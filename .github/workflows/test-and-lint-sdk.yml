@@ -1,0 +1,65 @@
+name: Lint and Test SDK
+
+on: 
+  pull_request:
+    paths:
+      - '**/*'
+
+
+jobs:
+  check-format-with-black:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: "actions/setup-python@v2"
+        with: 
+          python-version: '3.x'
+      - name: "install dependencies"
+        run: |
+          python -m pip install black
+          black --version
+      - name: "format-black"
+        run: |
+          black . --check --diff
+  lint-with-flake8:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: "actions/setup-python@v2"
+        with: 
+          python-version: '3.x'
+      - name: "install dependencies"
+        run: |
+          python -m pip install flake8
+      - name: "lint-flake8"
+        run: |
+          flake8 . --max-line-length 120
+  type-check-with-mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: "actions/checkout@v2"
+      - name: "Install dependencies"
+        run: |
+          python -VV
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements-test.txt
+      - name: "Run mypy tests"
+        run: |
+          mypy .
+  run-tests-with-tox:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: "actions/checkout@v2"
+      - uses: "actions/setup-python@v2"
+        with: 
+          python-version: '3.9.x'
+      - name: "Install dependencies"
+        run: |
+          python -VV
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements-test.txt
+      - name: "Run tox tests"
+        run: |
+          tox
