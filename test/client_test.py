@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import json
 import os
+from typing import List
 from unittest.mock import patch
 import pytest
 from eppo_client.client import EppoClient
@@ -18,9 +19,9 @@ mock_api_key = "mock-api-key"
 class AssignmentTestCase:
     experiment: str
     percentExposure: float
-    variations: list[VariationDto]
-    subjects: list[str]
-    expectedAssignments: list[str]
+    variations: List[VariationDto]
+    subjects: List[str]
+    expectedAssignments: List[str]
 
 
 test_data = []

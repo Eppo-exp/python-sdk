@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 from eppo_client.shard import ShardRange
 
@@ -22,7 +22,7 @@ class ExperimentConfigurationDto:
     subjectShards: int
     percentExposure: float
     enabled: bool
-    variations: list[VariationDto]
+    variations: List[VariationDto]
     name: str
 
 
