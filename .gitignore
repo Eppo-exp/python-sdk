@@ -4,3 +4,4 @@ dist/
 .env
 __pycache__
 .tox/
+test-data
