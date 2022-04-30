@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-import json
+from typing import Optional
 
 from eppo_client.shard import ShardRange
 
@@ -25,18 +25,8 @@ class ExperimentConfigurationDto:
     variations: list[VariationDto]
     name: str
 
-    @staticmethod
-    def from_json(json_str: str):
-        json_dict = json.load(json_str)
-        variations = [
-            VariationDto.from_dict(variation_dict)
-            for variation_dict in json_dict["variations"]
-        ]
-        json_dict["variations"] = variations
-        return ExperimentConfigurationDto(**json_dict)
-
 
 class ExperimentConfigurationRequestor:
-    def get_configuration(flag: str) -> ExperimentConfigurationDto:
+    def get_configuration(self, flag: str) -> Optional[ExperimentConfigurationDto]:
         # TODO: implement this method
         return None

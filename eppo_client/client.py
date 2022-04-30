@@ -8,11 +8,6 @@ from eppo_client.validation import validate_not_blank
 
 
 class EppoClient:
-    """
-    The client should be initialized at application startup as a singleton; use the same client instance for the lifetime of the application.
-    Use the :func:`eppo_client.get()` method to get a shared instance of the client.
-    """
-
     def __init__(self, config_requestor: ExperimentConfigurationRequestor) -> None:
         self.__config_requestor = config_requestor
 
@@ -27,7 +22,7 @@ class EppoClient:
         validate_not_blank("flag", flag)
         experiment_config = self.__config_requestor.get_configuration(flag)
         if (
-            experiment_config == None
+            experiment_config is None
             or not experiment_config.enabled
             or not self.is_in_experiment_sample(subject, flag, experiment_config)
         ):

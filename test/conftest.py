@@ -1,5 +1,5 @@
 import os
-from google.cloud import storage
+from google.cloud import storage  # type: ignore
 
 TEST_DATA_DIR = "test/test-data/assignment"
 

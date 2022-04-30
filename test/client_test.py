@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-import json, os
+import json
+import os
 from unittest.mock import patch
 import pytest
 from eppo_client.client import EppoClient
-from eppo_client.config import Config
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationDto,
     ExperimentConfigurationRequestor,
@@ -61,7 +61,7 @@ def test_assign_subject_not_in_sample(mock_config_requestor):
         name="recommendation_algo",
     )
     client = EppoClient(config_requestor=mock_config_requestor)
-    assert client.assign("user-1", "flag-1") == None
+    assert client.assign("user-1", "flag-1") is None
 
 
 @pytest.mark.parametrize("test_case", test_data)
