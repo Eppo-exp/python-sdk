@@ -2,3 +2,4 @@ tox
 pytest
 mypy
 google-cloud-storage
+httpretty
