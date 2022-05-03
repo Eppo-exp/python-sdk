@@ -39,7 +39,7 @@ def test_assign_blank_experiment():
     client = EppoClient(config_requestor=ExperimentConfigurationRequestor())
     with pytest.raises(Exception) as exc_info:
         client.assign("subject-1", "")
-    assert exc_info.value.args[0] == "Invalid value for flag: cannot be blank"
+    assert exc_info.value.args[0] == "Invalid value for experiment_key: cannot be blank"
 
 
 def test_assign_blank_subject():
@@ -61,7 +61,7 @@ def test_assign_subject_not_in_sample(mock_config_requestor):
         name="recommendation_algo",
     )
     client = EppoClient(config_requestor=mock_config_requestor)
-    assert client.assign("user-1", "flag-1") is None
+    assert client.assign("user-1", "experiment-key-1") is None
 
 
 @pytest.mark.parametrize("test_case", test_data)

@@ -18,6 +18,8 @@ class ExperimentConfigurationDto(SdkBaseModel):
 
 
 class ExperimentConfigurationRequestor:
-    def get_configuration(self, flag: str) -> Optional[ExperimentConfigurationDto]:
+    def get_configuration(
+        self, experiment_key: str
+    ) -> Optional[ExperimentConfigurationDto]:
         # TODO: implement this method
         return None
