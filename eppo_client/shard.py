@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 import hashlib
+
+from eppo_client.base_model import SdkBaseModel
 
 
 def get_shard(input: str, subject_shards: int):
@@ -10,13 +11,9 @@ def get_shard(input: str, subject_shards: int):
     return int_from_hash % subject_shards
 
 
-@dataclass
-class ShardRange:
+class ShardRange(SdkBaseModel):
     start: int
     end: int
-
-    def from_dict(range_dict):
-        return ShardRange(**range_dict)
 
 
 def is_in_shard_range(shard: int, range: ShardRange) -> bool:

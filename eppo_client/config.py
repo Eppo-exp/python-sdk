@@ -1,10 +1,9 @@
-from dataclasses import dataclass
+from eppo_client.base_model import SdkBaseModel
 
 from eppo_client.validation import validate_not_blank
 
 
-@dataclass
-class Config:
+class Config(SdkBaseModel):
     api_key: str
     base_url: str = "https://eppo.cloud/api"
 

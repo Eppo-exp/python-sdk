@@ -1,26 +1,17 @@
-from dataclasses import dataclass
 from typing import List, Optional
+from eppo_client.base_model import SdkBaseModel
 
 from eppo_client.shard import ShardRange
 
 
-@dataclass
-class VariationDto:
+class VariationDto(SdkBaseModel):
     name: str
-    shardRange: ShardRange
-
-    @staticmethod
-    def from_dict(variation_dict):
-        variation_dict["shardRange"] = ShardRange.from_dict(
-            variation_dict["shardRange"]
-        )
-        return VariationDto(**variation_dict)
+    shard_range: ShardRange
 
 
-@dataclass
-class ExperimentConfigurationDto:
-    subjectShards: int
-    percentExposure: float
+class ExperimentConfigurationDto(SdkBaseModel):
+    subject_shards: int
+    percent_exposure: float
     enabled: bool
     variations: List[VariationDto]
     name: str

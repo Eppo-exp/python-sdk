@@ -1,9 +1,9 @@
-from dataclasses import dataclass
 import json
 import os
-from typing import List
+from typing import List, Optional
 from unittest.mock import patch
 import pytest
+from eppo_client.base_model import SdkBaseModel
 from eppo_client.client import EppoClient
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationDto,
@@ -15,13 +15,12 @@ from eppo_client.shard import ShardRange
 mock_api_key = "mock-api-key"
 
 
-@dataclass
-class AssignmentTestCase:
+class AssignmentTestCase(SdkBaseModel):
     experiment: str
-    percentExposure: float
+    percent_exposure: float
     variations: List[VariationDto]
     subjects: List[str]
-    expectedAssignments: List[str]
+    expected_assignments: List[Optional[str]]
 
 
 test_data = []
@@ -29,7 +28,7 @@ for file_name in [file for file in os.listdir("test/test-data/assignment")]:
     with open("test/test-data/assignment/{}".format(file_name)) as test_case_json:
         test_case_dict = json.load(test_case_json)
         variations = [
-            VariationDto.from_dict(variation_dict)
+            VariationDto(**variation_dict)
             for variation_dict in test_case_dict["variations"]
         ]
         test_case_dict["variations"] = variations
@@ -74,7 +73,7 @@ def test_assign_subject_in_sample(test_case):
         mock_config_requestor.get_configuration.return_value = (
             ExperimentConfigurationDto(
                 subjectShards=10000,
-                percentExposure=test_case.percentExposure,
+                percentExposure=test_case.percent_exposure,
                 enabled=True,
                 variations=test_case.variations,
                 name=test_case.experiment,
@@ -85,4 +84,4 @@ def test_assign_subject_in_sample(test_case):
             client.assign(subject, test_case.experiment)
             for subject in test_case.subjects
         ]
-        assert assignments == test_case.expectedAssignments
+        assert assignments == test_case.expected_assignments

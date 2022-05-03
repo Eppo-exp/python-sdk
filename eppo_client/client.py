@@ -28,13 +28,13 @@ class EppoClient:
         ):
             return None
         shard = get_shard(
-            "assignment-{}-{}".format(subject, flag), experiment_config.subjectShards
+            "assignment-{}-{}".format(subject, flag), experiment_config.subject_shards
         )
         return next(
             (
                 variation.name
                 for variation in experiment_config.variations
-                if is_in_shard_range(shard, variation.shardRange)
+                if is_in_shard_range(shard, variation.shard_range)
             ),
             None,
         )
@@ -43,8 +43,9 @@ class EppoClient:
         self, subject: str, flag: str, experiment_config: ExperimentConfigurationDto
     ):
         shard = get_shard(
-            "exposure-{}-{}".format(subject, flag), experiment_config.subjectShards
+            "exposure-{}-{}".format(subject, flag), experiment_config.subject_shards
         )
         return (
-            shard <= experiment_config.percentExposure * experiment_config.subjectShards
+            shard
+            <= experiment_config.percent_exposure * experiment_config.subject_shards
         )
