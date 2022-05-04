@@ -1,4 +1,5 @@
 from typing import Any
+from requests.exceptions import Timeout
 from requests.adapters import HTTPAdapter, Retry
 from http import HTTPStatus
 
@@ -16,8 +17,8 @@ class SdkParams(SdkBaseModel):
 
 class HttpRequestError(Exception):
     def __init__(self, message: str, status_code: int):
-        super().__init__(message)
         self.status_code = status_code
+        super().__init__(message)
 
     def is_recoverable(self) -> bool:
         if self.status_code >= 400 and self.status_code < 500:
@@ -47,17 +48,21 @@ class HttpClient:
         return self.__is_unauthorized
 
     def get(self, resource: str) -> Any:
-        response = self.__session.get(
-            self.__base_url + resource,
-            params=self.__sdk_params.dict(),
-            timeout=REQUEST_TIMEOUT_SECONDS,
-        )
-        self.__is_unauthorized = response.status_code == HTTPStatus.UNAUTHORIZED
-        if response.status_code == HTTPStatus.OK.value:
+        try:
+            response = self.__session.get(
+                self.__base_url + resource,
+                params=self.__sdk_params.dict(),
+                timeout=REQUEST_TIMEOUT_SECONDS,
+            )
+            self.__is_unauthorized = response.status_code == HTTPStatus.UNAUTHORIZED
+            if response.status_code != HTTPStatus.OK:
+                raise self._get_http_error(response.status_code, resource)
             return response.json()
-        raise HttpRequestError(
-            "HTTP {} error while requesting resource {}".format(
-                response.status_code, resource
-            ),
-            status_code=response.status_code,
+        except Timeout:
+            raise self._get_http_error(HTTPStatus.REQUEST_TIMEOUT, resource)
+
+    def _get_http_error(self, status_code: int, resource: str) -> HttpRequestError:
+        return HttpRequestError(
+            "HTTP {} error while requesting resource {}".format(status_code, resource),
+            status_code=status_code,
         )
