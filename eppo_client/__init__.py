@@ -59,9 +59,9 @@ def get_instance() -> EppoClient:
     :return: a shared client instance
     :rtype: EppoClient
     """
+    global __client
+    global __lock
     try:
-        global __client
-        global __lock
         __lock.acquire_read()
         if __client:
             return __client
