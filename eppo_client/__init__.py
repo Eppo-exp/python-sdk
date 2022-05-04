@@ -10,8 +10,7 @@ from eppo_client.constants import CACHE_TTL_SECONDS, MAX_CACHE_ENTRIES
 from eppo_client.http_client import HttpClient, SdkParams
 from eppo_client.read_write_lock import ReadWriteLock
 
-with open("VERSION.txt") as version_file:
-    __version__ = version_file.read().strip()
+__version__ = "0.0.1"
 
 __client: Optional[EppoClient] = None
 __lock = ReadWriteLock()
