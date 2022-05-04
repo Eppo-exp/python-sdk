@@ -1,7 +1,10 @@
 from typing import Optional
 from eppo_client.client import EppoClient
 from eppo_client.config import Config
-from eppo_client.configuration_requestor import ExperimentConfigurationRequestor
+from eppo_client.configuration_requestor import (
+    ExperimentConfigurationDto,
+    ExperimentConfigurationRequestor,
+)
 from eppo_client.configuration_store import ConfigurationStore
 from eppo_client.constants import CACHE_TTL_SECONDS, MAX_CACHE_ENTRIES
 from eppo_client.http_client import HttpClient, SdkParams
@@ -29,7 +32,7 @@ def init(config: Config) -> EppoClient:
         apiKey=config.api_key, sdkName="python", sdkVersion=__version__
     )
     http_client = HttpClient(base_url=config.base_url, sdk_params=sdk_params)
-    config_store = ConfigurationStore(
+    config_store: ConfigurationStore[ExperimentConfigurationDto] = ConfigurationStore(
         max_size=MAX_CACHE_ENTRIES, ttl_seconds=CACHE_TTL_SECONDS
     )
     config_requestor = ExperimentConfigurationRequestor(

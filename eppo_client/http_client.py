@@ -1,5 +1,4 @@
 from typing import Any
-from pydantic.dataclasses import dataclass
 from requests.adapters import HTTPAdapter, Retry
 from http import HTTPStatus
 
@@ -31,7 +30,8 @@ class HttpRequestError(Exception):
 
 REQUEST_TIMEOUT_SECONDS = 2
 # Retry reference: https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#module-urllib3.util.retry
-# This applies only to failed DNS lookups and connection timeouts, never to requests where data has made it to the server.
+# This applies only to failed DNS lookups and connection timeouts,
+# never to requests where data has made it to the server.
 MAX_RETRIES = Retry(total=3, backoff_factor=1)
 
 

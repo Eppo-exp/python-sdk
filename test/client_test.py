@@ -1,7 +1,7 @@
 import json
 import os
 from unittest.mock import patch
-import httpretty
+import httpretty  # type: ignore
 import pytest
 from eppo_client.client import EppoClient
 from eppo_client.config import Config

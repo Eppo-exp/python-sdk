@@ -43,10 +43,13 @@ class ExperimentConfigurationRequestor:
 
     def fetch_and_store_configurations(self) -> Dict[str, ExperimentConfigurationDto]:
         try:
-            configs = cast(dict, self.__http_client.get(RAC_ENDPOINT))
-            for exp_key, exp_config in configs.get("experiments", {}).items():
+            configs = cast(
+                dict, self.__http_client.get(RAC_ENDPOINT).get("experiments", {})
+            )
+            for exp_key, exp_config in configs.items():
                 configs[exp_key] = ExperimentConfigurationDto(**exp_config)
             self.__config_store.set_configurations(configs)
+            return configs
         except HttpRequestError as e:
             logger.error("Error retrieving assignment configurations: " + str(e))
             if e.is_recoverable():

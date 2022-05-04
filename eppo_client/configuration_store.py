@@ -8,7 +8,7 @@ T = TypeVar("T")
 
 class ConfigurationStore(Generic[T]):
     def __init__(self, ttl_seconds: float, max_size: int):
-        self.__cache = TTLCache(maxsize=max_size, ttl=ttl_seconds)
+        self.__cache: TTLCache = TTLCache(maxsize=max_size, ttl=ttl_seconds)
         self.__lock = ReadWriteLock()
 
     def get_configuration(self, key: str) -> Optional[T]:

@@ -9,12 +9,14 @@ test_exp = ExperimentConfigurationDto(
     name="randomization_algo",
 )
 
-store = ConfigurationStore(ttl_seconds=100, max_size=1)
+store: ConfigurationStore[ExperimentConfigurationDto] = ConfigurationStore(
+    ttl_seconds=100, max_size=1
+)
 store.set_configurations({"randomization_algo": test_exp})
 
 
 def test_get_configuration_unknown_key():
-    assert store.get_configuration("unknown_exp") == None
+    assert store.get_configuration("unknown_exp") is None
 
 
 def test_get_configuration_known_key():
