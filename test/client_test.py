@@ -1,5 +1,6 @@
 import json
 import os
+from time import sleep
 from unittest.mock import patch
 import httpretty  # type: ignore
 import pytest
@@ -42,6 +43,7 @@ def init_fixture():
         body=config_response_json,
     )
     client = init(Config(base_url=MOCK_BASE_URL, api_key="dummy"))
+    sleep(0.1)  # wait for initialization
     yield
     client._shutdown()
     httpretty.disable()

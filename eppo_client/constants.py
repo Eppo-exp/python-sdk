@@ -1,6 +1,5 @@
 # configuration cache
 MAX_CACHE_ENTRIES = 1000  # arbitrary; the caching library requires a max limit
-CACHE_TTL_SECONDS = 15 * 60
 
 # poller
 SECOND_MILLIS = 1000
