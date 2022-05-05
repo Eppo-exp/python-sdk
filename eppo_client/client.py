@@ -10,6 +10,11 @@ from eppo_client.validation import validate_not_blank
 
 
 class EppoClient:
+    """Client object for assigning variations
+    Don't invoke the EppoClient constructor directly. Instead use :func:`eppo_client.get_instance()`
+    to get a singleton instance of this object.
+    """
+
     def __init__(self, config_requestor: ExperimentConfigurationRequestor):
         self.__config_requestor = config_requestor
         self.__poller = Poller(
