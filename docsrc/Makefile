@@ -12,6 +12,7 @@ BUILDDIR      = _build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
+
 .PHONY: help Makefile
 
 install:
@@ -21,3 +22,4 @@ install:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 html: install
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@cp -a _build/html/. ../docs

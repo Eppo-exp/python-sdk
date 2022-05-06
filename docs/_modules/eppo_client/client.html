@@ -1,0 +1,180 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>eppo_client.client &#8212; Eppo Server SDK 0.0.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for eppo_client.client</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">eppo_client.configuration_requestor</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ExperimentConfigurationDto</span><span class="p">,</span>
+    <span class="n">ExperimentConfigurationRequestor</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">eppo_client.constants</span> <span class="kn">import</span> <span class="n">POLL_INTERVAL_MILLIS</span><span class="p">,</span> <span class="n">POLL_JITTER_MILLIS</span>
+<span class="kn">from</span> <span class="nn">eppo_client.poller</span> <span class="kn">import</span> <span class="n">Poller</span>
+<span class="kn">from</span> <span class="nn">eppo_client.shard</span> <span class="kn">import</span> <span class="n">get_shard</span><span class="p">,</span> <span class="n">is_in_shard_range</span>
+<span class="kn">from</span> <span class="nn">eppo_client.validation</span> <span class="kn">import</span> <span class="n">validate_not_blank</span>
+
+
+<div class="viewcode-block" id="EppoClient"><a class="viewcode-back" href="../../api.html#eppo_client.client.EppoClient">[docs]</a><span class="k">class</span> <span class="nc">EppoClient</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Client object for assigning variations</span>
+<span class="sd">    Don&#39;t invoke the EppoClient constructor directly. Instead use :func:`eppo_client.get_instance()`</span>
+<span class="sd">    to get a singleton instance of this object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_requestor</span><span class="p">:</span> <span class="n">ExperimentConfigurationRequestor</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__config_requestor</span> <span class="o">=</span> <span class="n">config_requestor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__poller</span> <span class="o">=</span> <span class="n">Poller</span><span class="p">(</span>
+            <span class="n">interval_millis</span><span class="o">=</span><span class="n">POLL_INTERVAL_MILLIS</span><span class="p">,</span>
+            <span class="n">jitter_millis</span><span class="o">=</span><span class="n">POLL_JITTER_MILLIS</span><span class="p">,</span>
+            <span class="n">callback</span><span class="o">=</span><span class="n">config_requestor</span><span class="o">.</span><span class="n">fetch_and_store_configurations</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__poller</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+<div class="viewcode-block" id="EppoClient.assign"><a class="viewcode-back" href="../../api.html#eppo_client.client.EppoClient.assign">[docs]</a>    <span class="k">def</span> <span class="nf">assign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subject</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">experiment_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Maps a subject to a variation for a given experiment</span>
+<span class="sd">        Returns None if the subject is not part of the experiment sample.</span>
+
+<span class="sd">        :param subject: an entity ID, e.g. userId</span>
+<span class="sd">        :param experiment_key: an experiment identifier</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">validate_not_blank</span><span class="p">(</span><span class="s2">&quot;subject&quot;</span><span class="p">,</span> <span class="n">subject</span><span class="p">)</span>
+        <span class="n">validate_not_blank</span><span class="p">(</span><span class="s2">&quot;experiment_key&quot;</span><span class="p">,</span> <span class="n">experiment_key</span><span class="p">)</span>
+        <span class="n">experiment_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__config_requestor</span><span class="o">.</span><span class="n">get_configuration</span><span class="p">(</span><span class="n">experiment_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">experiment_config</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="ow">not</span> <span class="n">experiment_config</span><span class="o">.</span><span class="n">enabled</span>
+            <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_in_experiment_sample</span><span class="p">(</span>
+                <span class="n">subject</span><span class="p">,</span> <span class="n">experiment_key</span><span class="p">,</span> <span class="n">experiment_config</span>
+            <span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">shard</span> <span class="o">=</span> <span class="n">get_shard</span><span class="p">(</span>
+            <span class="s2">&quot;assignment-</span><span class="si">{}</span><span class="s2">-</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">experiment_key</span><span class="p">),</span>
+            <span class="n">experiment_config</span><span class="o">.</span><span class="n">subject_shards</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">next</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">variation</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">for</span> <span class="n">variation</span> <span class="ow">in</span> <span class="n">experiment_config</span><span class="o">.</span><span class="n">variations</span>
+                <span class="k">if</span> <span class="n">is_in_shard_range</span><span class="p">(</span><span class="n">shard</span><span class="p">,</span> <span class="n">variation</span><span class="o">.</span><span class="n">shard_range</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stops all background processes used by the client</span>
+<span class="sd">        Do not use the client after calling this method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__poller</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_is_in_experiment_sample</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">subject</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">experiment_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">experiment_config</span><span class="p">:</span> <span class="n">ExperimentConfigurationDto</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">shard</span> <span class="o">=</span> <span class="n">get_shard</span><span class="p">(</span>
+            <span class="s2">&quot;exposure-</span><span class="si">{}</span><span class="s2">-</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">experiment_key</span><span class="p">),</span>
+            <span class="n">experiment_config</span><span class="o">.</span><span class="n">subject_shards</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">shard</span>
+            <span class="o">&lt;=</span> <span class="n">experiment_config</span><span class="o">.</span><span class="n">percent_exposure</span> <span class="o">*</span> <span class="n">experiment_config</span><span class="o">.</span><span class="n">subject_shards</span>
+        <span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Eppo Server SDK</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  <li><a href="../eppo_client.html">eppo_client</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, Eppo Data, Inc..
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
