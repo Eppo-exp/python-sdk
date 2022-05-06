@@ -1,1 +1,5 @@
 pydantic
+requests
+cachetools
+types-cachetools
+types-requests
