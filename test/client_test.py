@@ -75,9 +75,26 @@ def test_assign_subject_not_in_sample(mock_config_requestor):
             VariationDto(name="control", shardRange=ShardRange(start=0, end=100))
         ],
         name="recommendation_algo",
+        overrides=dict(),
     )
     client = EppoClient(config_requestor=mock_config_requestor)
     assert client.assign("user-1", "experiment-key-1") is None
+
+
+@patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
+def test_with_subject_in_overrides(mock_config_requestor):
+    mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
+        subjectShards=10000,
+        percentExposure=100,
+        enabled=True,
+        variations=[
+            VariationDto(name="control", shardRange=ShardRange(start=0, end=100))
+        ],
+        name="recommendation_algo",
+        overrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
+    )
+    client = EppoClient(config_requestor=mock_config_requestor)
+    assert client.assign("user-1", "experiment-key-1") == "override-variation"
 
 
 @pytest.mark.parametrize("test_case", test_data)

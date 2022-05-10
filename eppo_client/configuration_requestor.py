@@ -20,6 +20,7 @@ class ExperimentConfigurationDto(SdkBaseModel):
     enabled: bool
     variations: List[VariationDto]
     name: Optional[str]
+    overrides: Dict[str, str] = {}
 
 
 RAC_ENDPOINT = "/randomized_assignment/config"
