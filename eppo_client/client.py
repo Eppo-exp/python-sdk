@@ -1,3 +1,4 @@
+import hashlib
 from typing import Optional
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationDto,
@@ -37,6 +38,9 @@ class EppoClient:
             )
         ):
             return None
+        override = self._get_subject_variation_override(experiment_config, subject)
+        if override:
+            return override
         shard = get_shard(
             "assignment-{}-{}".format(subject, experiment_key),
             experiment_config.subject_shards,
@@ -55,6 +59,14 @@ class EppoClient:
         Do not use the client after calling this method.
         """
         self.__poller.stop()
+
+    def _get_subject_variation_override(
+        self, experiment_config: ExperimentConfigurationDto, subject: str
+    ) -> Optional[str]:
+        subject_hash = hashlib.md5(subject.encode("utf-8")).hexdigest()
+        if subject_hash in experiment_config.overrides:
+            return experiment_config.overrides[subject_hash]
+        return None
 
     def _is_in_experiment_sample(
         self,
