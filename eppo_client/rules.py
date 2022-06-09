@@ -41,10 +41,12 @@ def matches_rule(subject_attributes: dict, rule: Rule):
 def evaluate_condition(subject_attributes: dict, condition: Condition) -> bool:
     subject_value = subject_attributes.get(condition.attribute, None)
     if subject_value:
-        if isinstance(subject_value, numbers.Number):
-            return evaluate_numeric_condition(subject_value, condition)
-        elif condition.operator == OperatorType.MATCHES:
-            return bool(re.match(condition.value, subject_value))
+        if condition.operator == OperatorType.MATCHES:
+            return bool(re.match(condition.value, str(subject_value)))
+        else:
+            return isinstance(
+                subject_value, numbers.Number
+            ) and evaluate_numeric_condition(subject_value, condition)
     return False
 
 
