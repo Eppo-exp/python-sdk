@@ -29,7 +29,8 @@ class EppoClient:
 
         :param subject: an entity ID, e.g. userId
         :param experiment_key: an experiment identifier
-        :param subject_attributes: properties of the subject, e.g. name, email. Used for evaluating any experiment targeting rules.
+        :param subject_attributes: properties of the subject, e.g. name, email.
+        Used for evaluating any experiment targeting rules.
         """
         validate_not_blank("subject", subject)
         validate_not_blank("experiment_key", experiment_key)
