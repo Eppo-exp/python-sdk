@@ -1,5 +1,6 @@
 import hashlib
-from typing import List, Optional
+from typing import Dict, List, Optional
+from eppo_client.base_model import SdkBaseModel
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationDto,
     ExperimentConfigurationRequestor,
@@ -9,6 +10,11 @@ from eppo_client.poller import Poller
 from eppo_client.rules import Rule, matches_any_rule
 from eppo_client.shard import get_shard, is_in_shard_range
 from eppo_client.validation import validate_not_blank
+
+
+class Subject(SdkBaseModel):
+    key: str
+    custom_attributes: Dict = dict()
 
 
 class EppoClient:
@@ -21,36 +27,32 @@ class EppoClient:
         )
         self.__poller.start()
 
-    def assign(
-        self, subject: str, experiment_key: str, subject_attributes=dict()
-    ) -> Optional[str]:
+    def assign(self, subject: Subject, experiment_key: str) -> Optional[str]:
         """Maps a subject to a variation for a given experiment
         Returns None if the subject is not part of the experiment sample.
 
-        :param subject: an entity ID, e.g. userId
+        :param subject: an entity or user
         :param experiment_key: an experiment identifier
-        :param subject_attributes: properties of the subject, e.g. name, email.
-        Used for evaluating any experiment targeting rules.
         """
-        validate_not_blank("subject", subject)
+        validate_not_blank("subject", subject.key)
         validate_not_blank("experiment_key", experiment_key)
         experiment_config = self.__config_requestor.get_configuration(experiment_key)
         if (
             experiment_config is None
             or not experiment_config.enabled
             or not self._subject_attributes_satisfy_rules(
-                subject_attributes, experiment_config.rules
+                subject.custom_attributes, experiment_config.rules
             )
             or not self._is_in_experiment_sample(
-                subject, experiment_key, experiment_config
+                subject.key, experiment_key, experiment_config
             )
         ):
             return None
-        override = self._get_subject_variation_override(experiment_config, subject)
+        override = self._get_subject_variation_override(experiment_config, subject.key)
         if override:
             return override
         shard = get_shard(
-            "assignment-{}-{}".format(subject, experiment_key),
+            "assignment-{}-{}".format(subject.key, experiment_key),
             experiment_config.subject_shards,
         )
         return next(
