@@ -1,6 +1,5 @@
 import hashlib
-from typing import Dict, List, Optional
-from eppo_client.base_model import SdkBaseModel
+from typing import List, Optional
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationDto,
     ExperimentConfigurationRequestor,
@@ -9,12 +8,8 @@ from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
 from eppo_client.poller import Poller
 from eppo_client.rules import Rule, matches_any_rule
 from eppo_client.shard import get_shard, is_in_shard_range
+from eppo_client.subject import Subject
 from eppo_client.validation import validate_not_blank
-
-
-class Subject(SdkBaseModel):
-    key: str
-    custom_attributes: Dict = dict()
 
 
 class EppoClient:
