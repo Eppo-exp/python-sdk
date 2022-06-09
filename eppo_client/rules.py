@@ -1,8 +1,7 @@
 import numbers
 import re
 from enum import Enum
-from tokenize import Number
-from typing import List, Union
+from typing import Any, List
 
 from eppo_client.base_model import SdkBaseModel
 
@@ -18,7 +17,7 @@ class OperatorType(Enum):
 class Condition(SdkBaseModel):
     operator: OperatorType
     attribute: str
-    value: Union[int, float, str]
+    value: Any
 
 
 class Rule(SdkBaseModel):
