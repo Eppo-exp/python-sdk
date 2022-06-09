@@ -37,3 +37,11 @@ def test_matches_rules_true_if_no_conditions_for_rule():
 
 def test_matches_rules_false_if_numeric_operator_with_string():
     assert matches_any_rule({"age": "99"}, [numeric_rule]) is False
+
+
+def test_matches_rules_true_with_numeric_value_and_regex():
+    condition = Condition(
+        operator=OperatorType.MATCHES, value="[0-9]+", attribute="age"
+    )
+    rule = Rule(conditions=[condition])
+    assert matches_any_rule({"age": 99}, [rule]) is True
