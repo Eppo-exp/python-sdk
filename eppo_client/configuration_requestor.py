@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, cast
 from eppo_client.base_model import SdkBaseModel
 from eppo_client.configuration_store import ConfigurationStore
 from eppo_client.http_client import HttpClient, HttpRequestError
+from eppo_client.rules import Rule
 
 from eppo_client.shard import ShardRange
 
@@ -21,6 +22,7 @@ class ExperimentConfigurationDto(SdkBaseModel):
     variations: List[VariationDto]
     name: Optional[str]
     overrides: Dict[str, str] = {}
+    rules: List[Rule] = []
 
 
 RAC_ENDPOINT = "/randomized_assignment/config"

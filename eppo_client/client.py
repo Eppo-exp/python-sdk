@@ -1,11 +1,12 @@
 import hashlib
-from typing import Optional
+from typing import List, Optional
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationDto,
     ExperimentConfigurationRequestor,
 )
 from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
 from eppo_client.poller import Poller
+from eppo_client.rules import Rule, matches_any_rule
 from eppo_client.shard import get_shard, is_in_shard_range
 from eppo_client.validation import validate_not_blank
 
@@ -20,12 +21,15 @@ class EppoClient:
         )
         self.__poller.start()
 
-    def assign(self, subject: str, experiment_key: str) -> Optional[str]:
+    def assign(
+        self, subject: str, experiment_key: str, subject_attributes=dict()
+    ) -> Optional[str]:
         """Maps a subject to a variation for a given experiment
         Returns None if the subject is not part of the experiment sample.
 
         :param subject: an entity ID, e.g. userId
         :param experiment_key: an experiment identifier
+        :param subject_attributes: properties of the subject, e.g. name, email. Used for evaluating any experiment targeting rules.
         """
         validate_not_blank("subject", subject)
         validate_not_blank("experiment_key", experiment_key)
@@ -33,6 +37,9 @@ class EppoClient:
         if (
             experiment_config is None
             or not experiment_config.enabled
+            or not self._subject_attributes_satisfy_rules(
+                subject_attributes, experiment_config.rules
+            )
             or not self._is_in_experiment_sample(
                 subject, experiment_key, experiment_config
             )
@@ -53,6 +60,13 @@ class EppoClient:
             ),
             None,
         )
+
+    def _subject_attributes_satisfy_rules(
+        self, subject_attributes: dict, rules: List[Rule]
+    ) -> bool:
+        if len(rules) == 0:
+            return True
+        return matches_any_rule(subject_attributes, rules)
 
     def _shutdown(self):
         """Stops all background processes used by the client
