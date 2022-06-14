@@ -22,7 +22,7 @@ class EppoClient:
         )
         self.__poller.start()
 
-    def assign(self, subject: Subject, experiment_key: str) -> Optional[str]:
+    def get_assignment(self, subject: Subject, experiment_key: str) -> Optional[str]:
         """Maps a subject to a variation for a given experiment
         Returns None if the subject is not part of the experiment sample.
 

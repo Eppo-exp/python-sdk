@@ -54,7 +54,7 @@ def init_fixture():
 def test_assign_blank_experiment(mock_config_requestor):
     client = EppoClient(config_requestor=mock_config_requestor)
     with pytest.raises(Exception) as exc_info:
-        client.assign(Subject(key="subject-1"), "")
+        client.get_assignment(Subject(key="subject-1"), "")
     assert exc_info.value.args[0] == "Invalid value for experiment_key: cannot be blank"
 
 
@@ -62,7 +62,7 @@ def test_assign_blank_experiment(mock_config_requestor):
 def test_assign_blank_subject(mock_config_requestor):
     client = EppoClient(config_requestor=mock_config_requestor)
     with pytest.raises(Exception) as exc_info:
-        client.assign(Subject(key=""), "experiment-1")
+        client.get_assignment(Subject(key=""), "experiment-1")
     assert exc_info.value.args[0] == "Invalid value for subject: cannot be blank"
 
 
@@ -79,7 +79,7 @@ def test_assign_subject_not_in_sample(mock_config_requestor):
         overrides=dict(),
     )
     client = EppoClient(config_requestor=mock_config_requestor)
-    assert client.assign(Subject(key="user-1"), "experiment-key-1") is None
+    assert client.get_assignment(Subject(key="user-1"), "experiment-key-1") is None
 
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
@@ -100,16 +100,16 @@ def test_assign_subject_with_with_attributes_and_rules(mock_config_requestor):
         rules=[text_rule],
     )
     client = EppoClient(config_requestor=mock_config_requestor)
-    assert client.assign(Subject(key="user-1"), "experiment-key-1") is None
+    assert client.get_assignment(Subject(key="user-1"), "experiment-key-1") is None
     assert (
-        client.assign(
+        client.get_assignment(
             Subject(key="user1", custom_attributes={"email": "test@example.com"}),
             "experiment-key-1",
         )
         is None
     )
     assert (
-        client.assign(
+        client.get_assignment(
             Subject(key="user1", custom_attributes={"email": "test@eppo.com"}),
             "experiment-key-1",
         )
@@ -131,7 +131,8 @@ def test_with_subject_in_overrides(mock_config_requestor):
     )
     client = EppoClient(config_requestor=mock_config_requestor)
     assert (
-        client.assign(Subject(key="user-1"), "experiment-key-1") == "override-variation"
+        client.get_assignment(Subject(key="user-1"), "experiment-key-1")
+        == "override-variation"
     )
 
 
@@ -140,7 +141,7 @@ def test_assign_subject_in_sample(test_case):
     print("---- Test case for {} Experiment".format(test_case["experiment"]))
     client = get_instance()
     assignments = [
-        client.assign(Subject(key=key), test_case["experiment"])
+        client.get_assignment(Subject(key=key), test_case["experiment"])
         for key in test_case["subjects"]
     ]
     assert assignments == test_case["expectedAssignments"]
