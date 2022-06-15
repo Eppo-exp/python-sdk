@@ -10,6 +10,7 @@ from eppo_client.configuration_requestor import (
     ExperimentConfigurationDto,
     VariationDto,
 )
+from eppo_client.rules import Condition, OperatorType, Rule
 from eppo_client.shard import ShardRange
 from eppo_client import init, get_instance
 
@@ -53,7 +54,7 @@ def init_fixture():
 def test_assign_blank_experiment(mock_config_requestor):
     client = EppoClient(config_requestor=mock_config_requestor)
     with pytest.raises(Exception) as exc_info:
-        client.assign("subject-1", "")
+        client.get_assignment("subject-1", "")
     assert exc_info.value.args[0] == "Invalid value for experiment_key: cannot be blank"
 
 
@@ -61,8 +62,8 @@ def test_assign_blank_experiment(mock_config_requestor):
 def test_assign_blank_subject(mock_config_requestor):
     client = EppoClient(config_requestor=mock_config_requestor)
     with pytest.raises(Exception) as exc_info:
-        client.assign("", "experiment-1")
-    assert exc_info.value.args[0] == "Invalid value for subject: cannot be blank"
+        client.get_assignment("", "experiment-1")
+    assert exc_info.value.args[0] == "Invalid value for subject_key: cannot be blank"
 
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
@@ -72,13 +73,44 @@ def test_assign_subject_not_in_sample(mock_config_requestor):
         percentExposure=0,
         enabled=True,
         variations=[
-            VariationDto(name="control", shardRange=ShardRange(start=0, end=100))
+            VariationDto(name="control", shardRange=ShardRange(start=0, end=10000))
         ],
         name="recommendation_algo",
         overrides=dict(),
     )
     client = EppoClient(config_requestor=mock_config_requestor)
-    assert client.assign("user-1", "experiment-key-1") is None
+    assert client.get_assignment("user-1", "experiment-key-1") is None
+
+
+@patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
+def test_assign_subject_with_with_attributes_and_rules(mock_config_requestor):
+    matches_email_condition = Condition(
+        operator=OperatorType.MATCHES, value=".*@eppo.com", attribute="email"
+    )
+    text_rule = Rule(conditions=[matches_email_condition])
+    mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
+        subjectShards=10000,
+        percentExposure=100,
+        enabled=True,
+        variations=[
+            VariationDto(name="control", shardRange=ShardRange(start=0, end=10000))
+        ],
+        name="experiment-key-1",
+        overrides=dict(),
+        rules=[text_rule],
+    )
+    client = EppoClient(config_requestor=mock_config_requestor)
+    assert client.get_assignment("user-1", "experiment-key-1") is None
+    assert (
+        client.get_assignment(
+            "user1", "experiment-key-1", {"email": "test@example.com"}
+        )
+        is None
+    )
+    assert (
+        client.get_assignment("user1", "experiment-key-1", {"email": "test@eppo.com"})
+        == "control"
+    )
 
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
@@ -94,7 +126,7 @@ def test_with_subject_in_overrides(mock_config_requestor):
         overrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
     )
     client = EppoClient(config_requestor=mock_config_requestor)
-    assert client.assign("user-1", "experiment-key-1") == "override-variation"
+    assert client.get_assignment("user-1", "experiment-key-1") == "override-variation"
 
 
 @pytest.mark.parametrize("test_case", test_data)
@@ -102,7 +134,7 @@ def test_assign_subject_in_sample(test_case):
     print("---- Test case for {} Experiment".format(test_case["experiment"]))
     client = get_instance()
     assignments = [
-        client.assign(subject, test_case["experiment"])
-        for subject in test_case["subjects"]
+        client.get_assignment(key, test_case["experiment"])
+        for key in test_case["subjects"]
     ]
     assert assignments == test_case["expectedAssignments"]
