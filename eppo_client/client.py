@@ -8,7 +8,6 @@ from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
 from eppo_client.poller import Poller
 from eppo_client.rules import Rule, matches_any_rule
 from eppo_client.shard import get_shard, is_in_shard_range
-from eppo_client.subject import Subject
 from eppo_client.validation import validate_not_blank
 
 
@@ -22,32 +21,36 @@ class EppoClient:
         )
         self.__poller.start()
 
-    def get_assignment(self, subject: Subject, experiment_key: str) -> Optional[str]:
+    def get_assignment(
+        self, subject_key: str, experiment_key: str, subject_attributes=dict()
+    ) -> Optional[str]:
         """Maps a subject to a variation for a given experiment
         Returns None if the subject is not part of the experiment sample.
 
-        :param subject: an entity or user
+        :param subject_key: an identifier of the experiment subject, for example a user ID.
         :param experiment_key: an experiment identifier
+        :param subject_attributes: optional attributes associated with the subject, for example name and email.
+        The subject attributes are used for evaluating any targeting rules tied to the experiment.
         """
-        validate_not_blank("subject.key", subject.key)
+        validate_not_blank("subject_key", subject_key)
         validate_not_blank("experiment_key", experiment_key)
         experiment_config = self.__config_requestor.get_configuration(experiment_key)
         if (
             experiment_config is None
             or not experiment_config.enabled
             or not self._subject_attributes_satisfy_rules(
-                subject.custom_attributes, experiment_config.rules
+                subject_attributes, experiment_config.rules
             )
             or not self._is_in_experiment_sample(
-                subject.key, experiment_key, experiment_config
+                subject_key, experiment_key, experiment_config
             )
         ):
             return None
-        override = self._get_subject_variation_override(experiment_config, subject.key)
+        override = self._get_subject_variation_override(experiment_config, subject_key)
         if override:
             return override
         shard = get_shard(
-            "assignment-{}-{}".format(subject.key, experiment_key),
+            "assignment-{}-{}".format(subject_key, experiment_key),
             experiment_config.subject_shards,
         )
         return next(
