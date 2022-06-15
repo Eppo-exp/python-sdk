@@ -29,7 +29,7 @@ class EppoClient:
         :param subject: an entity or user
         :param experiment_key: an experiment identifier
         """
-        validate_not_blank("subject", subject.key)
+        validate_not_blank("subject.key", subject.key)
         validate_not_blank("experiment_key", experiment_key)
         experiment_config = self.__config_requestor.get_configuration(experiment_key)
         if (
