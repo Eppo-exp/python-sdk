@@ -12,6 +12,8 @@ class OperatorType(Enum):
     GT = "GT"
     LTE = "LTE"
     LT = "LT"
+    ONE_OF = "ONE_OF"
+    NOT_ONE_OF = "NOT_ONE_OF"
 
 
 class Condition(SdkBaseModel):
@@ -40,9 +42,13 @@ def matches_rule(subject_attributes: dict, rule: Rule):
 
 def evaluate_condition(subject_attributes: dict, condition: Condition) -> bool:
     subject_value = subject_attributes.get(condition.attribute, None)
-    if subject_value:
+    if subject_value is not None:
         if condition.operator == OperatorType.MATCHES:
             return bool(re.match(condition.value, str(subject_value)))
+        elif condition.operator == OperatorType.ONE_OF:
+            return str(subject_value) in condition.value
+        elif condition.operator == OperatorType.NOT_ONE_OF:
+            return str(subject_value) not in condition.value
         else:
             return isinstance(
                 subject_value, numbers.Number
