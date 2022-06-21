@@ -45,3 +45,64 @@ def test_matches_rules_true_with_numeric_value_and_regex():
     )
     rule = Rule(conditions=[condition])
     assert matches_any_rule({"age": 99}, [rule]) is True
+
+
+def test_one_of_operator_with_boolean():
+    oneOfRule = Rule(
+        conditions=[
+            Condition(operator=OperatorType.ONE_OF, value=["True"], attribute="enabled")
+        ]
+    )
+    notOneOfRule = Rule(
+        conditions=[
+            Condition(
+                operator=OperatorType.NOT_ONE_OF, value=["True"], attribute="enabled"
+            )
+        ]
+    )
+    assert matches_any_rule({"enabled": True}, [oneOfRule]) is True
+    assert matches_any_rule({"enabled": False}, [oneOfRule]) is False
+    assert matches_any_rule({"enabled": True}, [notOneOfRule]) is False
+    assert matches_any_rule({"enabled": False}, [notOneOfRule]) is True
+
+
+def test_one_of_operator_with_string():
+    oneOfRule = Rule(
+        conditions=[
+            Condition(
+                operator=OperatorType.ONE_OF, value=["john", "ron"], attribute="name"
+            )
+        ]
+    )
+    notOneOfRule = Rule(
+        conditions=[
+            Condition(operator=OperatorType.NOT_ONE_OF, value=["ron"], attribute="name")
+        ]
+    )
+    assert matches_any_rule({"name": "john"}, [oneOfRule]) is True
+    assert matches_any_rule({"name": "ron"}, [oneOfRule]) is True
+    assert matches_any_rule({"name": "sam"}, [oneOfRule]) is False
+    assert matches_any_rule({"name": "ron"}, [notOneOfRule]) is False
+    assert matches_any_rule({"name": "sam"}, [notOneOfRule]) is True
+
+
+def test_one_of_operator_with_number():
+    oneOfRule = Rule(
+        conditions=[
+            Condition(
+                operator=OperatorType.ONE_OF, value=["14", "15.11"], attribute="number"
+            )
+        ]
+    )
+    notOneOfRule = Rule(
+        conditions=[
+            Condition(
+                operator=OperatorType.NOT_ONE_OF, value=["10"], attribute="number"
+            )
+        ]
+    )
+    assert matches_any_rule({"number": "14"}, [oneOfRule]) is True
+    assert matches_any_rule({"number": 15.11}, [oneOfRule]) is True
+    assert matches_any_rule({"number": "10"}, [oneOfRule]) is False
+    assert matches_any_rule({"number": "10"}, [notOneOfRule]) is False
+    assert matches_any_rule({"number": 11}, [notOneOfRule]) is True
