@@ -12,7 +12,7 @@ from eppo_client.configuration_requestor import (
 )
 from eppo_client.rules import Condition, OperatorType, Rule
 from eppo_client.shard import ShardRange
-from eppo_client import assignment_logger, init, get_instance
+from eppo_client import init, get_instance
 
 test_data = []
 for file_name in [file for file in os.listdir("test/test-data/assignment")]:
