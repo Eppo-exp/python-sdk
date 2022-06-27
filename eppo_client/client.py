@@ -76,8 +76,8 @@ class EppoClient:
             "variation": assigned_variation,
             "subject": subject_key,
             "timestamp": datetime.datetime.utcnow().isoformat(),
+            "subjectAttributes": subject_attributes,
         }
-        assignment_event.update(subject_attributes)
         try:
             self.__assignment_logger.log_assignment(assignment_event)
         except Exception as e:
