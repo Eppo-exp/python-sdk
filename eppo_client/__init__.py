@@ -37,6 +37,7 @@ def init(config: Config) -> EppoClient:
     config_requestor = ExperimentConfigurationRequestor(
         http_client=http_client, config_store=config_store
     )
+    assignment_logger = config.assignment_logger
     global __client
     global __lock
     try:
@@ -44,7 +45,10 @@ def init(config: Config) -> EppoClient:
         if __client:
             # if a client was already initialized, stop the background processes of the old client
             __client._shutdown()
-        __client = EppoClient(config_requestor=config_requestor)
+        __client = EppoClient(
+            config_requestor=config_requestor,
+            assignment_logger=assignment_logger,
+        )
         return __client
     finally:
         __lock.release_write()

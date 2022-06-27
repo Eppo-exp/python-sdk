@@ -82,6 +82,46 @@ def test_assign_subject_not_in_sample(mock_config_requestor):
     assert client.get_assignment("user-1", "experiment-key-1") is None
 
 
+@patch("eppo_client.assignment_logger.AssignmentLogger")
+@patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
+def test_log_assignment(mock_config_requestor, mock_logger):
+    mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
+        subjectShards=10000,
+        percentExposure=100,
+        enabled=True,
+        variations=[
+            VariationDto(name="control", shardRange=ShardRange(start=0, end=10000))
+        ],
+        name="recommendation_algo",
+        overrides=dict(),
+    )
+    client = EppoClient(
+        config_requestor=mock_config_requestor, assignment_logger=mock_logger
+    )
+    assert client.get_assignment("user-1", "experiment-key-1") == "control"
+    assert mock_logger.log_assignment.call_count == 1
+
+
+@patch("eppo_client.assignment_logger.AssignmentLogger")
+@patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
+def test_get_assignment_handles_logging_exception(mock_config_requestor, mock_logger):
+    mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
+        subjectShards=10000,
+        percentExposure=100,
+        enabled=True,
+        variations=[
+            VariationDto(name="control", shardRange=ShardRange(start=0, end=10000))
+        ],
+        name="recommendation_algo",
+        overrides=dict(),
+    )
+    mock_logger.log_assignment.side_effect = ValueError("logging error")
+    client = EppoClient(
+        config_requestor=mock_config_requestor, assignment_logger=mock_logger
+    )
+    assert client.get_assignment("user-1", "experiment-key-1") == "control"
+
+
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
 def test_assign_subject_with_with_attributes_and_rules(mock_config_requestor):
     matches_email_condition = Condition(
