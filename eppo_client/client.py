@@ -76,9 +76,10 @@ class EppoClient:
             "variation": assigned_variation,
             "subject": subject_key,
             "timestamp": datetime.datetime.utcnow().isoformat(),
-        }.update(subject_attributes)
+        }
+        assignment_event.update(subject_attributes)
         try:
-            self.__assignment_logger.log_assignment(assignment_event=assignment_event)
+            self.__assignment_logger.log_assignment(assignment_event)
         except Exception as e:
             logger.error("[Eppo SDK] Error logging assignment event: " + str(e))
         return assigned_variation
