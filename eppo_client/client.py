@@ -1,5 +1,8 @@
 import hashlib
+import datetime
+import logging
 from typing import List, Optional
+from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationDto,
     ExperimentConfigurationRequestor,
@@ -10,10 +13,17 @@ from eppo_client.rules import Rule, matches_any_rule
 from eppo_client.shard import get_shard, is_in_shard_range
 from eppo_client.validation import validate_not_blank
 
+logger = logging.getLogger(__name__)
+
 
 class EppoClient:
-    def __init__(self, config_requestor: ExperimentConfigurationRequestor):
+    def __init__(
+        self,
+        config_requestor: ExperimentConfigurationRequestor,
+        assignment_logger: AssignmentLogger = AssignmentLogger(),
+    ):
         self.__config_requestor = config_requestor
+        self.__assignment_logger = assignment_logger
         self.__poller = Poller(
             interval_millis=POLL_INTERVAL_MILLIS,
             jitter_millis=POLL_JITTER_MILLIS,
@@ -53,7 +63,7 @@ class EppoClient:
             "assignment-{}-{}".format(subject_key, experiment_key),
             experiment_config.subject_shards,
         )
-        return next(
+        assigned_variation = next(
             (
                 variation.name
                 for variation in experiment_config.variations
@@ -61,6 +71,17 @@ class EppoClient:
             ),
             None,
         )
+        assignment_event = {
+            "experiment": experiment_key,
+            "variation": assigned_variation,
+            "subject": subject_key,
+            "timestamp": datetime.datetime.utcnow().isoformat(),
+        }.update(subject_attributes)
+        try:
+            self.__assignment_logger.log_assignment(assignment_event=assignment_event)
+        except Exception as e:
+            logger.error("[Eppo SDK] Error logging assignment event: " + str(e))
+        return assigned_variation
 
     def _subject_attributes_satisfy_rules(
         self, subject_attributes: dict, rules: List[Rule]
