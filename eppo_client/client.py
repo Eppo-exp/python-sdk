@@ -20,7 +20,7 @@ class EppoClient:
     def __init__(
         self,
         config_requestor: ExperimentConfigurationRequestor,
-        assignment_logger: AssignmentLogger = AssignmentLogger(),
+        assignment_logger: AssignmentLogger,
     ):
         self.__config_requestor = config_requestor
         self.__assignment_logger = assignment_logger

@@ -4,6 +4,7 @@ from time import sleep
 from unittest.mock import patch
 import httpretty  # type: ignore
 import pytest
+from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.client import EppoClient
 from eppo_client.config import Config
 from eppo_client.configuration_requestor import (
@@ -43,7 +44,13 @@ def init_fixture():
         MOCK_BASE_URL + "/randomized_assignment/config",
         body=config_response_json,
     )
-    client = init(Config(base_url=MOCK_BASE_URL, api_key="dummy"))
+    client = init(
+        Config(
+            base_url=MOCK_BASE_URL,
+            api_key="dummy",
+            assignment_logger=AssignmentLogger(),
+        )
+    )
     sleep(0.1)  # wait for initialization
     yield
     client._shutdown()
@@ -52,7 +59,9 @@ def init_fixture():
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
 def test_assign_blank_experiment(mock_config_requestor):
-    client = EppoClient(config_requestor=mock_config_requestor)
+    client = EppoClient(
+        config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
+    )
     with pytest.raises(Exception) as exc_info:
         client.get_assignment("subject-1", "")
     assert exc_info.value.args[0] == "Invalid value for experiment_key: cannot be blank"
@@ -60,7 +69,9 @@ def test_assign_blank_experiment(mock_config_requestor):
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
 def test_assign_blank_subject(mock_config_requestor):
-    client = EppoClient(config_requestor=mock_config_requestor)
+    client = EppoClient(
+        config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
+    )
     with pytest.raises(Exception) as exc_info:
         client.get_assignment("", "experiment-1")
     assert exc_info.value.args[0] == "Invalid value for subject_key: cannot be blank"
@@ -78,7 +89,9 @@ def test_assign_subject_not_in_sample(mock_config_requestor):
         name="recommendation_algo",
         overrides=dict(),
     )
-    client = EppoClient(config_requestor=mock_config_requestor)
+    client = EppoClient(
+        config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
+    )
     assert client.get_assignment("user-1", "experiment-key-1") is None
 
 
@@ -139,7 +152,9 @@ def test_assign_subject_with_with_attributes_and_rules(mock_config_requestor):
         overrides=dict(),
         rules=[text_rule],
     )
-    client = EppoClient(config_requestor=mock_config_requestor)
+    client = EppoClient(
+        config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
+    )
     assert client.get_assignment("user-1", "experiment-key-1") is None
     assert (
         client.get_assignment(
@@ -165,7 +180,9 @@ def test_with_subject_in_overrides(mock_config_requestor):
         name="recommendation_algo",
         overrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
     )
-    client = EppoClient(config_requestor=mock_config_requestor)
+    client = EppoClient(
+        config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
+    )
     assert client.get_assignment("user-1", "experiment-key-1") == "override-variation"
 
 
@@ -181,14 +198,18 @@ def test_with_subject_in_overrides_exp_disabled(mock_config_requestor):
         name="recommendation_algo",
         overrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
     )
-    client = EppoClient(config_requestor=mock_config_requestor)
+    client = EppoClient(
+        config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
+    )
     assert client.get_assignment("user-1", "experiment-key-1") == "override-variation"
 
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
 def test_with_null_experiment_config(mock_config_requestor):
     mock_config_requestor.get_configuration.return_value = None
-    client = EppoClient(config_requestor=mock_config_requestor)
+    client = EppoClient(
+        config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
+    )
     assert client.get_assignment("user-1", "experiment-key-1") is None
 
 
