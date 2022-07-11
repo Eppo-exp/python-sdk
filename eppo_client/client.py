@@ -20,7 +20,7 @@ class EppoClient:
     def __init__(
         self,
         config_requestor: ExperimentConfigurationRequestor,
-        assignment_logger: AssignmentLogger = AssignmentLogger(),
+        assignment_logger: AssignmentLogger,
     ):
         self.__config_requestor = config_requestor
         self.__assignment_logger = assignment_logger
@@ -45,6 +45,9 @@ class EppoClient:
         validate_not_blank("subject_key", subject_key)
         validate_not_blank("experiment_key", experiment_key)
         experiment_config = self.__config_requestor.get_configuration(experiment_key)
+        override = self._get_subject_variation_override(experiment_config, subject_key)
+        if override:
+            return override
         if (
             experiment_config is None
             or not experiment_config.enabled
@@ -56,9 +59,6 @@ class EppoClient:
             )
         ):
             return None
-        override = self._get_subject_variation_override(experiment_config, subject_key)
-        if override:
-            return override
         shard = get_shard(
             "assignment-{}-{}".format(subject_key, experiment_key),
             experiment_config.subject_shards,
@@ -98,10 +98,13 @@ class EppoClient:
         self.__poller.stop()
 
     def _get_subject_variation_override(
-        self, experiment_config: ExperimentConfigurationDto, subject: str
+        self, experiment_config: Optional[ExperimentConfigurationDto], subject: str
     ) -> Optional[str]:
         subject_hash = hashlib.md5(subject.encode("utf-8")).hexdigest()
-        if subject_hash in experiment_config.overrides:
+        if (
+            experiment_config is not None
+            and subject_hash in experiment_config.overrides
+        ):
             return experiment_config.overrides[subject_hash]
         return None
 
