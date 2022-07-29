@@ -66,6 +66,32 @@ def test_one_of_operator_with_boolean():
     assert matches_any_rule({"enabled": False}, [notOneOfRule]) is True
 
 
+def test_one_of_operator_case_insensitive():
+    oneOfRule = Rule(
+        conditions=[
+            Condition(
+                operator=OperatorType.ONE_OF, value=["1Ab", "Ron"], attribute="name"
+            )
+        ]
+    )
+    assert matches_any_rule({"name": "ron"}, [oneOfRule]) is True
+    assert matches_any_rule({"name": "1AB"}, [oneOfRule]) is True
+
+
+def test_not_one_of_operator_case_insensitive():
+    notOneOf = Rule(
+        conditions=[
+            Condition(
+                operator=OperatorType.NOT_ONE_OF,
+                value=["bbB", "1.1.ab"],
+                attribute="name",
+            )
+        ]
+    )
+    assert matches_any_rule({"name": "BBB"}, [notOneOf]) is False
+    assert matches_any_rule({"name": "1.1.AB"}, [notOneOf]) is False
+
+
 def test_one_of_operator_with_string():
     oneOfRule = Rule(
         conditions=[

@@ -46,9 +46,13 @@ def evaluate_condition(subject_attributes: dict, condition: Condition) -> bool:
         if condition.operator == OperatorType.MATCHES:
             return bool(re.match(condition.value, str(subject_value)))
         elif condition.operator == OperatorType.ONE_OF:
-            return str(subject_value) in condition.value
+            return str(subject_value).lower() in [
+                value.lower() for value in condition.value
+            ]
         elif condition.operator == OperatorType.NOT_ONE_OF:
-            return str(subject_value) not in condition.value
+            return str(subject_value).lower() not in [
+                value.lower() for value in condition.value
+            ]
         else:
             return isinstance(
                 subject_value, numbers.Number
