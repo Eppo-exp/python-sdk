@@ -54,7 +54,7 @@ def test_assign_blank_experiment(mock_config_requestor):
     )
     with pytest.raises(Exception) as exc_info:
         client.get_assignment("subject-1", "")
-    assert exc_info.value.args[0] == "Invalid value for experiment_key: cannot be blank"
+    assert exc_info.value.args[0] == "Invalid value for flag_key: cannot be blank"
 
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
