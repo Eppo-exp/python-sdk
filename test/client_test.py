@@ -16,45 +16,34 @@ from eppo_client.shard import ShardRange
 from eppo_client import init, get_instance
 
 test_data = []
-for file_name in [file for file in os.listdir("test/test-data/assignment")]:
-    with open("test/test-data/assignment/{}".format(file_name)) as test_case_json:
+for file_name in [file for file in os.listdir("test/test-data/assignment-v2")]:
+    with open("test/test-data/assignment-v2/{}".format(file_name)) as test_case_json:
         test_case_dict = json.load(test_case_json)
         test_data.append(test_case_dict)
 
-exp_configs = dict()
-for experiment_test in test_data:
-    experiment_name = experiment_test["experiment"]
-    exp_configs[experiment_name] = {
-        "subjectShards": 10000,
-        "enabled": True,
-        "variations": experiment_test["variations"],
-        "name": experiment_name,
-        "percentExposure": experiment_test["percentExposure"],
-    }
-
-MOCK_BASE_URL = "http://localhost:4000/api"
+MOCK_BASE_URL = "http://localhost:4001/api"
 
 
 @pytest.fixture(scope="session", autouse=True)
 def init_fixture():
     httpretty.enable()
-    config_response_json = json.dumps({"experiments": exp_configs})
-    httpretty.register_uri(
-        httpretty.GET,
-        MOCK_BASE_URL + "/randomized_assignment/config",
-        body=config_response_json,
-    )
-    client = init(
-        Config(
-            base_url=MOCK_BASE_URL,
-            api_key="dummy",
-            assignment_logger=AssignmentLogger(),
+    with open("test/test-data/rac-experiments.json") as mock_rac_response:
+        httpretty.register_uri(
+            httpretty.GET,
+            MOCK_BASE_URL + "/randomized_assignment/config",
+            body=json.dumps(json.load(mock_rac_response)),
         )
-    )
-    sleep(0.1)  # wait for initialization
-    yield
-    client._shutdown()
-    httpretty.disable()
+        client = init(
+            Config(
+                base_url=MOCK_BASE_URL,
+                api_key="dummy",
+                assignment_logger=AssignmentLogger(),
+            )
+        )
+        sleep(0.1)  # wait for initialization
+        yield
+        client._shutdown()
+        httpretty.disable()
 
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
@@ -216,9 +205,20 @@ def test_with_null_experiment_config(mock_config_requestor):
 @pytest.mark.parametrize("test_case", test_data)
 def test_assign_subject_in_sample(test_case):
     print("---- Test case for {} Experiment".format(test_case["experiment"]))
-    client = get_instance()
-    assignments = [
-        client.get_assignment(key, test_case["experiment"])
-        for key in test_case["subjects"]
-    ]
+    assignments = get_assignments(test_case=test_case)
     assert assignments == test_case["expectedAssignments"]
+
+
+def get_assignments(test_case):
+    client = get_instance()
+    return [
+        client.get_assignment(subjectKey, test_case["experiment"])
+        for subjectKey in test_case.get("subjects", [])
+    ] + [
+        client.get_assignment(
+            subject_key=subject["subjectKey"],
+            experiment_key=test_case["experiment"],
+            subject_attributes=subject["subjectAttributes"],
+        )
+        for subject in test_case.get("subjectsWithAttributes", [])
+    ]
