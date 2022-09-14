@@ -264,7 +264,7 @@ def get_assignments(test_case):
     ] + [
         client.get_assignment(
             subject_key=subject["subjectKey"],
-            experiment_key=test_case["experiment"],
+            flag_key=test_case["experiment"],
             subject_attributes=subject["subjectAttributes"],
         )
         for subject in test_case.get("subjectsWithAttributes", [])
