@@ -1,12 +1,14 @@
-from eppo_client.configuration_requestor import ExperimentConfigurationDto
+from eppo_client.configuration_requestor import (
+    AllocationDto,
+    ExperimentConfigurationDto,
+)
 from eppo_client.configuration_store import ConfigurationStore
 
 test_exp = ExperimentConfigurationDto(
     subject_shards=1000,
-    percent_exposure=1,
     enabled=True,
-    variations=[],
     name="randomization_algo",
+    allocations={"allocation-1": AllocationDto(percent_exposure=1, variations=[])},
 )
 
 TEST_MAX_SIZE = 10

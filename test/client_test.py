@@ -8,6 +8,7 @@ from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.client import EppoClient
 from eppo_client.config import Config
 from eppo_client.configuration_requestor import (
+    AllocationDto,
     ExperimentConfigurationDto,
     VariationDto,
 )
@@ -27,10 +28,10 @@ MOCK_BASE_URL = "http://localhost:4001/api"
 @pytest.fixture(scope="session", autouse=True)
 def init_fixture():
     httpretty.enable()
-    with open("test/test-data/rac-experiments.json") as mock_rac_response:
+    with open("test/test-data/rac-experiments-v2.json") as mock_rac_response:
         httpretty.register_uri(
             httpretty.GET,
-            MOCK_BASE_URL + "/randomized_assignment/config",
+            MOCK_BASE_URL + "/randomized_assignment/v2/config",
             body=json.dumps(json.load(mock_rac_response)),
         )
         client = init(
@@ -68,15 +69,22 @@ def test_assign_blank_subject(mock_config_requestor):
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
 def test_assign_subject_not_in_sample(mock_config_requestor):
+    allocation = AllocationDto(
+        percent_exposure=0,
+        variations=[
+            VariationDto(
+                name="control",
+                value="control",
+                shardRange=ShardRange(start=0, end=10000),
+            )
+        ],
+    )
     mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
         subjectShards=10000,
-        percentExposure=0,
         enabled=True,
-        variations=[
-            VariationDto(name="control", shardRange=ShardRange(start=0, end=10000))
-        ],
         name="recommendation_algo",
         overrides=dict(),
+        allocations={"allocation": allocation},
     )
     client = EppoClient(
         config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
@@ -87,13 +95,21 @@ def test_assign_subject_not_in_sample(mock_config_requestor):
 @patch("eppo_client.assignment_logger.AssignmentLogger")
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
 def test_log_assignment(mock_config_requestor, mock_logger):
-    mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
-        subjectShards=10000,
-        percentExposure=100,
-        enabled=True,
+    allocation = AllocationDto(
+        percent_exposure=1,
         variations=[
-            VariationDto(name="control", shardRange=ShardRange(start=0, end=10000))
+            VariationDto(
+                name="control",
+                value="control",
+                shardRange=ShardRange(start=0, end=10000),
+            )
         ],
+    )
+    mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
+        allocations={"allocation": allocation},
+        rules=[Rule(conditions=[], allocation_key="allocation")],
+        subjectShards=10000,
+        enabled=True,
         name="recommendation_algo",
         overrides=dict(),
     )
@@ -107,13 +123,21 @@ def test_log_assignment(mock_config_requestor, mock_logger):
 @patch("eppo_client.assignment_logger.AssignmentLogger")
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
 def test_get_assignment_handles_logging_exception(mock_config_requestor, mock_logger):
+    allocation = AllocationDto(
+        percent_exposure=1,
+        variations=[
+            VariationDto(
+                name="control",
+                value="control",
+                shardRange=ShardRange(start=0, end=10000),
+            )
+        ],
+    )
     mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
         subjectShards=10000,
-        percentExposure=100,
+        allocations={"allocation": allocation},
         enabled=True,
-        variations=[
-            VariationDto(name="control", shardRange=ShardRange(start=0, end=10000))
-        ],
+        rules=[Rule(conditions=[], allocation_key="allocation")],
         name="recommendation_algo",
         overrides=dict(),
     )
@@ -126,17 +150,24 @@ def test_get_assignment_handles_logging_exception(mock_config_requestor, mock_lo
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
 def test_assign_subject_with_with_attributes_and_rules(mock_config_requestor):
+    allocation = AllocationDto(
+        percent_exposure=1,
+        variations=[
+            VariationDto(
+                name="control",
+                value="control",
+                shardRange=ShardRange(start=0, end=10000),
+            )
+        ],
+    )
     matches_email_condition = Condition(
         operator=OperatorType.MATCHES, value=".*@eppo.com", attribute="email"
     )
-    text_rule = Rule(conditions=[matches_email_condition])
+    text_rule = Rule(conditions=[matches_email_condition], allocation_key="allocation")
     mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
         subjectShards=10000,
-        percentExposure=100,
+        allocations={"allocation": allocation},
         enabled=True,
-        variations=[
-            VariationDto(name="control", shardRange=ShardRange(start=0, end=10000))
-        ],
         name="experiment-key-1",
         overrides=dict(),
         rules=[text_rule],
@@ -159,13 +190,21 @@ def test_assign_subject_with_with_attributes_and_rules(mock_config_requestor):
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
 def test_with_subject_in_overrides(mock_config_requestor):
+    allocation = AllocationDto(
+        percent_exposure=1,
+        variations=[
+            VariationDto(
+                name="control",
+                value="control",
+                shardRange=ShardRange(start=0, end=10000),
+            )
+        ],
+    )
     mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
         subjectShards=10000,
-        percentExposure=100,
+        allocations={"allocation": allocation},
         enabled=True,
-        variations=[
-            VariationDto(name="control", shardRange=ShardRange(start=0, end=100))
-        ],
+        rules=[Rule(conditions=[], allocation_key="allocation")],
         name="recommendation_algo",
         overrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
     )
@@ -177,13 +216,21 @@ def test_with_subject_in_overrides(mock_config_requestor):
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
 def test_with_subject_in_overrides_exp_disabled(mock_config_requestor):
+    allocation = AllocationDto(
+        percent_exposure=0,
+        variations=[
+            VariationDto(
+                name="control",
+                value="control",
+                shardRange=ShardRange(start=0, end=10000),
+            )
+        ],
+    )
     mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
         subjectShards=10000,
-        percentExposure=0,
+        allocations={"allocation": allocation},
         enabled=False,
-        variations=[
-            VariationDto(name="control", shardRange=ShardRange(start=0, end=100))
-        ],
+        rules=[Rule(conditions=[], allocation_key="allocation")],
         name="recommendation_algo",
         overrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
     )

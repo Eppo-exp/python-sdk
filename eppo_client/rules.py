@@ -23,14 +23,15 @@ class Condition(SdkBaseModel):
 
 
 class Rule(SdkBaseModel):
+    allocation_key: str
     conditions: List[Condition]
 
 
-def matches_any_rule(subject_attributes: dict, rules: List[Rule]):
+def find_matching_rule(subject_attributes: dict, rules: List[Rule]):
     for rule in rules:
         if matches_rule(subject_attributes, rule):
-            return True
-    return False
+            return rule
+    return None
 
 
 def matches_rule(subject_attributes: dict, rule: Rule):
