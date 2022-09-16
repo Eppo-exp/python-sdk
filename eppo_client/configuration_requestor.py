@@ -2,7 +2,7 @@ import logging
 from typing import Any, Dict, List, Optional, cast
 from eppo_client.base_model import SdkBaseModel
 from eppo_client.configuration_store import ConfigurationStore
-from eppo_client.http_client import HttpClient, HttpRequestError
+from eppo_client.http_client import HttpClient
 from eppo_client.rules import Rule
 
 from eppo_client.shard import ShardRange
@@ -56,9 +56,6 @@ class ExperimentConfigurationRequestor:
                 configs[exp_key] = ExperimentConfigurationDto(**exp_config)
             self.__config_store.set_configurations(configs)
             return configs
-        except HttpRequestError as e:
+        except Exception as e:
             logger.error("Error retrieving assignment configurations: " + str(e))
-            if e.is_recoverable():
-                return {}
-            else:
-                raise e  # caught by the polling task; causes assignment polling to stop
+            return {}
