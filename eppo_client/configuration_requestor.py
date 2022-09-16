@@ -57,5 +57,5 @@ class ExperimentConfigurationRequestor:
             self.__config_store.set_configurations(configs)
             return configs
         except Exception as e:
-            logger.error("[Test] Error retrieving assignment configurations: " + str(e))
+            logger.error("Error retrieving assignment configurations: " + str(e))
             return {}
