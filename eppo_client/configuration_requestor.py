@@ -56,9 +56,6 @@ class ExperimentConfigurationRequestor:
                 configs[exp_key] = ExperimentConfigurationDto(**exp_config)
             self.__config_store.set_configurations(configs)
             return configs
-        except HttpRequestError as e:
-            logger.error("Error retrieving assignment configurations: " + str(e))
-            if e.is_recoverable():
-                return {}
-            else:
-                raise e  # caught by the polling task; causes assignment polling to stop
+        except Exception as e:
+            logger.error("[Test] Error retrieving assignment configurations: " + str(e))
+            return {}

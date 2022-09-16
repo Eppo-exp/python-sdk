@@ -20,14 +20,6 @@ class HttpRequestError(Exception):
         self.status_code = status_code
         super().__init__(message)
 
-    def is_recoverable(self) -> bool:
-        if self.status_code >= 400 and self.status_code < 500:
-            return (
-                self.status_code == HTTPStatus.TOO_MANY_REQUESTS
-                or self.status_code == HTTPStatus.REQUEST_TIMEOUT
-            )
-        return True
-
 
 REQUEST_TIMEOUT_SECONDS = 2
 # Retry reference: https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#module-urllib3.util.retry
