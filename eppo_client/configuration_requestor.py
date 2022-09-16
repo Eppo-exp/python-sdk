@@ -2,7 +2,7 @@ import logging
 from typing import Any, Dict, List, Optional, cast
 from eppo_client.base_model import SdkBaseModel
 from eppo_client.configuration_store import ConfigurationStore
-from eppo_client.http_client import HttpClient, HttpRequestError
+from eppo_client.http_client import HttpClient
 from eppo_client.rules import Rule
 
 from eppo_client.shard import ShardRange
