@@ -34,4 +34,4 @@ test-data:
 
 .PHONY: test
 test: test-data
-	tox .
+	tox
