@@ -6,7 +6,7 @@ from eppo_client.validation import validate_not_blank
 
 class Config(SdkBaseModel):
     api_key: str
-    base_url: str = "https://eppo.cloud/api"
+    base_url: str = "https://fscdn.eppo.cloud/api"
     assignment_logger: AssignmentLogger
 
     def _validate(self):
