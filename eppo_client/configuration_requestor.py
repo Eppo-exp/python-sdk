@@ -30,7 +30,7 @@ class ExperimentConfigurationDto(SdkBaseModel):
     allocations: Dict[str, AllocationDto]
 
 
-RAC_ENDPOINT = "/randomized_assignment/v2/config"
+RAC_ENDPOINT = "/randomized_assignment/v3/config"
 
 
 class ExperimentConfigurationRequestor:

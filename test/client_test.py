@@ -31,7 +31,7 @@ def init_fixture():
     with open("test/test-data/rac-experiments-v2.json") as mock_rac_response:
         httpretty.register_uri(
             httpretty.GET,
-            MOCK_BASE_URL + "/randomized_assignment/v2/config",
+            MOCK_BASE_URL + "/randomized_assignment/v3/config",
             body=json.dumps(json.load(mock_rac_response)),
         )
         client = init(
