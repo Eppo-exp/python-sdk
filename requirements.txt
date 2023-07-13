@@ -1,5 +1,5 @@
-pydantic
-requests
-cachetools
-types-cachetools
-types-requests
+pydantic==1.10.*
+requests==2.31.*
+cachetools==5.3.*
+types-cachetools==5.3.*
+types-requests==2.31.*
