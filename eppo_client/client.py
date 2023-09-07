@@ -90,7 +90,9 @@ class EppoClient:
             None,
         )
         assignment_event = {
-            "experiment": flag_key,
+            "allocation": matched_rule.allocation_key,
+            "experiment": f"{flag_key}-{matched_rule.allocation_key}",
+            "featureFlag": flag_key,
             "variation": assigned_variation,
             "subject": subject_key,
             "timestamp": datetime.datetime.utcnow().isoformat(),
