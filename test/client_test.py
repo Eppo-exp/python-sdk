@@ -28,7 +28,7 @@ MOCK_BASE_URL = "http://localhost:4001/api"
 @pytest.fixture(scope="session", autouse=True)
 def init_fixture():
     httpretty.enable()
-    with open("test/test-data/rac-experiments-v2.json") as mock_rac_response:
+    with open("test/test-data/rac-experiments-v3.json") as mock_rac_response:
         httpretty.register_uri(
             httpretty.GET,
             MOCK_BASE_URL + "/randomized_assignment/v3/config",
