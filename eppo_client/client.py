@@ -1,16 +1,17 @@
 import hashlib
 import datetime
 import logging
-from typing import Optional
+from typing import Any, Optional
 from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationDto,
     ExperimentConfigurationRequestor,
+    VariationDto,
 )
-from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
+from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS, VariationType
 from eppo_client.poller import Poller
 from eppo_client.rules import find_matching_rule
-from eppo_client.shard import get_shard, is_in_shard_range
+from eppo_client.shard import ShardRange, get_shard, is_in_shard_range
 from eppo_client.validation import validate_not_blank
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,13 @@ class EppoClient:
     def get_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
     ) -> Optional[str]:
+         assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes)
+         return assigned_variation.value if assigned_variation is not None else assigned_variation
+
+
+    def get_assignment_variation(
+        self, subject_key: str, flag_key: str, subject_attributes: Any
+    ) -> Optional[VariationDto]:
         """Maps a subject to a variation for a given experiment
         Returns None if the subject is not part of the experiment sample.
 
@@ -83,7 +91,7 @@ class EppoClient:
         )
         assigned_variation = next(
             (
-                variation.value
+                variation
                 for variation in allocation.variations
                 if is_in_shard_range(shard, variation.shard_range)
             ),
@@ -93,7 +101,7 @@ class EppoClient:
             "allocation": matched_rule.allocation_key,
             "experiment": f"{flag_key}-{matched_rule.allocation_key}",
             "featureFlag": flag_key,
-            "variation": assigned_variation,
+            "variation": assigned_variation.value,
             "subject": subject_key,
             "timestamp": datetime.datetime.utcnow().isoformat(),
             "subjectAttributes": subject_attributes,
@@ -118,7 +126,12 @@ class EppoClient:
             experiment_config is not None
             and subject_hash in experiment_config.overrides
         ):
-            return experiment_config.overrides[subject_hash]
+            override_variation = VariationDto(
+                name="override",
+                value=experiment_config.overrides[subject_hash],
+                shardRange=ShardRange(start=0, end=10000),
+                )
+            return override_variation
         return None
 
     def _is_in_experiment_sample(
