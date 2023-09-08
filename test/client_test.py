@@ -260,18 +260,17 @@ def test_assign_subject_in_sample(test_case):
 
 def get_assignments(test_case):
     client = get_instance()
-    typed_get_assignments = {
+    get_typed_assignment = {
         "string": client.get_string_assignment,
         "numeric": client.get_numeric_assignment,
         "boolean": client.get_boolean_assignment,
         "json": client.get_json_string_assignment,
     }
-    print(test_case["valueType"])
     return [
-        typed_get_assignments[test_case["valueType"]](subjectKey, test_case["experiment"])
+        get_typed_assignment[test_case["valueType"]](subjectKey, test_case["experiment"])
         for subjectKey in test_case.get("subjects", [])
     ] + [
-        typed_get_assignments[test_case["valueType"]](
+        get_typed_assignment[test_case["valueType"]](
             subject_key=subject["subjectKey"],
             flag_key=test_case["experiment"],
             subject_attributes=subject["subjectAttributes"],

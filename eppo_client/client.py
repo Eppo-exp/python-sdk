@@ -43,7 +43,6 @@ class EppoClient:
     def get_numeric_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
     ) -> Optional[str]:
-        print(subject_key, flag_key, subject_attributes)
         assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.NUMERIC)
         return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
 
