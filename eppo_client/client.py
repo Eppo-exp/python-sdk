@@ -1,4 +1,5 @@
 import hashlib
+import json
 import datetime
 import logging
 from typing import Any, Optional
@@ -32,6 +33,37 @@ class EppoClient:
         )
         self.__poller.start()
 
+    def get_string_assignment(
+        self, subject_key: str, flag_key: str, subject_attributes=dict()
+    ) -> Optional[str]:
+        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.STRING.value)
+        return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
+
+    def get_numeric_assignment(
+        self, subject_key: str, flag_key: str, subject_attributes=dict()
+    ) -> Optional[str]:
+        print(subject_key, flag_key, subject_attributes)
+        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.NUMERIC.value)
+        return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
+
+    def get_boolean_assignment(
+        self, subject_key: str, flag_key: str, subject_attributes=dict()
+    ) -> Optional[str]:
+        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.BOOLEAN.value)
+        return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
+
+    def get_parsed_json_assignment(
+        self, subject_key: str, flag_key: str, subject_attributes=dict()
+    ) -> Optional[str]:
+        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.JSON.value)
+        return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
+
+    def get_json_string_assignment(
+        self, subject_key: str, flag_key: str, subject_attributes=dict()
+    ) -> Optional[str]:
+        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.JSON.value)
+        return assigned_variation.value if assigned_variation is not None else assigned_variation
+
     def get_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
     ) -> Optional[str]:
@@ -40,7 +72,7 @@ class EppoClient:
 
 
     def get_assignment_variation(
-        self, subject_key: str, flag_key: str, subject_attributes: Any
+        self, subject_key: str, flag_key: str, subject_attributes: Any, expected_variation_type: Optional[str] = None
     ) -> Optional[VariationDto]:
         """Maps a subject to a variation for a given experiment
         Returns None if the subject is not part of the experiment sample.
@@ -97,6 +129,27 @@ class EppoClient:
             ),
             None,
         )
+
+        type_matches_expected = False
+        if expected_variation_type is not None:
+            if expected_variation_type == VariationType.STRING.value:
+                type_matches_expected = isinstance(assigned_variation.typedValue, str)
+            elif expected_variation_type == VariationType.NUMERIC.value:
+                type_matches_expected = isinstance(assigned_variation.typedValue, (int, float, complex))
+            elif expected_variation_type == VariationType.BOOLEAN.value:
+                type_matches_expected = isinstance(assigned_variation.typedValue, bool)
+            elif expected_variation_type == VariationType.JSON.value:
+                try:
+                    parsed_json = json.loads(assigned_variation.value)
+                    json.dumps(assigned_variation.typedValue)
+                    assert parsed_json == assigned_variation.typedValue
+                    type_matches_expected = True
+                except (json.JSONDecodeError, TypeError, AssertionError) as e:
+                    pass
+
+            if not type_matches_expected:
+                return None
+
         assignment_event = {
             "allocation": matched_rule.allocation_key,
             "experiment": f"{flag_key}-{matched_rule.allocation_key}",
@@ -126,9 +179,11 @@ class EppoClient:
             experiment_config is not None
             and subject_hash in experiment_config.overrides
         ):
+            # TODO do typecheck with typedOverrides
             override_variation = VariationDto(
                 name="override",
                 value=experiment_config.overrides[subject_hash],
+                typedValue=experiment_config.typedOverrides[subject_hash],
                 shardRange=ShardRange(start=0, end=10000),
                 )
             return override_variation

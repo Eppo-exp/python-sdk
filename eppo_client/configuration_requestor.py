@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 
 class VariationDto(SdkBaseModel):
     name: str
-    value: Any
+    value: str
+    typedValue: Any
     shard_range: ShardRange
 
 
@@ -26,6 +27,7 @@ class ExperimentConfigurationDto(SdkBaseModel):
     enabled: bool
     name: Optional[str]
     overrides: Dict[str, str] = {}
+    typedOverrides: Dict[str, Any] = {}
     rules: List[Rule] = []
     allocations: Dict[str, AllocationDto]
 
