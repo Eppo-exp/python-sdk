@@ -169,7 +169,6 @@ class EppoClient:
             experiment_config is not None
             and subject_hash in experiment_config.overrides
         ):
-            # TODO do typecheck with typedOverrides
             override_variation = VariationDto(
                 name="override",
                 value=experiment_config.overrides[subject_hash],
