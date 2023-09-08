@@ -40,7 +40,11 @@ class EppoClient:
         assigned_variation = self.get_assignment_variation(
             subject_key, flag_key, subject_attributes, VariationType.STRING
         )
-        return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
+        return (
+            assigned_variation.typedValue
+            if assigned_variation is not None
+            else assigned_variation
+        )
 
     def get_numeric_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
@@ -48,7 +52,11 @@ class EppoClient:
         assigned_variation = self.get_assignment_variation(
             subject_key, flag_key, subject_attributes, VariationType.NUMERIC
         )
-        return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
+        return (
+            assigned_variation.typedValue
+            if assigned_variation is not None
+            else assigned_variation
+        )
 
     def get_boolean_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
@@ -56,7 +64,11 @@ class EppoClient:
         assigned_variation = self.get_assignment_variation(
             subject_key, flag_key, subject_attributes, VariationType.BOOLEAN
         )
-        return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
+        return (
+            assigned_variation.typedValue
+            if assigned_variation is not None
+            else assigned_variation
+        )
 
     def get_parsed_json_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
@@ -64,7 +76,11 @@ class EppoClient:
         assigned_variation = self.get_assignment_variation(
             subject_key, flag_key, subject_attributes, VariationType.JSON
         )
-        return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
+        return (
+            assigned_variation.typedValue
+            if assigned_variation is not None
+            else assigned_variation
+        )
 
     def get_json_string_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
@@ -72,17 +88,31 @@ class EppoClient:
         assigned_variation = self.get_assignment_variation(
             subject_key, flag_key, subject_attributes, VariationType.JSON
         )
-        return assigned_variation.value if assigned_variation is not None else assigned_variation
+        return (
+            assigned_variation.value
+            if assigned_variation is not None
+            else assigned_variation
+        )
 
     # deprecated in favor of the typed get_<type>_assignment methods
     def get_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
     ) -> Optional[str]:
-        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes)
-        return assigned_variation.value if assigned_variation is not None else assigned_variation
+        assigned_variation = self.get_assignment_variation(
+            subject_key, flag_key, subject_attributes
+        )
+        return (
+            assigned_variation.value
+            if assigned_variation is not None
+            else assigned_variation
+        )
 
     def get_assignment_variation(
-        self, subject_key: str, flag_key: str, subject_attributes: Any, expected_variation_type: Optional[str] = None
+        self,
+        subject_key: str,
+        flag_key: str,
+        subject_attributes: Any,
+        expected_variation_type: Optional[str] = None,
     ) -> Optional[VariationDto]:
         """Maps a subject to a variation for a given experiment
         Returns None if the subject is not part of the experiment sample.
@@ -98,7 +128,9 @@ class EppoClient:
         override = self._get_subject_variation_override(experiment_config, subject_key)
         if override:
             if expected_variation_type is not None:
-                variation_is_expected_type = VariationType.is_expected_type(override, expected_variation_type)
+                variation_is_expected_type = VariationType.is_expected_type(
+                    override, expected_variation_type
+                )
                 if not variation_is_expected_type:
                     return None
             return override
@@ -147,7 +179,9 @@ class EppoClient:
             return None
 
         if expected_variation_type is not None:
-            variation_is_expected_type = VariationType.is_expected_type(assigned_variation, expected_variation_type)
+            variation_is_expected_type = VariationType.is_expected_type(
+                assigned_variation, expected_variation_type
+            )
             if not variation_is_expected_type:
                 return None
 
