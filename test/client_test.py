@@ -265,14 +265,12 @@ def get_assignments(test_case):
         "numeric": client.get_numeric_assignment,
         "boolean": client.get_boolean_assignment,
         "json": client.get_json_string_assignment,
-    }
+    }[test_case["valueType"]]
     return [
-        get_typed_assignment[test_case["valueType"]](
-            subjectKey, test_case["experiment"]
-        )
+        get_typed_assignment(subjectKey, test_case["experiment"])
         for subjectKey in test_case.get("subjects", [])
     ] + [
-        get_typed_assignment[test_case["valueType"]](
+        get_typed_assignment(
             subject_key=subject["subjectKey"],
             flag_key=test_case["experiment"],
             subject_attributes=subject["subjectAttributes"],
