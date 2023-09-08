@@ -2,6 +2,7 @@ import hashlib
 import datetime
 import logging
 from typing import Any, Dict, Optional
+from typing_extensions import deprecated
 from numbers import Number
 from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.configuration_requestor import (
@@ -94,7 +95,9 @@ class EppoClient:
             else assigned_variation
         )
 
-    # deprecated in favor of the typed get_<type>_assignment methods
+    @deprecated(
+        "get_assignment is deprecated in favor of the typed get_<type>_assignment methods"
+    )
     def get_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
     ) -> Optional[str]:
