@@ -2,6 +2,7 @@ import json
 from numbers import Number
 from eppo_client.configuration_requestor import VariationDto
 
+
 class VariationType:
     STRING = 'string'
     NUMERIC = 'numeric'
@@ -21,6 +22,6 @@ class VariationType:
                 parsed_json = json.loads(assigned_variation.value)
                 json.dumps(assigned_variation.typedValue)
                 return parsed_json == assigned_variation.typedValue
-            except (json.JSONDecodeError, TypeError, AssertionError) as e:
+            except (json.JSONDecodeError, TypeError):
                 pass
         return False
