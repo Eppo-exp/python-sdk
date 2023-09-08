@@ -9,11 +9,12 @@ from eppo_client.configuration_requestor import (
     ExperimentConfigurationRequestor,
     VariationDto,
 )
-from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS, VariationType
+from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
 from eppo_client.poller import Poller
 from eppo_client.rules import find_matching_rule
 from eppo_client.shard import ShardRange, get_shard, is_in_shard_range
 from eppo_client.validation import validate_not_blank
+from eppo_client.variation_type import VariationType
 
 logger = logging.getLogger(__name__)
 
@@ -36,32 +37,32 @@ class EppoClient:
     def get_string_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
     ) -> Optional[str]:
-        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.STRING.value)
+        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.STRING)
         return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
 
     def get_numeric_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
     ) -> Optional[str]:
         print(subject_key, flag_key, subject_attributes)
-        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.NUMERIC.value)
+        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.NUMERIC)
         return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
 
     def get_boolean_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
     ) -> Optional[str]:
-        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.BOOLEAN.value)
+        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.BOOLEAN)
         return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
 
     def get_parsed_json_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
     ) -> Optional[str]:
-        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.JSON.value)
+        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.JSON)
         return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
 
     def get_json_string_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
     ) -> Optional[str]:
-        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.JSON.value)
+        assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.JSON)
         return assigned_variation.value if assigned_variation is not None else assigned_variation
 
     def get_assignment(
@@ -87,6 +88,10 @@ class EppoClient:
         experiment_config = self.__config_requestor.get_configuration(flag_key)
         override = self._get_subject_variation_override(experiment_config, subject_key)
         if override:
+            if expected_variation_type is not None:
+                variation_is_expected_type = VariationType.is_expected_type(override, expected_variation_type)
+                if not variation_is_expected_type:
+                    return None
             return override
 
         if experiment_config is None or not experiment_config.enabled:
@@ -130,24 +135,9 @@ class EppoClient:
             None,
         )
 
-        type_matches_expected = False
         if expected_variation_type is not None:
-            if expected_variation_type == VariationType.STRING.value:
-                type_matches_expected = isinstance(assigned_variation.typedValue, str)
-            elif expected_variation_type == VariationType.NUMERIC.value:
-                type_matches_expected = isinstance(assigned_variation.typedValue, (int, float, complex))
-            elif expected_variation_type == VariationType.BOOLEAN.value:
-                type_matches_expected = isinstance(assigned_variation.typedValue, bool)
-            elif expected_variation_type == VariationType.JSON.value:
-                try:
-                    parsed_json = json.loads(assigned_variation.value)
-                    json.dumps(assigned_variation.typedValue)
-                    assert parsed_json == assigned_variation.typedValue
-                    type_matches_expected = True
-                except (json.JSONDecodeError, TypeError, AssertionError) as e:
-                    pass
-
-            if not type_matches_expected:
+            variation_is_expected_type = VariationType.is_expected_type(assigned_variation, expected_variation_type)
+            if not variation_is_expected_type:
                 return None
 
         assignment_event = {

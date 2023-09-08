@@ -8,9 +8,3 @@ SECOND_MILLIS = 1000
 MINUTE_MILLIS = 60 * SECOND_MILLIS
 POLL_JITTER_MILLIS = 30 * SECOND_MILLIS
 POLL_INTERVAL_MILLIS = 5 * MINUTE_MILLIS
-
-class VariationType(Enum):
-    STRING = 'string'
-    NUMERIC = 'numeric'
-    BOOLEAN = 'boolean'
-    JSON = 'json'
