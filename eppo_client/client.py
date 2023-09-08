@@ -175,21 +175,22 @@ class EppoClient:
             ),
             None,
         )
-        if assigned_variation is None:
-            return None
 
-        if expected_variation_type is not None:
-            variation_is_expected_type = VariationType.is_expected_type(
-                assigned_variation, expected_variation_type
-            )
-            if not variation_is_expected_type:
-                return None
+        assigned_variation_value_to_log = None
+        if assigned_variation is not None:
+            assigned_variation_value_to_log = assigned_variation.value
+            if expected_variation_type is not None:
+                variation_is_expected_type = VariationType.is_expected_type(
+                    assigned_variation, expected_variation_type
+                )
+                if not variation_is_expected_type:
+                    return None
 
         assignment_event = {
             "allocation": matched_rule.allocation_key,
             "experiment": f"{flag_key}-{matched_rule.allocation_key}",
             "featureFlag": flag_key,
-            "variation": assigned_variation.value,
+            "variation": assigned_variation_value_to_log,
             "subject": subject_key,
             "timestamp": datetime.datetime.utcnow().isoformat(),
             "subjectAttributes": subject_attributes,
