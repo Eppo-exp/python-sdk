@@ -1,8 +1,8 @@
 import hashlib
-import json
 import datetime
 import logging
-from typing import Any, Optional
+from typing import Any, Dict, Optional
+from numbers import Number
 from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationDto,
@@ -42,19 +42,19 @@ class EppoClient:
 
     def get_numeric_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
-    ) -> Optional[str]:
+    ) -> Optional[Number]:
         assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.NUMERIC)
         return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
 
     def get_boolean_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
-    ) -> Optional[str]:
+    ) -> Optional[bool]:
         assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.BOOLEAN)
         return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
 
     def get_parsed_json_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
-    ) -> Optional[str]:
+    ) -> Optional[Dict[Any, Any]]:
         assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.JSON)
         return assigned_variation.typedValue if assigned_variation is not None else assigned_variation
 
@@ -64,6 +64,7 @@ class EppoClient:
         assigned_variation = self.get_assignment_variation(subject_key, flag_key, subject_attributes, VariationType.JSON)
         return assigned_variation.value if assigned_variation is not None else assigned_variation
 
+    # deprecated in favor of the typed get_<type>_assignment methods
     def get_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
     ) -> Optional[str]:

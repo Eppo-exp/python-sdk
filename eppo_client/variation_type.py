@@ -1,4 +1,5 @@
 import json
+from numbers import Number
 from eppo_client.configuration_requestor import VariationDto
 
 class VariationType:
@@ -12,7 +13,7 @@ class VariationType:
         if expected_variation_type == cls.STRING:
             return isinstance(assigned_variation.typedValue, str)
         elif expected_variation_type == cls.NUMERIC:
-            return isinstance(assigned_variation.typedValue, (int, float, complex))
+            return isinstance(assigned_variation.typedValue, Number)
         elif expected_variation_type == cls.BOOLEAN:
             return isinstance(assigned_variation.typedValue, bool)
         elif expected_variation_type == cls.JSON:
