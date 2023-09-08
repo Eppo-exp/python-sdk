@@ -25,12 +25,18 @@ help: Makefile
 
 ## test-data
 testDataDir := test/test-data/
+tempDir := ${testDataDir}temp/
+gitDataDir := ${tempDir}sdk-test-data/
+branchName := main
+githubRepoLink := https://github.com/Eppo-exp/sdk-test-data.git
 .PHONY: test-data
-test-data:
+test-data: 
 	rm -rf $(testDataDir)
-	mkdir -p $(testDataDir)
-	gsutil cp gs://sdk-test-data/rac-experiments-v2.json $(testDataDir)
-	gsutil cp -r gs://sdk-test-data/assignment-v2 $(testDataDir)
+	mkdir -p $(tempDir)
+	git clone -b ${branchName} --depth 1 --single-branch ${githubRepoLink} ${gitDataDir}
+	cp ${gitDataDir}rac-experiments-v3.json ${testDataDir}
+	cp -r ${gitDataDir}assignment-v2 ${testDataDir}
+	rm -rf ${tempDir}
 
 .PHONY: test
 test: test-data

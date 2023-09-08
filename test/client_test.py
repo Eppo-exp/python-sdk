@@ -28,7 +28,7 @@ MOCK_BASE_URL = "http://localhost:4001/api"
 @pytest.fixture(scope="session", autouse=True)
 def init_fixture():
     httpretty.enable()
-    with open("test/test-data/rac-experiments-v2.json") as mock_rac_response:
+    with open("test/test-data/rac-experiments-v3.json") as mock_rac_response:
         httpretty.register_uri(
             httpretty.GET,
             MOCK_BASE_URL + "/randomized_assignment/v3/config",
@@ -207,6 +207,7 @@ def test_with_subject_in_overrides(mock_config_requestor):
         rules=[Rule(conditions=[], allocation_key="allocation")],
         name="recommendation_algo",
         overrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
+        typedOverrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
     )
     client = EppoClient(
         config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
@@ -233,6 +234,7 @@ def test_with_subject_in_overrides_exp_disabled(mock_config_requestor):
         rules=[Rule(conditions=[], allocation_key="allocation")],
         name="recommendation_algo",
         overrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
+        typedOverrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
     )
     client = EppoClient(
         config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
@@ -258,11 +260,17 @@ def test_assign_subject_in_sample(test_case):
 
 def get_assignments(test_case):
     client = get_instance()
+    get_typed_assignment = {
+        "string": client.get_string_assignment,
+        "numeric": client.get_numeric_assignment,
+        "boolean": client.get_boolean_assignment,
+        "json": client.get_json_string_assignment,
+    }[test_case["valueType"]]
     return [
-        client.get_assignment(subjectKey, test_case["experiment"])
+        get_typed_assignment(subjectKey, test_case["experiment"])
         for subjectKey in test_case.get("subjects", [])
     ] + [
-        client.get_assignment(
+        get_typed_assignment(
             subject_key=subject["subjectKey"],
             flag_key=test_case["experiment"],
             subject_attributes=subject["subjectAttributes"],
