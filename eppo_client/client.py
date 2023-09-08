@@ -143,6 +143,8 @@ class EppoClient:
             ),
             None,
         )
+        if assigned_variation is None:
+            return None
 
         if expected_variation_type is not None:
             variation_is_expected_type = VariationType.is_expected_type(assigned_variation, expected_variation_type)
@@ -172,19 +174,18 @@ class EppoClient:
 
     def _get_subject_variation_override(
         self, experiment_config: Optional[ExperimentConfigurationDto], subject: str
-    ) -> Optional[str]:
+    ) -> Optional[VariationDto]:
         subject_hash = hashlib.md5(subject.encode("utf-8")).hexdigest()
         if (
             experiment_config is not None
             and subject_hash in experiment_config.overrides
         ):
-            override_variation = VariationDto(
+            return VariationDto(
                 name="override",
                 value=experiment_config.overrides[subject_hash],
                 typedValue=experiment_config.typedOverrides[subject_hash],
-                shardRange=ShardRange(start=0, end=10000),
-                )
-            return override_variation
+                shard_range=ShardRange(start=0, end=10000),
+            )
         return None
 
     def _is_in_experiment_sample(
