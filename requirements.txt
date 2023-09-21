@@ -1,4 +1,4 @@
-pydantic==1.10.*
+pydantic==2.3.*
 requests==2.31.*
 cachetools==5.3.*
 types-cachetools==5.3.*
