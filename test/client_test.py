@@ -278,6 +278,7 @@ def get_assignments(test_case):
         for subject in test_case.get("subjectsWithAttributes", [])
     ]
 
+
 @pytest.mark.parametrize("test_case", test_data)
 def test_get_numeric_assignment_on_bool_feature_flag_should_return_none(test_case):
     if test_case["valueType"] == "boolean":

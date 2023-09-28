@@ -16,7 +16,9 @@ class VariationType:
         if expected_variation_type == cls.STRING:
             return isinstance(assigned_variation.typedValue, str)
         elif expected_variation_type == cls.NUMERIC:
-            return isinstance(assigned_variation.typedValue, Number) and not isinstance(assigned_variation.typedValue, bool)
+            return isinstance(assigned_variation.typedValue, Number) and not isinstance(
+                assigned_variation.typedValue, bool
+            )
         elif expected_variation_type == cls.BOOLEAN:
             return isinstance(assigned_variation.typedValue, bool)
         elif expected_variation_type == cls.JSON:
