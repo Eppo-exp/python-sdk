@@ -277,3 +277,11 @@ def get_assignments(test_case):
         )
         for subject in test_case.get("subjectsWithAttributes", [])
     ]
+
+@pytest.mark.parametrize("test_case", test_data)
+def test_wrong_get_typed_assignment(test_case):
+    if test_case["valueType"] == "boolean":
+        # Causes get_numeric_assignment to be used on boolean feature flag
+        test_case["valueType"] = "numeric"
+        assignments = get_assignments(test_case=test_case)
+        assert assignments == [None] * len(test_case["expectedAssignments"])
