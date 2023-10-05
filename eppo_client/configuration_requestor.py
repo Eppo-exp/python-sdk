@@ -4,7 +4,6 @@ from eppo_client.base_model import SdkBaseModel
 from eppo_client.configuration_store import ConfigurationStore
 from eppo_client.http_client import HttpClient
 from eppo_client.rules import Rule
-
 from eppo_client.shard import ShardRange
 
 logger = logging.getLogger(__name__)
@@ -13,7 +12,7 @@ logger = logging.getLogger(__name__)
 class VariationDto(SdkBaseModel):
     name: str
     value: str
-    typedValue: Any
+    typed_value: Any = None
     shard_range: ShardRange
 
 
@@ -25,9 +24,9 @@ class AllocationDto(SdkBaseModel):
 class ExperimentConfigurationDto(SdkBaseModel):
     subject_shards: int
     enabled: bool
-    name: Optional[str]
+    name: Optional[str] = None
     overrides: Dict[str, str] = {}
-    typedOverrides: Dict[str, Any] = {}
+    typed_overrides: Dict[str, Any] = {}
     rules: List[Rule] = []
     allocations: Dict[str, AllocationDto]
 

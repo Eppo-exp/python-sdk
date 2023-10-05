@@ -42,7 +42,7 @@ class EppoClient:
             subject_key, flag_key, subject_attributes, VariationType.STRING
         )
         return (
-            assigned_variation.typedValue
+            assigned_variation.typed_value
             if assigned_variation is not None
             else assigned_variation
         )
@@ -54,7 +54,7 @@ class EppoClient:
             subject_key, flag_key, subject_attributes, VariationType.NUMERIC
         )
         return (
-            assigned_variation.typedValue
+            assigned_variation.typed_value
             if assigned_variation is not None
             else assigned_variation
         )
@@ -66,7 +66,7 @@ class EppoClient:
             subject_key, flag_key, subject_attributes, VariationType.BOOLEAN
         )
         return (
-            assigned_variation.typedValue
+            assigned_variation.typed_value
             if assigned_variation is not None
             else assigned_variation
         )
@@ -78,7 +78,7 @@ class EppoClient:
             subject_key, flag_key, subject_attributes, VariationType.JSON
         )
         return (
-            assigned_variation.typedValue
+            assigned_variation.typed_value
             if assigned_variation is not None
             else assigned_variation
         )
@@ -221,7 +221,7 @@ class EppoClient:
             return VariationDto(
                 name="override",
                 value=experiment_config.overrides[subject_hash],
-                typedValue=experiment_config.typedOverrides[subject_hash],
+                typed_value=experiment_config.typed_overrides[subject_hash],
                 shard_range=ShardRange(start=0, end=10000),
             )
         return None

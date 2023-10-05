@@ -11,7 +11,3 @@ class Config(SdkBaseModel):
 
     def _validate(self):
         validate_not_blank("api_key", self.api_key)
-
-    class Config:
-        # needed for the AssignmentLogger class which is not of type SdkBaseModel
-        arbitrary_types_allowed = True

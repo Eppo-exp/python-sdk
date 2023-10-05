@@ -1,14 +1,6 @@
-from pydantic import BaseModel
-
-
-def to_camel(s: str):
-    words = s.split("_")
-    if len(words) > 1:
-        return words[0] + "".join([w.capitalize() for w in words[1:]])
-    return words[0]
+from pydantic import ConfigDict, BaseModel
+from pydantic.alias_generators import to_camel
 
 
 class SdkBaseModel(BaseModel):
-    class Config:
-        alias_generator = to_camel
-        allow_population_by_field_name = True
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)

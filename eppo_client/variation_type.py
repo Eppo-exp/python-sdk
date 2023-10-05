@@ -14,18 +14,18 @@ class VariationType:
         cls, assigned_variation: VariationDto, expected_variation_type: str
     ) -> bool:
         if expected_variation_type == cls.STRING:
-            return isinstance(assigned_variation.typedValue, str)
+            return isinstance(assigned_variation.typed_value, str)
         elif expected_variation_type == cls.NUMERIC:
-            return isinstance(assigned_variation.typedValue, Number) and not isinstance(
-                assigned_variation.typedValue, bool
-            )
+            return isinstance(
+                assigned_variation.typed_value, Number
+            ) and not isinstance(assigned_variation.typed_value, bool)
         elif expected_variation_type == cls.BOOLEAN:
-            return isinstance(assigned_variation.typedValue, bool)
+            return isinstance(assigned_variation.typed_value, bool)
         elif expected_variation_type == cls.JSON:
             try:
                 parsed_json = json.loads(assigned_variation.value)
-                json.dumps(assigned_variation.typedValue)
-                return parsed_json == assigned_variation.typedValue
+                json.dumps(assigned_variation.typed_value)
+                return parsed_json == assigned_variation.typed_value
             except (json.JSONDecodeError, TypeError):
                 pass
         return False

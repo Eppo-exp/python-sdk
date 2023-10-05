@@ -19,7 +19,7 @@ class OperatorType(Enum):
 class Condition(SdkBaseModel):
     operator: OperatorType
     attribute: str
-    value: Any
+    value: Any = None
 
 
 class Rule(SdkBaseModel):
