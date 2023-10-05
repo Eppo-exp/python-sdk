@@ -1,11 +1,5 @@
 from pydantic import ConfigDict, BaseModel
-
-
-def to_camel(s: str):
-    words = s.split("_")
-    if len(words) > 1:
-        return words[0] + "".join([w.capitalize() for w in words[1:]])
-    return words[0]
+from pydantic.alias_generators import to_camel
 
 
 class SdkBaseModel(BaseModel):
