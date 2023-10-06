@@ -38,6 +38,7 @@ def init(config: Config) -> EppoClient:
         http_client=http_client, config_store=config_store
     )
     assignment_logger = config.assignment_logger
+    is_graceful_mode = config.is_graceful_mode
     global __client
     global __lock
     try:
@@ -48,6 +49,7 @@ def init(config: Config) -> EppoClient:
         __client = EppoClient(
             config_requestor=config_requestor,
             assignment_logger=assignment_logger,
+            is_graceful_mode=is_graceful_mode,
         )
         return __client
     finally:

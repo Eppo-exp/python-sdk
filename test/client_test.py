@@ -252,6 +252,37 @@ def test_with_null_experiment_config(mock_config_requestor):
     assert client.get_assignment("user-1", "experiment-key-1") is None
 
 
+@patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
+@patch.object(EppoClient, "get_assignment_variation")
+def test_graceful_mode_on(mock_get_assignment_variation, mock_config_requestor):
+    mock_get_assignment_variation.side_effect = Exception("This is a mock exception!")
+
+    client = EppoClient(
+        config_requestor=mock_config_requestor,
+        assignment_logger=AssignmentLogger(),
+        is_graceful_mode=True,
+    )
+
+    res = client.get_assignment("user-1", "experiment-key-1")
+    mock_get_assignment_variation.assert_called_once()
+    assert res is None
+
+
+@patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
+@patch.object(EppoClient, "get_assignment_variation")
+def test_graceful_mode_off(mock_get_assignment_variation, mock_config_requestor):
+    mock_get_assignment_variation.side_effect = Exception("This is a mock exception!")
+
+    client = EppoClient(
+        config_requestor=mock_config_requestor,
+        assignment_logger=AssignmentLogger(),
+        is_graceful_mode=False,
+    )
+
+    with pytest.raises(Exception) as exc_info:
+        client.get_assignment("user-1", "experiment-key-1")
+
+
 @pytest.mark.parametrize("test_case", test_data)
 def test_assign_subject_in_sample(test_case):
     print("---- Test case for {} Experiment".format(test_case["experiment"]))
