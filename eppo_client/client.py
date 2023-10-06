@@ -49,6 +49,9 @@ class EppoClient:
                 if assigned_variation is not None
                 else assigned_variation
             )
+        except ValueError as e:
+            # allow ValueError to bubble up as it is a validation error
+            raise e
         except Exception as e:
             if self.__is_graceful_mode:
                 logger.error("[Eppo SDK] Error getting assignment: " + str(e))
@@ -67,6 +70,9 @@ class EppoClient:
                 if assigned_variation is not None
                 else assigned_variation
             )
+        except ValueError as e:
+            # allow ValueError to bubble up as it is a validation error
+            raise e
         except Exception as e:
             if self.__is_graceful_mode:
                 logger.error("[Eppo SDK] Error getting assignment: " + str(e))
@@ -85,6 +91,9 @@ class EppoClient:
                 if assigned_variation is not None
                 else assigned_variation
             )
+        except ValueError as e:
+            # allow ValueError to bubble up as it is a validation error
+            raise e
         except Exception as e:
             if self.__is_graceful_mode:
                 logger.error("[Eppo SDK] Error getting assignment: " + str(e))
@@ -103,6 +112,9 @@ class EppoClient:
                 if assigned_variation is not None
                 else assigned_variation
             )
+        except ValueError as e:
+            # allow ValueError to bubble up as it is a validation error
+            raise e
         except Exception as e:
             if self.__is_graceful_mode:
                 logger.error("[Eppo SDK] Error getting assignment: " + str(e))
@@ -121,6 +133,9 @@ class EppoClient:
                 if assigned_variation is not None
                 else assigned_variation
             )
+        except ValueError as e:
+            # allow ValueError to bubble up as it is a validation error
+            raise e
         except Exception as e:
             if self.__is_graceful_mode:
                 logger.error("[Eppo SDK] Error getting assignment: " + str(e))
