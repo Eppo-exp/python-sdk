@@ -263,9 +263,12 @@ def test_graceful_mode_on(mock_get_assignment_variation, mock_config_requestor):
         is_graceful_mode=True,
     )
 
-    res = client.get_assignment("user-1", "experiment-key-1")
-    mock_get_assignment_variation.assert_called_once()
-    assert res is None
+    assert client.get_assignment("user-1", "experiment-key-1") is None
+    assert client.get_boolean_assignment("user-1", "experiment-key-1") is None
+    assert client.get_json_string_assignment("user-1", "experiment-key-1") is None
+    assert client.get_numeric_assignment("user-1", "experiment-key-1") is None
+    assert client.get_string_assignment("user-1", "experiment-key-1") is None
+    assert client.get_parsed_json_assignment("user-1", "experiment-key-1") is None
 
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
@@ -279,8 +282,13 @@ def test_graceful_mode_off(mock_get_assignment_variation, mock_config_requestor)
         is_graceful_mode=False,
     )
 
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(Exception):
         client.get_assignment("user-1", "experiment-key-1")
+        client.get_boolean_assignment("user-1", "experiment-key-1")
+        client.get_json_string_assignment("user-1", "experiment-key-1")
+        client.get_numeric_assignment("user-1", "experiment-key-1")
+        client.get_string_assignment("user-1", "experiment-key-1")
+        client.get_parsed_json_assignment("user-1", "experiment-key-1")
 
 
 @pytest.mark.parametrize("test_case", test_data)
