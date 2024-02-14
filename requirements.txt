@@ -4,3 +4,4 @@ requests==2.31.*
 cachetools==5.3.*
 types-cachetools==5.3.*
 types-requests==2.31.*
+semver==3.0.*

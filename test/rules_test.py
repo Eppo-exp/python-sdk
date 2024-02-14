@@ -58,6 +58,23 @@ def test_find_matching_rule_with_numeric_value_and_regex():
     assert find_matching_rule({"age": 99}, [rule]) == rule
 
 
+def test_find_matching_rule_with_semver():
+    semver_greater_than_condition = Condition(
+        operator=OperatorType.GTE, value="1.0.0", attribute="version"
+    )
+    semver_less_than_condition = Condition(
+        operator=OperatorType.LTE, value="2.0.0", attribute="version"
+    )
+    semver_rule = Rule(
+        allocation_key="allocation",
+        conditions=[semver_less_than_condition, semver_greater_than_condition],
+    )
+
+    assert find_matching_rule({"version": "1.1.0"}, [semver_rule]) is semver_rule
+    assert find_matching_rule({"version": "2.0.0"}, [semver_rule]) is semver_rule
+    assert find_matching_rule({"version": "2.1.0"}, [semver_rule]) is None
+
+
 def test_one_of_operator_with_boolean():
     oneOfRule = Rule(
         allocation_key="allocation",

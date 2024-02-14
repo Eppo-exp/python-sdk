@@ -11,6 +11,12 @@
   * Describe deprecated APIs in this version
 -->
 
+## [1.1.0] - 2024-02-15
+
+#### New Features:
+* Semantic version comparison: it is now possible to use semantic versions (e.g app versions such as `1.2.1`)
+in targeting rules.
+
 ## [1.0.0] - 2022-06-08
 
 #### New Features:
