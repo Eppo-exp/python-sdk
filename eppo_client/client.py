@@ -201,64 +201,73 @@ class EppoClient:
             )
             return None
 
-        matched_rule = find_matching_rule(subject_attributes, experiment_config.rules)
-        if matched_rule is None:
-            logger.info(
-                "[Eppo SDK] No assigned variation. Subject attributes do not match targeting rules: {0}".format(
-                    subject_attributes
-                )
-            )
-            return None
-
-        allocation = experiment_config.allocations[matched_rule.allocation_key]
-        if not self._is_in_experiment_sample(
-            subject_key,
-            flag_key,
-            experiment_config.subject_shards,
-            allocation.percent_exposure,
+        for matched_rule in find_matching_rule(
+            subject_attributes, experiment_config.rules
         ):
-            logger.info(
-                "[Eppo SDK] No assigned variation. Subject is not part of experiment sample population"
+
+            traffic_key = (
+                f"traffic-{subject_key}-{matched_rule.layer_key}"
+                if matched_rule.layer_key
+                else f"traffic-{subject_key}-{flag_key}-{matched_rule.allocation_key}"
             )
-            return None
-
-        shard = get_shard(
-            "assignment-{}-{}".format(subject_key, flag_key),
-            experiment_config.subject_shards,
-        )
-        assigned_variation = next(
-            (
-                variation
-                for variation in allocation.variations
-                if is_in_shard_range(shard, variation.shard_range)
-            ),
-            None,
-        )
-
-        assigned_variation_value_to_log = None
-        if assigned_variation is not None:
-            assigned_variation_value_to_log = assigned_variation.value
-            if expected_variation_type is not None:
-                variation_is_expected_type = VariationType.is_expected_type(
-                    assigned_variation, expected_variation_type
+            if matched_rule is None:
+                logger.info(
+                    "[Eppo SDK] No assigned variation. Subject attributes do not match targeting rules: {0}".format(
+                        subject_attributes
+                    )
                 )
-                if not variation_is_expected_type:
-                    return None
+                continue
 
-        assignment_event = {
-            "allocation": matched_rule.allocation_key,
-            "experiment": f"{flag_key}-{matched_rule.allocation_key}",
-            "featureFlag": flag_key,
-            "variation": assigned_variation_value_to_log,
-            "subject": subject_key,
-            "timestamp": datetime.datetime.utcnow().isoformat(),
-            "subjectAttributes": subject_attributes,
-        }
-        try:
-            self.__assignment_logger.log_assignment(assignment_event)
-        except Exception as e:
-            logger.error("[Eppo SDK] Error logging assignment event: " + str(e))
-        return assigned_variation
+            allocation = experiment_config.allocations[matched_rule.allocation_key]
+            if not self._is_in_experiment_sample(
+                subject_key,
+                traffic_key,
+                experiment_config.subject_shards,
+                allocation.traffic_shards,
+            ):
+                logger.info(
+                    "[Eppo SDK] No assigned variation. Subject is not part of experiment sample population"
+                )
+                return None
+
+            experiment_key = f"{flag_key}-{matched_rule.allocation_key}"
+            shard = get_shard(
+                "assignment-{}-{}".format(subject_key, experiment_key),
+                experiment_config.subject_shards,
+            )
+            assigned_variation = next(
+                (
+                    variation
+                    for variation in allocation.variations
+                    if is_in_shard_range(shard, variation.shard_range)
+                ),
+                None,
+            )
+
+            assigned_variation_value_to_log = None
+            if assigned_variation is not None:
+                assigned_variation_value_to_log = assigned_variation.value
+                if expected_variation_type is not None:
+                    variation_is_expected_type = VariationType.is_expected_type(
+                        assigned_variation, expected_variation_type
+                    )
+                    if not variation_is_expected_type:
+                        return None
+
+            assignment_event = {
+                "allocation": matched_rule.allocation_key,
+                "experiment": experiment_key,
+                "featureFlag": flag_key,
+                "variation": assigned_variation_value_to_log,
+                "subject": subject_key,
+                "timestamp": datetime.datetime.utcnow().isoformat(),
+                "subjectAttributes": subject_attributes,
+            }
+            try:
+                self.__assignment_logger.log_assignment(assignment_event)
+            except Exception as e:
+                logger.error("[Eppo SDK] Error logging assignment event: " + str(e))
+            return assigned_variation
 
     def _shutdown(self):
         """Stops all background processes used by the client
@@ -287,10 +296,13 @@ class EppoClient:
         subject: str,
         experiment_key: str,
         subject_shards: int,
-        percent_exposure: float,
+        traffic_shards: list[tuple[int, int]],
     ):
         shard = get_shard(
             "exposure-{}-{}".format(subject, experiment_key),
             subject_shards,
         )
-        return shard <= percent_exposure * subject_shards
+        for lb, ub in traffic_shards:
+            if lb <= shard < ub:
+                return True
+        return False

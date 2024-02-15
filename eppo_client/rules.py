@@ -30,7 +30,7 @@ class Rule(SdkBaseModel):
 def find_matching_rule(subject_attributes: dict, rules: List[Rule]):
     for rule in rules:
         if matches_rule(subject_attributes, rule):
-            return rule
+            yield rule
     return None
 
 
