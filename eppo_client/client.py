@@ -206,7 +206,7 @@ class EppoClient:
         ):
 
             traffic_key = (
-                f"traffic-{subject_key}-{matched_rule.layer_key}"
+                f"traffic-{subject_key}-{flag_key}-{matched_rule.layer_key}"
                 if matched_rule.layer_key
                 else f"traffic-{subject_key}-{flag_key}-{matched_rule.allocation_key}"
             )
