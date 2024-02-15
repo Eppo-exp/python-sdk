@@ -296,13 +296,10 @@ class EppoClient:
         subject: str,
         experiment_key: str,
         subject_shards: int,
-        traffic_shards: list[tuple[int, int]],
+        traffic_shards: list[ShardRange],
     ):
         shard = get_shard(
             "exposure-{}-{}".format(subject, experiment_key),
             subject_shards,
         )
-        for lb, ub in traffic_shards:
-            if lb <= shard < ub:
-                return True
-        return False
+        return any(is_in_shard_range(shard, range) for range in traffic_shards)

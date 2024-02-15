@@ -18,7 +18,7 @@ class VariationDto(SdkBaseModel):
 
 class AllocationDto(SdkBaseModel):
     # Any allocation that is outside of layers will have traffic_shards = [[0, traffic_exposure * num_shards]]
-    traffic_shards: list[tuple[int, int]]
+    traffic_shards: list[ShardRange]
     variations: List[VariationDto]
     layer_key: Optional[str] = None
 
