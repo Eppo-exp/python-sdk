@@ -1,5 +1,6 @@
 import numbers
 import re
+import semver
 from enum import Enum
 from typing import Any, List
 
@@ -55,9 +56,13 @@ def evaluate_condition(subject_attributes: dict, condition: Condition) -> bool:
                 value.lower() for value in condition.value
             ]
         else:
-            return isinstance(
-                subject_value, numbers.Number
-            ) and evaluate_numeric_condition(subject_value, condition)
+            # Numeric operator: value could be numeric or semver.
+            if isinstance(subject_value, numbers.Number):
+                return evaluate_numeric_condition(subject_value, condition)
+            elif is_valid_semver(subject_value):
+                return compare_semver(
+                    subject_value, condition.value, condition.operator
+                )
     return False
 
 
@@ -70,4 +75,31 @@ def evaluate_numeric_condition(subject_value: numbers.Number, condition: Conditi
         return subject_value < condition.value
     elif condition.operator == OperatorType.LTE:
         return subject_value <= condition.value
+
+    return False
+
+
+def is_valid_semver(value: str):
+    try:
+        # Parse the string. If it's a valid semver, it will return without errors.
+        semver.VersionInfo.parse(value)
+        return True
+    except ValueError:
+        # If a ValueError is raised, the string is not a valid semver.
+        return False
+
+
+def compare_semver(attribute_value: Any, condition_value: Any, operator: OperatorType):
+    if not is_valid_semver(attribute_value) or not is_valid_semver(condition_value):
+        return False
+
+    if operator == OperatorType.GT:
+        return semver.compare(attribute_value, condition_value) > 0
+    elif operator == OperatorType.GTE:
+        return semver.compare(attribute_value, condition_value) >= 0
+    elif operator == OperatorType.LT:
+        return semver.compare(attribute_value, condition_value) < 0
+    elif operator == OperatorType.LTE:
+        return semver.compare(attribute_value, condition_value) <= 0
+
     return False
