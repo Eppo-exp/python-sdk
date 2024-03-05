@@ -10,7 +10,7 @@ import datetime
 class FlagEvaluation:
     flag_key: str
     subject_key: str
-    subject_attributes: Dict[str, str]
+    subject_attributes: Dict[str, str | int | float | bool]
     allocation_key: str
     variation: Variation
     extra_logging: Dict[str, str]
@@ -61,7 +61,7 @@ class Evaluator:
         return none_result(flag.key, subject_key, subject_attributes)
 
     def matches_shard(self, shard: Shard, subject_key: str, total_shards: int) -> bool:
-        h = self.sharder.get_shard(seed(shard.salt, subject_key), total_shards)
+        h = self.sharder.get_shard(hash_key(shard.salt, subject_key), total_shards)
         return any(is_in_shard_range(h, r) for r in shard.ranges)
 
 
@@ -69,7 +69,7 @@ def is_in_shard_range(shard: int, range: Range) -> bool:
     return range.start <= shard < range.end
 
 
-def seed(salt, subject_key):
+def hash_key(salt, subject_key):
     return f"{salt}-{subject_key}"
 
 

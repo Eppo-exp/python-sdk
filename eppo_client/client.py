@@ -13,7 +13,6 @@ from eppo_client.sharding import MD5Sharder
 from eppo_client.validation import validate_not_blank
 from eppo_client.variation_type import VariationType
 from eppo_client.eval import FlagEvaluation, Evaluator
-from eppo_client.models import Variation
 
 logger = logging.getLogger(__name__)
 

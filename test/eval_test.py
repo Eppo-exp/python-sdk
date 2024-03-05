@@ -1,7 +1,7 @@
 import datetime
 
 from eppo_client.models import Flag, Allocation, Range, Variation, Split, Shard
-from eppo_client.eval import Evaluator, FlagEvaluation, is_in_shard_range, seed
+from eppo_client.eval import Evaluator, FlagEvaluation, is_in_shard_range, hash_key
 from eppo_client.rules import Condition, OperatorType, Rule
 from eppo_client.sharding import DeterministicSharder, MD5Sharder
 
@@ -342,7 +342,7 @@ def test_eval_after_alloc(mocker):
 
 
 def test_seed():
-    assert seed("salt", "subject") == "salt-subject"
+    assert hash_key("salt", "subject") == "salt-subject"
 
 
 def test_is_in_shard_range():
