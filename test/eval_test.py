@@ -1,7 +1,7 @@
 import datetime
 
 from eppo_client.models import Flag, Allocation, Range, Variation, Split, Shard
-from eppo_client.eval import Evaluator, FlagEvaluation
+from eppo_client.eval import Evaluator, FlagEvaluation, is_in_shard_range, seed
 from eppo_client.rules import Condition, OperatorType, Rule
 from eppo_client.sharding import DeterministicSharder, MD5Sharder
 
@@ -72,6 +72,8 @@ def test_eval_empty_flag():
     evaluator = Evaluator(sharder=MD5Sharder())
     assert evaluator.evaluate_flag(empty_flag, "subject_key", {}) == FlagEvaluation(
         flag_key="empty",
+        subject_key="subject_key",
+        subject_attributes={},
         allocation_key=None,
         variation=None,
         extra_logging={},
@@ -337,3 +339,17 @@ def test_eval_after_alloc(mocker):
         assert result.flag_key == "flag"
         assert result.allocation_key == None
         assert result.variation == None
+
+
+def test_seed():
+    assert seed("salt", "subject") == "salt-subject"
+
+
+def test_is_in_shard_range():
+    assert is_in_shard_range(5, Range(start=0, end=10)) is True
+    assert is_in_shard_range(10, Range(start=0, end=10)) is False
+    assert is_in_shard_range(0, Range(start=0, end=10)) is True
+    assert is_in_shard_range(0, Range(start=0, end=0)) is False
+    assert is_in_shard_range(0, Range(start=0, end=1)) is True
+    assert is_in_shard_range(1, Range(start=0, end=1)) is False
+    assert is_in_shard_range(1, Range(start=1, end=1)) is False
