@@ -5,7 +5,7 @@ from http import HTTPStatus
 
 import requests
 
-from eppo_client.base_model import SdkBaseModel
+from eppo_client.models import SdkBaseModel
 
 
 class SdkParams(SdkBaseModel):

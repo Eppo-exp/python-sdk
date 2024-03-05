@@ -1,6 +1,6 @@
 import json
 from numbers import Number
-from eppo_client.configuration_requestor import VariationDto
+from eppo_client.models import Variation
 
 
 class VariationType:
@@ -11,7 +11,7 @@ class VariationType:
 
     @classmethod
     def is_expected_type(
-        cls, assigned_variation: VariationDto, expected_variation_type: str
+        cls, assigned_variation: Variation, expected_variation_type: str
     ) -> bool:
         if expected_variation_type == cls.STRING:
             return isinstance(assigned_variation.typed_value, str)

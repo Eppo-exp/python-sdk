@@ -6,16 +6,15 @@ from typing_extensions import deprecated
 from numbers import Number
 from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.configuration_requestor import (
-    ExperimentConfigurationDto,
     ExperimentConfigurationRequestor,
-    VariationDto,
 )
 from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
 from eppo_client.poller import Poller
-from eppo_client.rules import find_matching_rule
-from eppo_client.shard import ShardRange, get_shard, is_in_shard_range
+from eppo_client.sharding import MD5Sharder
 from eppo_client.validation import validate_not_blank
 from eppo_client.variation_type import VariationType
+from eppo_client.eval import Evaluator
+from eppo_client.models import Variation, Flag
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +35,7 @@ class EppoClient:
             callback=config_requestor.fetch_and_store_configurations,
         )
         self.__poller.start()
+        self.__evaluator = Evaluator(sharder=MD5Sharder())
 
     def get_string_assignment(
         self, subject_key: str, flag_key: str, subject_attributes=dict()
@@ -172,7 +172,7 @@ class EppoClient:
         flag_key: str,
         subject_attributes: Any,
         expected_variation_type: Optional[str] = None,
-    ) -> Optional[VariationDto]:
+    ) -> Optional[Variation]:
         """Maps a subject to a variation for a given experiment
         Returns None if the subject is not part of the experiment sample.
 
@@ -183,114 +183,35 @@ class EppoClient:
         """
         validate_not_blank("subject_key", subject_key)
         validate_not_blank("flag_key", flag_key)
-        experiment_config = self.__config_requestor.get_configuration(flag_key)
-        override = self._get_subject_variation_override(experiment_config, subject_key)
-        if override:
-            if expected_variation_type is not None:
-                variation_is_expected_type = VariationType.is_expected_type(
-                    override, expected_variation_type
-                )
-                if not variation_is_expected_type:
-                    return None
-            return override
+        flag = self.__config_requestor.get_configuration(flag_key)
 
-        if experiment_config is None or not experiment_config.enabled:
+        if flag is None or not flag.enabled:
             logger.info(
-                "[Eppo SDK] No assigned variation. No active experiment or flag for key: "
-                + flag_key
+                "[Eppo SDK] No assigned variation. No active flag for key: " + flag_key
             )
             return None
 
-        matched_rule = find_matching_rule(subject_attributes, experiment_config.rules)
-        if matched_rule is None:
-            logger.info(
-                "[Eppo SDK] No assigned variation. Subject attributes do not match targeting rules: {0}".format(
-                    subject_attributes
-                )
-            )
-            return None
-
-        allocation = experiment_config.allocations[matched_rule.allocation_key]
-        if not self._is_in_experiment_sample(
-            subject_key,
-            flag_key,
-            experiment_config.subject_shards,
-            allocation.percent_exposure,
-        ):
-            logger.info(
-                "[Eppo SDK] No assigned variation. Subject is not part of experiment sample population"
-            )
-            return None
-
-        shard = get_shard(
-            "assignment-{}-{}".format(subject_key, flag_key),
-            experiment_config.subject_shards,
-        )
-        assigned_variation = next(
-            (
-                variation
-                for variation in allocation.variations
-                if is_in_shard_range(shard, variation.shard_range)
-            ),
-            None,
-        )
-
-        assigned_variation_value_to_log = None
-        if assigned_variation is not None:
-            assigned_variation_value_to_log = assigned_variation.value
-            if expected_variation_type is not None:
-                variation_is_expected_type = VariationType.is_expected_type(
-                    assigned_variation, expected_variation_type
-                )
-                if not variation_is_expected_type:
-                    return None
+        result = self.__evaluator.evaluate_flag(flag, subject_key, subject_attributes)
 
         assignment_event = {
-            "allocation": matched_rule.allocation_key,
-            "experiment": f"{flag_key}-{matched_rule.allocation_key}",
+            **result.extra_logging,
+            "allocation": result.allocation_key,
+            "experiment": f"{flag_key}-{result.allocation_key}",
             "featureFlag": flag_key,
-            "variation": assigned_variation_value_to_log,
+            "variation": result.variation.key,
             "subject": subject_key,
             "timestamp": datetime.datetime.utcnow().isoformat(),
             "subjectAttributes": subject_attributes,
         }
         try:
-            self.__assignment_logger.log_assignment(assignment_event)
+            if result.do_log:
+                self.__assignment_logger.log_assignment(assignment_event)
         except Exception as e:
             logger.error("[Eppo SDK] Error logging assignment event: " + str(e))
-        return assigned_variation
+        return result.variation
 
     def _shutdown(self):
         """Stops all background processes used by the client
         Do not use the client after calling this method.
         """
         self.__poller.stop()
-
-    def _get_subject_variation_override(
-        self, experiment_config: Optional[ExperimentConfigurationDto], subject: str
-    ) -> Optional[VariationDto]:
-        subject_hash = hashlib.md5(subject.encode("utf-8")).hexdigest()
-        if (
-            experiment_config is not None
-            and subject_hash in experiment_config.overrides
-        ):
-            return VariationDto(
-                name="override",
-                value=experiment_config.overrides[subject_hash],
-                typed_value=experiment_config.typed_overrides[subject_hash],
-                shard_range=ShardRange(start=0, end=10000),
-            )
-        return None
-
-    def _is_in_experiment_sample(
-        self,
-        subject: str,
-        experiment_key: str,
-        subject_shards: int,
-        percent_exposure: float,
-    ):
-        shard = get_shard(
-            "exposure-{}-{}".format(subject, experiment_key),
-            subject_shards,
-        )
-        return shard <= percent_exposure * subject_shards

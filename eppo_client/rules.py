@@ -2,9 +2,9 @@ import numbers
 import re
 import semver
 from enum import Enum
-from typing import Any, List
+from typing import Any, List, Optional, Dict
 
-from eppo_client.base_model import SdkBaseModel
+from eppo_client.models import SdkBaseModel
 
 
 class OperatorType(Enum):
@@ -24,25 +24,19 @@ class Condition(SdkBaseModel):
 
 
 class Rule(SdkBaseModel):
-    allocation_key: str
     conditions: List[Condition]
 
 
-def find_matching_rule(subject_attributes: dict, rules: List[Rule]):
-    for rule in rules:
-        if matches_rule(subject_attributes, rule):
-            return rule
-    return None
+def matches_rule(rule: Rule, subject_attributes: Dict[str, str]) -> bool:
+    return all(
+        evaluate_condition(condition, subject_attributes)
+        for condition in rule.conditions
+    )
 
 
-def matches_rule(subject_attributes: dict, rule: Rule):
-    for condition in rule.conditions:
-        if not evaluate_condition(subject_attributes, condition):
-            return False
-    return True
-
-
-def evaluate_condition(subject_attributes: dict, condition: Condition) -> bool:
+def evaluate_condition(
+    condition: Condition, subject_attributes: Dict[str, str]
+) -> bool:
     subject_value = subject_attributes.get(condition.attribute, None)
     if subject_value is not None:
         if condition.operator == OperatorType.MATCHES:
