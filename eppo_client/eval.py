@@ -24,6 +24,7 @@ class Evaluator:
         self, flag, subject_key, subject_attributes
     ) -> Optional[EvalResult]:
         for allocation in flag.allocations:
+            # todo: add conditionals for allocation start and end timestamps
             if not allocation.rules or any(
                 matches_rule(rule, subject_attributes) for rule in allocation.rules
             ):
