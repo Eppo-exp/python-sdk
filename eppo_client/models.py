@@ -1,15 +1,15 @@
 from datetime import datetime
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from eppo_client.base_model import SdkBaseModel
 from eppo_client.rules import Rule
 
 
 class Variation(SdkBaseModel):
-    # TODO: generalize
     key: str
-    value: str
+    value: str | int | float | bool
+    typed_value: Any = None
 
 
 class Range(SdkBaseModel):

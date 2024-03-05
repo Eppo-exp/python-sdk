@@ -1,7 +1,30 @@
+import datetime
+
 from eppo_client.models import Flag, Allocation, Range, Variation, Split, Shard
-from eppo_client.eval import Evaluator, EvalResult
+from eppo_client.eval import Evaluator, FlagEvaluation
 from eppo_client.rules import Condition, OperatorType, Rule
 from eppo_client.sharding import DeterministicSharder, MD5Sharder
+
+
+def test_disabled_flag_returns_none_result():
+    flag = Flag(
+        key="disabled_flag",
+        enabled=False,
+        variations={"a": Variation(key="a", value="A")},
+        allocations=[
+            Allocation(
+                key="default", rules=[], splits=[Split(variation_key="a", shards=[])]
+            )
+        ],
+        total_shards=10,
+    )
+
+    evaluator = Evaluator(sharder=MD5Sharder())
+    result = evaluator.evaluate_flag(flag, "subject_key", {})
+    assert result.flag_key == "disabled_flag"
+    assert result.allocation_key == None
+    assert result.variation == None
+    assert not result.do_log
 
 
 def test_matches_shard_full_range():
@@ -47,12 +70,12 @@ def test_eval_empty_flag():
     )
 
     evaluator = Evaluator(sharder=MD5Sharder())
-    assert evaluator.evaluate_flag(empty_flag, "subject_key", {}) == EvalResult(
+    assert evaluator.evaluate_flag(empty_flag, "subject_key", {}) == FlagEvaluation(
         flag_key="empty",
         allocation_key=None,
         variation=None,
         extra_logging={},
-        do_log=True,
+        do_log=False,
     )
 
 
@@ -79,6 +102,7 @@ def test_catch_all_allocation():
     assert result.flag_key == "flag"
     assert result.allocation_key == "default"
     assert result.variation == Variation(key="a", value="A")
+    assert result.do_log
 
 
 def test_match_first_allocation_rule():
@@ -232,3 +256,84 @@ def test_eval_sharding():
     result = evaluator.evaluate_flag(flag, "dave", {})
     assert result.allocation_key == "default"
     assert result.variation == Variation(key="c", value="C")
+
+
+def test_eval_prior_to_alloc(mocker):
+    flag = Flag(
+        key="flag",
+        enabled=True,
+        variations={"a": Variation(key="a", value="A")},
+        allocations=[
+            Allocation(
+                key="default",
+                start_at=datetime.datetime(2024, 1, 1),
+                end_at=datetime.datetime(2024, 2, 1),
+                rules=[],
+                splits=[Split(variation_key="a", shards=[])],
+            )
+        ],
+        total_shards=10,
+    )
+
+    evaluator = Evaluator(sharder=MD5Sharder())
+    with mocker.patch(
+        "eppo_client.eval.utcnow", return_value=datetime.datetime(2023, 1, 1)
+    ):
+        result = evaluator.evaluate_flag(flag, "subject_key", {})
+        assert result.flag_key == "flag"
+        assert result.allocation_key == None
+        assert result.variation == None
+
+
+def test_eval_during_alloc(mocker):
+    flag = Flag(
+        key="flag",
+        enabled=True,
+        variations={"a": Variation(key="a", value="A")},
+        allocations=[
+            Allocation(
+                key="default",
+                start_at=datetime.datetime(2024, 1, 1),
+                end_at=datetime.datetime(2024, 2, 1),
+                rules=[],
+                splits=[Split(variation_key="a", shards=[])],
+            )
+        ],
+        total_shards=10,
+    )
+
+    evaluator = Evaluator(sharder=MD5Sharder())
+    with mocker.patch(
+        "eppo_client.eval.utcnow", return_value=datetime.datetime(2024, 1, 5)
+    ):
+        result = evaluator.evaluate_flag(flag, "subject_key", {})
+        assert result.flag_key == "flag"
+        assert result.allocation_key == "default"
+        assert result.variation == Variation(key="a", value="A")
+
+
+def test_eval_after_alloc(mocker):
+    flag = Flag(
+        key="flag",
+        enabled=True,
+        variations={"a": Variation(key="a", value="A")},
+        allocations=[
+            Allocation(
+                key="default",
+                start_at=datetime.datetime(2024, 1, 1),
+                end_at=datetime.datetime(2024, 2, 1),
+                rules=[],
+                splits=[Split(variation_key="a", shards=[])],
+            )
+        ],
+        total_shards=10,
+    )
+
+    evaluator = Evaluator(sharder=MD5Sharder())
+    with mocker.patch(
+        "eppo_client.eval.utcnow", return_value=datetime.datetime(2024, 2, 5)
+    ):
+        result = evaluator.evaluate_flag(flag, "subject_key", {})
+        assert result.flag_key == "flag"
+        assert result.allocation_key == None
+        assert result.variation == None

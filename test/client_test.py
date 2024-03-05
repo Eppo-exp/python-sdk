@@ -7,13 +7,7 @@ import pytest
 from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.client import EppoClient
 from eppo_client.config import Config
-from eppo_client.configuration_requestor import (
-    AllocationDto,
-    ExperimentConfigurationDto,
-    VariationDto,
-)
 from eppo_client.rules import Condition, OperatorType, Rule
-from eppo_client.shard import ShardRange
 from eppo_client import init, get_instance
 
 test_data = []
