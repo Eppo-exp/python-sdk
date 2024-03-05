@@ -1,4 +1,3 @@
-import hashlib
 import datetime
 import logging
 from typing import Any, Dict, Optional
@@ -14,7 +13,7 @@ from eppo_client.sharding import MD5Sharder
 from eppo_client.validation import validate_not_blank
 from eppo_client.variation_type import VariationType
 from eppo_client.eval import Evaluator
-from eppo_client.models import Variation, Flag
+from eppo_client.models import Variation
 
 logger = logging.getLogger(__name__)
 

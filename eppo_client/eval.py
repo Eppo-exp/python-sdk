@@ -2,9 +2,7 @@ from typing import Dict, Optional
 from eppo_client.sharding import Sharder
 from eppo_client.models import Range, Shard, Variation
 from eppo_client.rules import matches_rule
-import hashlib
 from dataclasses import dataclass
-import logging
 
 
 @dataclass

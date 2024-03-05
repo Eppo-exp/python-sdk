@@ -2,7 +2,7 @@ import numbers
 import re
 import semver
 from enum import Enum
-from typing import Any, List, Optional, Dict
+from typing import Any, List, Dict
 
 from eppo_client.models import SdkBaseModel
 
