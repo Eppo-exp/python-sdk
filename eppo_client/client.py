@@ -9,6 +9,7 @@ from eppo_client.configuration_requestor import (
 )
 from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
 from eppo_client.poller import Poller
+from eppo_client.rules import AttributeValue, SubjectAttributes
 from eppo_client.sharding import MD5Sharder
 from eppo_client.validation import validate_not_blank
 from eppo_client.variation_type import VariationType
@@ -36,7 +37,11 @@ class EppoClient:
         self.__evaluator = Evaluator(sharder=MD5Sharder())
 
     def get_string_assignment(
-        self, subject_key: str, flag_key: str, subject_attributes=dict(), default=None
+        self,
+        subject_key: str,
+        flag_key: str,
+        subject_attributes: Optional[SubjectAttributes] = None,
+        default=None,
     ) -> Optional[str]:
         try:
             assigned_variation = self.get_assignment_variation(
@@ -60,7 +65,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes=dict(),
+        subject_attributes: Optional[SubjectAttributes] = None,
         default=None,
     ) -> Optional[Number]:
         try:
@@ -85,7 +90,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes=dict(),
+        subject_attributes: Optional[SubjectAttributes] = None,
         default=None,
     ) -> Optional[bool]:
         try:
@@ -110,7 +115,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes=dict(),
+        subject_attributes: Optional[SubjectAttributes] = None,
         default=None,
     ) -> Optional[Dict[Any, Any]]:
         try:
@@ -132,7 +137,11 @@ class EppoClient:
             raise e
 
     def get_json_string_assignment(
-        self, subject_key: str, flag_key: str, subject_attributes=dict(), default=None
+        self,
+        subject_key: str,
+        flag_key: str,
+        subject_attributes: Optional[SubjectAttributes] = None,
+        default=None,
     ) -> Optional[str]:
         try:
             result = self.get_assignment_detail(
@@ -160,7 +169,11 @@ class EppoClient:
         "get_assignment is deprecated in favor of the typed get_<type>_assignment methods"
     )
     def get_assignment(
-        self, subject_key: str, flag_key: str, subject_attributes=dict(), default=None
+        self,
+        subject_key: str,
+        flag_key: str,
+        subject_attributes: Optional[SubjectAttributes] = None,
+        default=None,
     ) -> Optional[str]:
         try:
             result = self.get_assignment_detail(
@@ -185,7 +198,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Any,
+        subject_attributes: Optional[SubjectAttributes] = None,
         expected_variation_type: Optional[str] = None,
     ) -> Optional[FlagEvaluation]:
         """Maps a subject to a variation for a given experiment
@@ -198,6 +211,9 @@ class EppoClient:
         """
         validate_not_blank("subject_key", subject_key)
         validate_not_blank("flag_key", flag_key)
+        if not subject_attributes:
+            subject_attributes = {}
+
         flag = self.__config_requestor.get_configuration(flag_key)
 
         if flag is None or not flag.enabled:
