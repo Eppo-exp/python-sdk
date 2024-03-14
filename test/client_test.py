@@ -202,14 +202,8 @@ def test_client_has_flags():
 @pytest.mark.parametrize("test_case", test_data)
 def test_assign_subject_in_sample(test_case):
     client = get_instance()
-    client.__is_graceful_mode = False
-    print("flag=")
-    print(client.get_flag_keys())
     print("---- Test case for {} Experiment".format(test_case["flag"]))
-    get_assignments(client, test_case=test_case)
 
-
-def get_assignments(client, test_case):
     get_typed_assignment = {
         "string": client.get_string_assignment,
         "integer": client.get_integer_assignment,
@@ -218,27 +212,40 @@ def get_assignments(client, test_case):
         "json": client.get_parsed_json_assignment,
     }[test_case["valueType"]]
 
+    assignments = get_assignments(test_case, get_typed_assignment)
+    for subject, assigned_variation in assignments:
+        assert assigned_variation == subject["assignment"]
+
+
+def get_assignments(test_case, get_assignment_fn):
+    client = get_instance()
+    client.__is_graceful_mode = False
+
     print(test_case["flag"])
+    assignments = []
     for subject in test_case.get("subjects", []):
-        variation = get_typed_assignment(
+        variation = get_assignment_fn(
             subject["subjectKey"], test_case["flag"], subject["subjectAttributes"]
         )
-        expected_variation = subject["assignment"]
-
-        assert variation == expected_variation, "Failed for subject: {}, got {}".format(
-            subject["subjectKey"], variation
-        )
+        assignments.append((subject, variation))
+    return assignments
 
 
 @pytest.mark.parametrize("test_case", test_data)
 def test_get_numeric_assignment_on_bool_feature_flag_should_return_none(test_case):
+    client = get_instance()
     if test_case["valueType"] == "boolean":
-        assignments = get_assignments(test_case=test_case)
-        assert assignments == test_case["expectedAssignments"]
-        # Change to get_numeric_assignment and try again
-        test_case["valueType"] = "numeric"
-        assignments = get_assignments(test_case=test_case)
-        assert assignments == [None] * len(test_case["expectedAssignments"])
+        assignments = get_assignments(
+            test_case=test_case, get_assignment_fn=client.get_float_assignment
+        )
+        for _, assigned_variation in assignments:
+            assert assigned_variation is None
+
+        assignments = get_assignments(
+            test_case=test_case, get_assignment_fn=client.get_integer_assignment
+        )
+        for _, assigned_variation in assignments:
+            assert assigned_variation is None
 
 
 def test_check_type_match():
