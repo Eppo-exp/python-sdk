@@ -7,7 +7,7 @@ from eppo_client.models import Flag
 logger = logging.getLogger(__name__)
 
 
-RAC_ENDPOINT = "/randomized_assignment/v3/config"
+UFC_ENDPOINT = "/flag_config/v1/config"
 
 
 class ExperimentConfigurationRequestor:
@@ -19,16 +19,19 @@ class ExperimentConfigurationRequestor:
         self.__http_client = http_client
         self.__config_store = config_store
 
-    def get_configuration(self, experiment_key: str) -> Optional[Flag]:
+    def get_configuration(self, flag_key: str) -> Optional[Flag]:
         if self.__http_client.is_unauthorized():
             raise ValueError("Unauthorized: please check your API key")
-        return self.__config_store.get_configuration(experiment_key)
+        return self.__config_store.get_configuration(flag_key)
+
+    def get_flag_keys(self):
+        return self.__config_store.get_keys()
 
     def fetch_and_store_configurations(self) -> Dict[str, Flag]:
         try:
-            configs = cast(dict, self.__http_client.get(RAC_ENDPOINT).get("flags", {}))
-            for exp_key, exp_config in configs.items():
-                configs[exp_key] = Flag(**exp_config)
+            configs = cast(dict, self.__http_client.get(UFC_ENDPOINT).get("flags", {}))
+            for flag_key, flag_config in configs.items():
+                configs[flag_key] = Flag(**flag_config)
             self.__config_store.set_configurations(configs)
             return configs
         except Exception as e:

@@ -1,6 +1,6 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 from eppo_client.sharding import Sharder
-from eppo_client.models import Range, Shard, Variation
+from eppo_client.models import Flag, Range, Shard, Variation
 from eppo_client.rules import matches_rule
 from dataclasses import dataclass
 import datetime
@@ -10,7 +10,7 @@ import datetime
 class FlagEvaluation:
     flag_key: str
     subject_key: str
-    subject_attributes: Dict[str, str | int | float | bool]
+    subject_attributes: Dict[str, Union[str, float, int, bool]]
     allocation_key: str
     variation: Variation
     extra_logging: Dict[str, str]
@@ -22,7 +22,10 @@ class Evaluator:
     sharder: Sharder
 
     def evaluate_flag(
-        self, flag, subject_key, subject_attributes
+        self,
+        flag: Flag,
+        subject_key: str,
+        subject_attributes: Dict[str, Union[str, float, int, bool]],
     ) -> Optional[FlagEvaluation]:
         if not flag.enabled:
             return none_result(flag.key, subject_key, subject_attributes)

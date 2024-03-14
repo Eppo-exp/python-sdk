@@ -43,7 +43,7 @@ class HttpClient:
         try:
             response = self.__session.get(
                 self.__base_url + resource,
-                params=self.__sdk_params.dict(),
+                params=self.__sdk_params.model_dump(),
                 timeout=REQUEST_TIMEOUT_SECONDS,
             )
             self.__is_unauthorized = response.status_code == HTTPStatus.UNAUTHORIZED

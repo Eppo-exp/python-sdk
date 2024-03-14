@@ -1,15 +1,24 @@
 from datetime import datetime
+from enum import Enum
 
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from eppo_client.base_model import SdkBaseModel
 from eppo_client.rules import Rule
 
 
+class ValueType(Enum):
+    STRING = "string"
+    INTEGER = "integer"
+    FLOAT = "float"
+    BOOLEAN = "boolean"
+    JSON = "json"
+
+
 class Variation(SdkBaseModel):
     key: str
-    value: str | int | float | bool
-    typed_value: Any = None
+    value: Union[str, int, float, bool]
+    value_type: ValueType
 
 
 class Range(SdkBaseModel):

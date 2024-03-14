@@ -1,18 +1,16 @@
 import datetime
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 from typing_extensions import deprecated
-from numbers import Number
 from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationRequestor,
 )
 from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
+from eppo_client.models import ValueType
 from eppo_client.poller import Poller
-from eppo_client.rules import AttributeValue, SubjectAttributes
 from eppo_client.sharding import MD5Sharder
 from eppo_client.validation import validate_not_blank
-from eppo_client.variation_type import VariationType
 from eppo_client.eval import FlagEvaluation, Evaluator
 
 logger = logging.getLogger(__name__)
@@ -40,130 +38,91 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[SubjectAttributes] = None,
+        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
         default=None,
     ) -> Optional[str]:
-        try:
-            assigned_variation = self.get_assignment_variation(
-                subject_key, flag_key, subject_attributes, VariationType.STRING
-            )
-            return (
-                assigned_variation.typed_value
-                if assigned_variation is not None
-                else assigned_variation
-            )
-        except ValueError as e:
-            # allow ValueError to bubble up as it is a validation error
-            raise e
-        except Exception as e:
-            if self.__is_graceful_mode:
-                logger.error("[Eppo SDK] Error getting assignment: " + str(e))
-                return default
-            raise e
+        return self.get_assignment_variation(
+            subject_key,
+            flag_key,
+            subject_attributes,
+            ValueType.STRING,
+            default=default,
+        )
 
+    def get_integer_assignment(
+        self,
+        subject_key: str,
+        flag_key: str,
+        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
+        default=None,
+    ) -> Optional[float]:
+        return self.get_assignment_variation(
+            subject_key,
+            flag_key,
+            subject_attributes,
+            ValueType.INTEGER,
+            default=default,
+        )
+
+    def get_float_assignment(
+        self,
+        subject_key: str,
+        flag_key: str,
+        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
+        default=None,
+    ) -> Optional[float]:
+        return self.get_assignment_variation(
+            subject_key,
+            flag_key,
+            subject_attributes,
+            ValueType.FLOAT,
+            default=default,
+        )
+
+    @deprecated("get_numeric_assignment is deprecated in favor of get_float_assignment")
     def get_numeric_assignment(
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[SubjectAttributes] = None,
+        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
         default=None,
-    ) -> Optional[Number]:
-        try:
-            assigned_variation = self.get_assignment_variation(
-                subject_key, flag_key, subject_attributes, VariationType.NUMERIC
-            )
-            return (
-                assigned_variation.typed_value
-                if assigned_variation is not None
-                else assigned_variation
-            )
-        except ValueError as e:
-            # allow ValueError to bubble up as it is a validation error
-            raise e
-        except Exception as e:
-            if self.__is_graceful_mode:
-                logger.error("[Eppo SDK] Error getting assignment: " + str(e))
-                return default
-            raise e
+    ) -> Optional[float]:
+        return self.get_float_assignment(
+            subject_key,
+            flag_key,
+            subject_attributes,
+            default=default,
+        )
 
     def get_boolean_assignment(
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[SubjectAttributes] = None,
+        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
         default=None,
     ) -> Optional[bool]:
-        try:
-            assigned_variation = self.get_assignment_variation(
-                subject_key, flag_key, subject_attributes, VariationType.BOOLEAN
-            )
-            return (
-                assigned_variation.typed_value
-                if assigned_variation is not None
-                else assigned_variation
-            )
-        except ValueError as e:
-            # allow ValueError to bubble up as it is a validation error
-            raise e
-        except Exception as e:
-            if self.__is_graceful_mode:
-                logger.error("[Eppo SDK] Error getting assignment: " + str(e))
-                return default
-            raise e
+        return self.get_assignment_variation(
+            subject_key,
+            flag_key,
+            subject_attributes,
+            ValueType.BOOLEAN,
+            default=default,
+        )
 
     def get_parsed_json_assignment(
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[SubjectAttributes] = None,
+        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
         default=None,
     ) -> Optional[Dict[Any, Any]]:
-        try:
-            assigned_variation = self.get_assignment_variation(
-                subject_key, flag_key, subject_attributes, VariationType.JSON
-            )
-            return (
-                assigned_variation.typed_value
-                if assigned_variation is not None
-                else assigned_variation
-            )
-        except ValueError as e:
-            # allow ValueError to bubble up as it is a validation error
-            raise e
-        except Exception as e:
-            if self.__is_graceful_mode:
-                logger.error("[Eppo SDK] Error getting assignment: " + str(e))
-                return default
-            raise e
-
-    def get_json_string_assignment(
-        self,
-        subject_key: str,
-        flag_key: str,
-        subject_attributes: Optional[SubjectAttributes] = None,
-        default=None,
-    ) -> Optional[str]:
-        try:
-            result = self.get_assignment_detail(
-                subject_key, flag_key, subject_attributes
-            )
-            assigned_variation = result.variation
-            assigned_variation = self.get_assignment_variation(
-                subject_key, flag_key, subject_attributes, VariationType.JSON
-            )
-            return (
-                assigned_variation.value
-                if assigned_variation is not None
-                else assigned_variation
-            )
-        except ValueError as e:
-            # allow ValueError to bubble up as it is a validation error
-            raise e
-        except Exception as e:
-            if self.__is_graceful_mode:
-                logger.error("[Eppo SDK] Error getting assignment: " + str(e))
-                return default
-            raise e
+        return self.get_assignment_variation(
+            subject_key,
+            flag_key,
+            subject_attributes,
+            ValueType.JSON,
+            default=default,
+        )
 
     @deprecated(
         "get_assignment is deprecated in favor of the typed get_<type>_assignment methods"
@@ -172,19 +131,35 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[SubjectAttributes] = None,
+        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
         default=None,
     ) -> Optional[str]:
+        return self.get_assignment_variation(
+            subject_key, flag_key, subject_attributes, default=default
+        )
+
+    def get_assignment_variation(
+        self,
+        subject_key: str,
+        flag_key: str,
+        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
+        expected_variation_type: Optional[ValueType] = None,
+        default=None,
+    ):
         try:
             result = self.get_assignment_detail(
                 subject_key, flag_key, subject_attributes
             )
+            if not result:
+                return default
             assigned_variation = result.variation
-            return (
-                assigned_variation.value
-                if assigned_variation is not None
-                else assigned_variation
-            )
+            if not check_type_match(
+                assigned_variation.value_type, expected_variation_type
+            ):
+                raise TypeError(
+                    "Variation value does not have the correct type. Found: {assigned_variation.value_type} != {expected_variation_type}"
+                )
+            return assigned_variation.value
         except ValueError as e:
             # allow ValueError to bubble up as it is a validation error
             raise e
@@ -198,8 +173,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[SubjectAttributes] = None,
-        expected_variation_type: Optional[str] = None,
+        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
     ) -> Optional[FlagEvaluation]:
         """Maps a subject to a variation for a given experiment
         Returns None if the subject is not part of the experiment sample.
@@ -224,13 +198,6 @@ class EppoClient:
 
         result = self.__evaluator.evaluate_flag(flag, subject_key, subject_attributes)
 
-        if expected_variation_type is not None and result.variation:
-            variation_is_expected_type = VariationType.is_expected_type(
-                result.variation, expected_variation_type
-            )
-            if not variation_is_expected_type:
-                return None
-
         assignment_event = {
             **result.extra_logging,
             "allocation": result.allocation_key,
@@ -248,8 +215,19 @@ class EppoClient:
             logger.error("[Eppo SDK] Error logging assignment event: " + str(e))
         return result
 
+    def get_flag_keys(self):
+        return self.__config_requestor.get_flag_keys()
+
     def _shutdown(self):
         """Stops all background processes used by the client
         Do not use the client after calling this method.
         """
         self.__poller.stop()
+
+
+def check_type_match(value_type, expected_type):
+    return (
+        expected_type is None
+        or value_type == expected_type
+        or value_type == expected_type.value
+    )
