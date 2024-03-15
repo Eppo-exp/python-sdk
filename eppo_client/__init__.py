@@ -10,7 +10,7 @@ from eppo_client.http_client import HttpClient, SdkParams
 from eppo_client.models import Flag
 from eppo_client.read_write_lock import ReadWriteLock
 
-__version__ = "1.3.1"
+__version__ = "3.0.0"
 
 __client: Optional[EppoClient] = None
 __lock = ReadWriteLock()
