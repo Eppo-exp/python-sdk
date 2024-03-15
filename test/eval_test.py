@@ -35,8 +35,8 @@ def test_disabled_flag_returns_none_result():
     evaluator = Evaluator(sharder=MD5Sharder())
     result = evaluator.evaluate_flag(flag, "subject_key", {})
     assert result.flag_key == "disabled_flag"
-    assert result.allocation_key == None
-    assert result.variation == None
+    assert result.allocation_key is None
+    assert result.variation is None
     assert not result.do_log
 
 
@@ -332,8 +332,8 @@ def test_eval_prior_to_alloc(mocker):
     mocker.patch("eppo_client.eval.utcnow", return_value=datetime.datetime(2023, 1, 1))
     result = evaluator.evaluate_flag(flag, "subject_key", {})
     assert result.flag_key == "flag"
-    assert result.allocation_key == None
-    assert result.variation == None
+    assert result.allocation_key is None
+    assert result.variation is None
 
 
 def test_eval_during_alloc(mocker):
@@ -384,8 +384,8 @@ def test_eval_after_alloc(mocker):
     mocker.patch("eppo_client.eval.utcnow", return_value=datetime.datetime(2024, 2, 5))
     result = evaluator.evaluate_flag(flag, "subject_key", {})
     assert result.flag_key == "flag"
-    assert result.allocation_key == None
-    assert result.variation == None
+    assert result.allocation_key is None
+    assert result.variation is None
 
 
 def test_seed():

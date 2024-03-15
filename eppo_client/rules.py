@@ -55,7 +55,7 @@ def evaluate_condition(
             # Numeric operator: value could be numeric or semver.
             if isinstance(subject_value, numbers.Number):
                 return evaluate_numeric_condition(subject_value, condition)
-            elif is_valid_semver(subject_value):
+            elif isinstance(subject_value, str) and is_valid_semver(subject_value):
                 return compare_semver(
                     subject_value, condition.value, condition.operator
                 )

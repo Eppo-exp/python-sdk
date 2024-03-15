@@ -11,8 +11,8 @@ class FlagEvaluation:
     flag_key: str
     subject_key: str
     subject_attributes: Dict[str, Union[str, float, int, bool]]
-    allocation_key: str
-    variation: Variation
+    allocation_key: Optional[str]
+    variation: Optional[Variation]
     extra_logging: Dict[str, str]
     do_log: bool
 

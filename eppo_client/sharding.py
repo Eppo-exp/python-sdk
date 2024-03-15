@@ -23,7 +23,7 @@ class DeterministicSharder(Sharder):
     to simplify writing tests
     """
 
-    def __init__(self, lookup: Dict[str, str]):
+    def __init__(self, lookup: Dict[str, int]):
         self.lookup = lookup
 
     def get_shard(self, input: str, total_shards: int) -> int:

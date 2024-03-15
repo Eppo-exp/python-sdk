@@ -125,8 +125,9 @@ class EppoClient:
             VariationType.JSON,
             default=default,
         )
-        if variation_jsons:
-            return json.loads(variation_jsons)
+        if variation_jsons is None:
+            return None
+        return json.loads(variation_jsons)
 
     @deprecated(
         "get_assignment is deprecated in favor of the typed get_<type>_assignment methods"
@@ -194,7 +195,8 @@ class EppoClient:
 
         if not check_type_match(expected_variation_type, flag.variation_type):
             raise TypeError(
-                f"Variation value does not have the correct type. Found: {flag.variation_type} != {expected_variation_type}"
+                f"Variation value does not have the correct type."
+                f" Found: {flag.variation_type} != {expected_variation_type}"
             )
 
         if not flag.enabled:
@@ -206,7 +208,7 @@ class EppoClient:
         result = self.__evaluator.evaluate_flag(flag, subject_key, subject_attributes)
 
         assignment_event = {
-            **result.extra_logging,
+            **(result.extra_logging if result else {}),
             "allocation": result.allocation_key if result else None,
             "experiment": f"{flag_key}-{result.allocation_key}" if result else None,
             "featureFlag": flag_key,
@@ -216,7 +218,7 @@ class EppoClient:
             "subjectAttributes": subject_attributes,
         }
         try:
-            if result.do_log:
+            if result and result.do_log:
                 self.__assignment_logger.log_assignment(assignment_event)
         except Exception as e:
             logger.error("[Eppo SDK] Error logging assignment event: " + str(e))

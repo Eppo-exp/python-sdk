@@ -16,7 +16,6 @@ from eppo_client.models import (
     VariationType,
     Variation,
 )
-from eppo_client.rules import Condition, OperatorType, Rule
 from eppo_client import init, get_instance
 
 import logging

@@ -9,16 +9,15 @@ from eppo_client.rules import (
 greater_than_condition = Condition(operator=OperatorType.GT, value=10, attribute="age")
 less_than_condition = Condition(operator=OperatorType.LT, value=100, attribute="age")
 numeric_rule = Rule(
-    allocation_key="allocation",
     conditions=[less_than_condition, greater_than_condition],
 )
 
 matches_email_condition = Condition(
     operator=OperatorType.MATCHES, value=".*@email.com", attribute="email"
 )
-text_rule = Rule(allocation_key="allocation", conditions=[matches_email_condition])
+text_rule = Rule(conditions=[matches_email_condition])
 
-rule_with_empty_conditions = Rule(allocation_key="allocation", conditions=[])
+rule_with_empty_conditions = Rule(conditions=[])
 
 
 def test_matches_rule_with_empty_rule():
