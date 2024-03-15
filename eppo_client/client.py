@@ -1,5 +1,6 @@
 import datetime
 import logging
+import json
 from typing import Any, Dict, Optional, Union
 from typing_extensions import deprecated
 from eppo_client.assignment_logger import AssignmentLogger
@@ -12,6 +13,7 @@ from eppo_client.poller import Poller
 from eppo_client.sharding import MD5Sharder
 from eppo_client.validation import validate_not_blank
 from eppo_client.eval import FlagEvaluation, Evaluator
+
 
 logger = logging.getLogger(__name__)
 
@@ -116,13 +118,15 @@ class EppoClient:
         subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
         default=None,
     ) -> Optional[Dict[Any, Any]]:
-        return self.get_assignment_variation(
+        variation_jsons = self.get_assignment_variation(
             subject_key,
             flag_key,
             subject_attributes,
             ValueType.JSON,
             default=default,
         )
+        if variation_jsons:
+            return json.loads(variation_jsons)
 
     @deprecated(
         "get_assignment is deprecated in favor of the typed get_<type>_assignment methods"
@@ -150,7 +154,7 @@ class EppoClient:
             result = self.get_assignment_detail(
                 subject_key, flag_key, subject_attributes
             )
-            if not result:
+            if not result or not result.variation:
                 return default
             assigned_variation = result.variation
             if not check_type_match(
@@ -200,10 +204,10 @@ class EppoClient:
 
         assignment_event = {
             **result.extra_logging,
-            "allocation": result.allocation_key,
-            "experiment": f"{flag_key}-{result.allocation_key}",
+            "allocation": result.allocation_key if result else None,
+            "experiment": f"{flag_key}-{result.allocation_key}" if result else None,
             "featureFlag": flag_key,
-            "variation": result.variation.key,
+            "variation": result.variation.key if result and result.variation else None,
             "subject": subject_key,
             "timestamp": datetime.datetime.utcnow().isoformat(),
             "subjectAttributes": subject_attributes,

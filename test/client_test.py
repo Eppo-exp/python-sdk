@@ -214,7 +214,9 @@ def test_assign_subject_in_sample(test_case):
 
     assignments = get_assignments(test_case, get_typed_assignment)
     for subject, assigned_variation in assignments:
-        assert assigned_variation == subject["assignment"]
+        assert (
+            assigned_variation == subject["assignment"]
+        ), f"expected <{subject['assignment']}> for subject {subject['subjectKey']}, found <{assigned_variation}>"
 
 
 def get_assignments(test_case, get_assignment_fn):

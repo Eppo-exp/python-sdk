@@ -131,6 +131,21 @@ def test_evaluate_condition_not_one_of():
         {"name": "charlie"},
     )
 
+    # NOT_ONE_OF fails when attribute is not specified
+    assert not evaluate_condition(
+        Condition(
+            operator=OperatorType.NOT_ONE_OF, value=["alice", "bob"], attribute="name"
+        ),
+        {},
+    )
+
+    assert not evaluate_condition(
+        Condition(
+            operator=OperatorType.NOT_ONE_OF, value=["alice", "bob"], attribute="name"
+        ),
+        {"name": None},
+    )
+
 
 # def test_find_matching_rule_with_empty_rules():
 #     subject_attributes = {"age": 20, "country": "US"}
