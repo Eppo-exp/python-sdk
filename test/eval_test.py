@@ -100,11 +100,7 @@ def test_simple_flag():
         key="flag-key",
         enabled=True,
         variation_type=VariationType.STRING,
-        variations={
-            "control": Variation(
-                key="control", value="control", value_type=VariationType.STRING
-            )
-        },
+        variations={"control": Variation(key="control", value="control")},
         allocations=[
             Allocation(
                 key="allocation",
@@ -122,9 +118,45 @@ def test_simple_flag():
 
     evaluator = Evaluator(sharder=MD5Sharder())
     result = evaluator.evaluate_flag(flag, "user-1", {})
-    assert result.variation == Variation(
-        key="control", value="control", value_type=VariationType.STRING
+    assert result.variation == Variation(key="control", value="control")
+
+
+def test_flag_target_on_id():
+    flag = Flag(
+        key="flag-key",
+        enabled=True,
+        variation_type=VariationType.STRING,
+        variations={"control": Variation(key="control", value="control")},
+        allocations=[
+            Allocation(
+                key="allocation",
+                rules=[
+                    Rule(
+                        conditions=[
+                            Condition(
+                                operator=OperatorType.ONE_OF,
+                                attribute="id",
+                                value=["user-1", "user-2"],
+                            )
+                        ]
+                    )
+                ],
+                splits=[
+                    Split(
+                        variation_key="control",
+                        shards=[],
+                    )
+                ],
+            )
+        ],
+        total_shards=10_000,
     )
+
+    evaluator = Evaluator(sharder=MD5Sharder())
+    result = evaluator.evaluate_flag(flag, "user-1", {})
+    assert result.variation == Variation(key="control", value="control")
+    result = evaluator.evaluate_flag(flag, "user-3", {})
+    assert result.variation is None
 
 
 def test_catch_all_allocation():

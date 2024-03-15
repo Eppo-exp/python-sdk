@@ -42,7 +42,8 @@ class Evaluator:
             # So we look for (rule 1) OR (rule 2) OR (rule 3) etc.
             # If there are no rules, then we always match
             if not allocation.rules or any(
-                matches_rule(rule, subject_attributes) for rule in allocation.rules
+                matches_rule(rule, {"id": subject_key, **subject_attributes})
+                for rule in allocation.rules
             ):
                 for split in allocation.splits:
                     # Split needs to match all shards
