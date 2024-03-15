@@ -4,7 +4,7 @@ from eppo_client.models import (
     Flag,
     Allocation,
     Range,
-    ValueType,
+    VariationType,
     Variation,
     Split,
     Shard,
@@ -13,15 +13,16 @@ from eppo_client.eval import Evaluator, FlagEvaluation, is_in_shard_range, hash_
 from eppo_client.rules import Condition, OperatorType, Rule
 from eppo_client.sharding import DeterministicSharder, MD5Sharder
 
-VARIATION_A = Variation(key="a", value="A", value_type=ValueType.STRING)
-VARIATION_B = Variation(key="b", value="B", value_type=ValueType.STRING)
-VARIATION_C = Variation(key="c", value="C", value_type=ValueType.STRING)
+VARIATION_A = Variation(key="a", value="A")
+VARIATION_B = Variation(key="b", value="B")
+VARIATION_C = Variation(key="c", value="C")
 
 
 def test_disabled_flag_returns_none_result():
     flag = Flag(
         key="disabled_flag",
         enabled=False,
+        variation_type=VariationType.STRING,
         variations={"a": VARIATION_A},
         allocations=[
             Allocation(
@@ -73,6 +74,7 @@ def test_eval_empty_flag():
     empty_flag = Flag(
         key="empty",
         enabled=True,
+        variation_type=VariationType.STRING,
         variations={
             "a": VARIATION_A,
             "b": VARIATION_B,
@@ -97,9 +99,10 @@ def test_simple_flag():
     flag = Flag(
         key="flag-key",
         enabled=True,
+        variation_type=VariationType.STRING,
         variations={
             "control": Variation(
-                key="control", value="control", value_type=ValueType.STRING
+                key="control", value="control", value_type=VariationType.STRING
             )
         },
         allocations=[
@@ -120,7 +123,7 @@ def test_simple_flag():
     evaluator = Evaluator(sharder=MD5Sharder())
     result = evaluator.evaluate_flag(flag, "user-1", {})
     assert result.variation == Variation(
-        key="control", value="control", value_type=ValueType.STRING
+        key="control", value="control", value_type=VariationType.STRING
     )
 
 
@@ -128,6 +131,7 @@ def test_catch_all_allocation():
     flag = Flag(
         key="flag",
         enabled=True,
+        variation_type=VariationType.STRING,
         variations={
             "a": VARIATION_A,
             "b": VARIATION_B,
@@ -154,6 +158,7 @@ def test_match_first_allocation_rule():
     flag = Flag(
         key="flag",
         enabled=True,
+        variation_type=VariationType.STRING,
         variations={
             "a": VARIATION_A,
             "b": VARIATION_B,
@@ -194,6 +199,7 @@ def test_do_not_match_first_allocation_rule():
     flag = Flag(
         key="flag",
         enabled=True,
+        variation_type=VariationType.STRING,
         variations={
             "a": VARIATION_A,
             "b": VARIATION_B,
@@ -234,6 +240,7 @@ def test_eval_sharding():
     flag = Flag(
         key="flag",
         enabled=True,
+        variation_type=VariationType.STRING,
         variations={
             "a": VARIATION_A,
             "b": VARIATION_B,
@@ -307,6 +314,7 @@ def test_eval_prior_to_alloc(mocker):
     flag = Flag(
         key="flag",
         enabled=True,
+        variation_type=VariationType.STRING,
         variations={"a": VARIATION_A},
         allocations=[
             Allocation(
@@ -332,6 +340,7 @@ def test_eval_during_alloc(mocker):
     flag = Flag(
         key="flag",
         enabled=True,
+        variation_type=VariationType.STRING,
         variations={"a": VARIATION_A},
         allocations=[
             Allocation(
@@ -357,6 +366,7 @@ def test_eval_after_alloc(mocker):
     flag = Flag(
         key="flag",
         enabled=True,
+        variation_type=VariationType.STRING,
         variations={"a": VARIATION_A},
         allocations=[
             Allocation(

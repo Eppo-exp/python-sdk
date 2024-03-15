@@ -1,12 +1,18 @@
 from eppo_client.models import Flag
 from eppo_client.configuration_store import ConfigurationStore
+from eppo_client.models import VariationType
 
 
 TEST_MAX_SIZE = 10
 
 store: ConfigurationStore[str] = ConfigurationStore(max_size=TEST_MAX_SIZE)
 mock_flag = Flag(
-    key="mock_flag", enabled=True, variations={}, allocations=[], total_shards=10000
+    key="mock_flag",
+    variation_type=VariationType.STRING,
+    enabled=True,
+    variations={},
+    allocations=[],
+    total_shards=10000,
 )
 
 

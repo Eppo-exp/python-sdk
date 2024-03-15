@@ -8,7 +8,7 @@ from eppo_client.configuration_requestor import (
     ExperimentConfigurationRequestor,
 )
 from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
-from eppo_client.models import ValueType
+from eppo_client.models import VariationType
 from eppo_client.poller import Poller
 from eppo_client.sharding import MD5Sharder
 from eppo_client.validation import validate_not_blank
@@ -47,7 +47,7 @@ class EppoClient:
             subject_key,
             flag_key,
             subject_attributes,
-            ValueType.STRING,
+            VariationType.STRING,
             default=default,
         )
 
@@ -62,7 +62,7 @@ class EppoClient:
             subject_key,
             flag_key,
             subject_attributes,
-            ValueType.INTEGER,
+            VariationType.INTEGER,
             default=default,
         )
 
@@ -77,7 +77,7 @@ class EppoClient:
             subject_key,
             flag_key,
             subject_attributes,
-            ValueType.FLOAT,
+            VariationType.FLOAT,
             default=default,
         )
 
@@ -107,7 +107,7 @@ class EppoClient:
             subject_key,
             flag_key,
             subject_attributes,
-            ValueType.BOOLEAN,
+            VariationType.BOOLEAN,
             default=default,
         )
 
@@ -122,7 +122,7 @@ class EppoClient:
             subject_key,
             flag_key,
             subject_attributes,
-            ValueType.JSON,
+            VariationType.JSON,
             default=default,
         )
         if variation_jsons:
@@ -147,12 +147,12 @@ class EppoClient:
         subject_key: str,
         flag_key: str,
         subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
-        expected_value_type: Optional[ValueType] = None,
+        expected_variation_type: Optional[VariationType] = None,
         default=None,
     ):
         try:
             result = self.get_assignment_detail(
-                subject_key, flag_key, subject_attributes, expected_value_type
+                subject_key, flag_key, subject_attributes, expected_variation_type
             )
             if not result or not result.variation:
                 return default
@@ -171,7 +171,7 @@ class EppoClient:
         subject_key: str,
         flag_key: str,
         subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
-        expected_value_type: Optional[ValueType] = None,
+        expected_variation_type: Optional[VariationType] = None,
     ) -> Optional[FlagEvaluation]:
         """Maps a subject to a variation for a given experiment
         Returns None if the subject is not part of the experiment sample.
@@ -192,9 +192,9 @@ class EppoClient:
             logger.info("[Eppo SDK] No assigned variation. Flag not found: " + flag_key)
             return None
 
-        if not check_type_match(expected_value_type, flag.value_type):
+        if not check_type_match(expected_variation_type, flag.variation_type):
             raise TypeError(
-                "Variation value does not have the correct type. Found: {flag.value_type} != {expected_value_type}"
+                f"Variation value does not have the correct type. Found: {flag.variation_type} != {expected_variation_type}"
             )
 
         if not flag.enabled:

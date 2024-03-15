@@ -13,7 +13,7 @@ from eppo_client.models import (
     Range,
     Shard,
     Split,
-    ValueType,
+    VariationType,
     Variation,
 )
 from eppo_client.rules import Condition, OperatorType, Rule
@@ -82,7 +82,7 @@ def test_log_assignment(mock_config_requestor, mock_logger):
     flag = Flag(
         key="flag-key",
         enabled=True,
-        valueType=ValueType.STRING,
+        variation_type=VariationType.STRING,
         variations={"control": Variation(key="control", value="control")},
         allocations=[
             Allocation(
@@ -113,7 +113,7 @@ def test_get_assignment_handles_logging_exception(mock_config_requestor, mock_lo
     flag = Flag(
         key="flag-key",
         enabled=True,
-        value_type=ValueType.STRING,
+        variation_type=VariationType.STRING,
         variations={"control": Variation(key="control", value="control")},
         allocations=[
             Allocation(
@@ -204,7 +204,7 @@ def test_assign_subject_in_sample(test_case):
         "float": client.get_float_assignment,
         "boolean": client.get_boolean_assignment,
         "json": client.get_parsed_json_assignment,
-    }[test_case["valueType"]]
+    }[test_case["variationType"]]
 
     assignments = get_assignments(test_case, get_typed_assignment)
     for subject, assigned_variation in assignments:
@@ -230,7 +230,7 @@ def get_assignments(test_case, get_assignment_fn):
 @pytest.mark.parametrize("test_case", test_data)
 def test_get_numeric_assignment_on_bool_feature_flag_should_return_none(test_case):
     client = get_instance()
-    if test_case["valueType"] == "boolean":
+    if test_case["variationType"] == "boolean":
         assignments = get_assignments(
             test_case=test_case, get_assignment_fn=client.get_float_assignment
         )
@@ -245,4 +245,4 @@ def test_get_numeric_assignment_on_bool_feature_flag_should_return_none(test_cas
 
 
 def test_check_type_match():
-    assert check_type_match(ValueType.STRING, "string")
+    assert check_type_match(VariationType.STRING, "string")

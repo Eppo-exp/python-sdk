@@ -7,7 +7,7 @@ from eppo_client.base_model import SdkBaseModel
 from eppo_client.rules import Rule
 
 
-class ValueType(Enum):
+class VariationType(Enum):
     STRING = "string"
     INTEGER = "integer"
     FLOAT = "float"
@@ -48,7 +48,7 @@ class Allocation(SdkBaseModel):
 class Flag(SdkBaseModel):
     key: str
     enabled: bool
-    value_type: ValueType
+    variation_type: VariationType
     variations: Dict[str, Variation]
     allocations: List[Allocation]
     total_shards: int = 10_000
