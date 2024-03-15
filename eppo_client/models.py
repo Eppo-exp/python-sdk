@@ -18,7 +18,6 @@ class ValueType(Enum):
 class Variation(SdkBaseModel):
     key: str
     value: Union[str, int, float, bool]
-    value_type: ValueType
 
 
 class Range(SdkBaseModel):
@@ -49,6 +48,7 @@ class Allocation(SdkBaseModel):
 class Flag(SdkBaseModel):
     key: str
     enabled: bool
+    value_type: ValueType
     variations: Dict[str, Variation]
     allocations: List[Allocation]
     total_shards: int = 10_000

@@ -147,23 +147,16 @@ class EppoClient:
         subject_key: str,
         flag_key: str,
         subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
-        expected_variation_type: Optional[ValueType] = None,
+        expected_value_type: Optional[ValueType] = None,
         default=None,
     ):
         try:
             result = self.get_assignment_detail(
-                subject_key, flag_key, subject_attributes
+                subject_key, flag_key, subject_attributes, expected_value_type
             )
             if not result or not result.variation:
                 return default
-            assigned_variation = result.variation
-            if not check_type_match(
-                assigned_variation.value_type, expected_variation_type
-            ):
-                raise TypeError(
-                    "Variation value does not have the correct type. Found: {assigned_variation.value_type} != {expected_variation_type}"
-                )
-            return assigned_variation.value
+            return result.variation.value
         except ValueError as e:
             # allow ValueError to bubble up as it is a validation error
             raise e
@@ -178,6 +171,7 @@ class EppoClient:
         subject_key: str,
         flag_key: str,
         subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
+        expected_value_type: Optional[ValueType] = None,
     ) -> Optional[FlagEvaluation]:
         """Maps a subject to a variation for a given experiment
         Returns None if the subject is not part of the experiment sample.
@@ -194,9 +188,18 @@ class EppoClient:
 
         flag = self.__config_requestor.get_configuration(flag_key)
 
-        if flag is None or not flag.enabled:
+        if flag is None:
+            logger.info("[Eppo SDK] No assigned variation. Flag not found: " + flag_key)
+            return None
+
+        if not check_type_match(expected_value_type, flag.value_type):
+            raise TypeError(
+                "Variation value does not have the correct type. Found: {flag.value_type} != {expected_value_type}"
+            )
+
+        if not flag.enabled:
             logger.info(
-                "[Eppo SDK] No assigned variation. No active flag for key: " + flag_key
+                "[Eppo SDK] No assigned variation. Flag is disabled: " + flag_key
             )
             return None
 
@@ -229,9 +232,9 @@ class EppoClient:
         self.__poller.stop()
 
 
-def check_type_match(value_type, expected_type):
+def check_type_match(expected_type, actual_type):
     return (
         expected_type is None
-        or value_type == expected_type
-        or value_type == expected_type.value
+        or actual_type == expected_type
+        or actual_type == expected_type.value
     )

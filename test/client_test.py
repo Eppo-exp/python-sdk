@@ -82,11 +82,8 @@ def test_log_assignment(mock_config_requestor, mock_logger):
     flag = Flag(
         key="flag-key",
         enabled=True,
-        variations={
-            "control": Variation(
-                key="control", value="control", value_type=ValueType.STRING
-            )
-        },
+        valueType=ValueType.STRING,
+        variations={"control": Variation(key="control", value="control")},
         allocations=[
             Allocation(
                 key="allocation",
@@ -116,11 +113,8 @@ def test_get_assignment_handles_logging_exception(mock_config_requestor, mock_lo
     flag = Flag(
         key="flag-key",
         enabled=True,
-        variations={
-            "control": Variation(
-                key="control", value="control", value_type=ValueType.STRING
-            )
-        },
+        value_type=ValueType.STRING,
+        variations={"control": Variation(key="control", value="control")},
         allocations=[
             Allocation(
                 key="allocation",
@@ -251,4 +245,4 @@ def test_get_numeric_assignment_on_bool_feature_flag_should_return_none(test_cas
 
 
 def test_check_type_match():
-    assert check_type_match("string", ValueType.STRING)
+    assert check_type_match(ValueType.STRING, "string")
