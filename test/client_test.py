@@ -244,4 +244,5 @@ def test_get_numeric_assignment_on_bool_feature_flag_should_return_none(test_cas
 
 
 def test_check_type_match():
-    assert check_type_match(VariationType.STRING, "string")
+    assert check_type_match(VariationType.STRING, VariationType.STRING)
+    assert check_type_match(None, VariationType.STRING)

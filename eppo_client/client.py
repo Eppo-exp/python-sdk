@@ -243,9 +243,7 @@ class EppoClient:
         self.__poller.stop()
 
 
-def check_type_match(expected_type, actual_type):
-    return (
-        expected_type is None
-        or actual_type == expected_type
-        or actual_type == expected_type.value
-    )
+def check_type_match(
+    expected_type: Optional[VariationType], actual_type: VariationType
+):
+    return expected_type is None or actual_type == expected_type
