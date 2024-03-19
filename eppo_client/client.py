@@ -17,6 +17,9 @@ from eppo_client.eval import FlagEvaluation, Evaluator
 
 logger = logging.getLogger(__name__)
 
+AttributeValue = Union[str, float, int, bool]
+SubjectAttributes = Dict[str, AttributeValue]
+
 
 class EppoClient:
     def __init__(
@@ -40,7 +43,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
+        subject_attributes: Optional[SubjectAttributes] = None,
         default=None,
     ) -> Optional[str]:
         return self.get_assignment_variation(
@@ -55,7 +58,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
+        subject_attributes: Optional[SubjectAttributes] = None,
         default=None,
     ) -> Optional[float]:
         return self.get_assignment_variation(
@@ -70,7 +73,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
+        subject_attributes: Optional[SubjectAttributes] = None,
         default=None,
     ) -> Optional[float]:
         return self.get_assignment_variation(
@@ -86,7 +89,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
+        subject_attributes: Optional[SubjectAttributes] = None,
         default=None,
     ) -> Optional[float]:
         return self.get_float_assignment(
@@ -100,7 +103,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
+        subject_attributes: Optional[SubjectAttributes] = None,
         default=None,
     ) -> Optional[bool]:
         return self.get_assignment_variation(
@@ -115,7 +118,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
+        subject_attributes: Optional[SubjectAttributes] = None,
         default=None,
     ) -> Optional[Dict[Any, Any]]:
         variation_jsons = self.get_assignment_variation(
@@ -136,7 +139,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
+        subject_attributes: Optional[SubjectAttributes] = None,
         default=None,
     ) -> Optional[str]:
         return self.get_assignment_variation(
@@ -147,7 +150,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
+        subject_attributes: Optional[SubjectAttributes] = None,
         expected_variation_type: Optional[VariationType] = None,
         default=None,
     ):
@@ -171,7 +174,7 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[Dict[str, Union[str, float, int, bool]]] = None,
+        subject_attributes: Optional[SubjectAttributes] = None,
         expected_variation_type: Optional[VariationType] = None,
     ) -> Optional[FlagEvaluation]:
         """Maps a subject to a variation for a given experiment
@@ -184,7 +187,7 @@ class EppoClient:
         """
         validate_not_blank("subject_key", subject_key)
         validate_not_blank("flag_key", flag_key)
-        if not subject_attributes:
+        if subject_attributes is None:
             subject_attributes = {}
 
         flag = self.__config_requestor.get_configuration(flag_key)
@@ -225,6 +228,12 @@ class EppoClient:
         return result
 
     def get_flag_keys(self):
+        """
+        Returns a list of all flag keys that have been initialized.
+        This can be useful to debug the initialization process.
+
+        Note that it is generally not a good idea to pre-load all flag configurations.
+        """
         return self.__config_requestor.get_flag_keys()
 
     def _shutdown(self):

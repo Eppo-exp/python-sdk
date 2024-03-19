@@ -15,9 +15,12 @@ class VariationType(Enum):
     JSON = "json"
 
 
+ValueType = Union[str, int, float, bool]
+
+
 class Variation(SdkBaseModel):
     key: str
-    value: Union[str, int, float, bool]
+    value: ValueType
 
 
 class Range(SdkBaseModel):
@@ -38,7 +41,7 @@ class Split(SdkBaseModel):
 
 class Allocation(SdkBaseModel):
     key: str
-    rules: List[Rule]
+    rules: List[Rule] = []
     start_at: Optional[datetime] = None
     end_at: Optional[datetime] = None
     splits: List[Split]
