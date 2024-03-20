@@ -73,11 +73,11 @@ def is_in_shard_range(shard: int, range: Range) -> bool:
     return range.start <= shard < range.end
 
 
-def hash_key(salt, subject_key):
+def hash_key(salt: str, subject_key: str) -> str:
     return f"{salt}-{subject_key}"
 
 
-def none_result(flag_key, subject_key, subject_attributes):
+def none_result(flag_key, subject_key, subject_attributes) -> FlagEvaluation:
     return FlagEvaluation(
         flag_key=flag_key,
         subject_key=subject_key,
@@ -89,5 +89,5 @@ def none_result(flag_key, subject_key, subject_attributes):
     )
 
 
-def utcnow():
+def utcnow() -> datetime.datetime:
     return datetime.datetime.utcnow()
