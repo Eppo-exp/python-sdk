@@ -26,7 +26,7 @@ class Evaluator:
         flag: Flag,
         subject_key: str,
         subject_attributes: Dict[str, Union[str, float, int, bool]],
-    ) -> Optional[FlagEvaluation]:
+    ) -> FlagEvaluation:
         if not flag.enabled:
             return none_result(flag.key, subject_key, subject_attributes)
 
