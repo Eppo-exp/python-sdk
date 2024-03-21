@@ -9,7 +9,7 @@ from eppo_client.configuration_requestor import (
 from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
 from eppo_client.models import VariationType
 from eppo_client.poller import Poller
-from eppo_client.sharding import MD5Sharder
+from eppo_client.sharders import MD5Sharder
 from eppo_client.types import SubjectAttributes
 from eppo_client.validation import validate_not_blank
 from eppo_client.eval import FlagEvaluation, Evaluator
@@ -103,16 +103,16 @@ class EppoClient:
         subject_attributes: Optional[SubjectAttributes] = None,
         default=None,
     ) -> Optional[Dict[Any, Any]]:
-        variation_jsons = self.get_assignment_variation(
+        variation_json_string = self.get_assignment_variation(
             subject_key,
             flag_key,
             subject_attributes,
             VariationType.JSON,
             default=default,
         )
-        if variation_jsons is None:
+        if variation_json_string is None:
             return None
-        return json.loads(variation_jsons)
+        return json.loads(variation_json_string)
 
     def get_assignment_variation(
         self,
@@ -145,13 +145,14 @@ class EppoClient:
         subject_attributes: Optional[SubjectAttributes] = None,
         expected_variation_type: Optional[VariationType] = None,
     ) -> Optional[FlagEvaluation]:
-        """Maps a subject to a variation for a given experiment
-        Returns None if the subject is not part of the experiment sample.
+        """Maps a subject to a variation for a given flag
+        Returns None if the subject is not allocated in the flag
 
-        :param subject_key: an identifier of the experiment subject, for example a user ID.
-        :param flag_key: an experiment or feature flag identifier
+        :param subject_key: an identifier of the subject, for example a user ID.
+        :param flag_key: a feature flag identifier
         :param subject_attributes: optional attributes associated with the subject, for example name and email.
-        The subject attributes are used for evaluating any targeting rules tied to the experiment.
+        The subject attributes are used for evaluating any targeting rules tied
+        to the flag and logged in the logging callback.
         """
         validate_not_blank("subject_key", subject_key)
         validate_not_blank("flag_key", flag_key)
@@ -161,7 +162,9 @@ class EppoClient:
         flag = self.__config_requestor.get_configuration(flag_key)
 
         if flag is None:
-            logger.info("[Eppo SDK] No assigned variation. Flag not found: " + flag_key)
+            logger.warning(
+                "[Eppo SDK] No assigned variation. Flag not found: " + flag_key
+            )
             return None
 
         if not check_type_match(expected_variation_type, flag.variation_type):

@@ -29,11 +29,12 @@ class ExperimentConfigurationRequestor:
 
     def fetch_and_store_configurations(self) -> Dict[str, Flag]:
         try:
-            configs = cast(dict, self.__http_client.get(UFC_ENDPOINT).get("flags", {}))
-            for flag_key, flag_config in configs.items():
-                configs[flag_key] = Flag(**flag_config)
+            configs_dict = cast(
+                dict, self.__http_client.get(UFC_ENDPOINT).get("flags", {})
+            )
+            configs = {key: Flag(**config) for key, config in configs_dict.items()}
             self.__config_store.set_configurations(configs)
             return configs
         except Exception as e:
-            logger.error("Error retrieving assignment configurations: " + str(e))
+            logger.error("Error retrieving flag configurations: " + str(e))
             return {}

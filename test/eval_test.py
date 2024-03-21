@@ -11,7 +11,7 @@ from eppo_client.models import (
 )
 from eppo_client.eval import Evaluator, FlagEvaluation, is_in_shard_range, hash_key
 from eppo_client.rules import Condition, OperatorType, Rule
-from eppo_client.sharding import DeterministicSharder, MD5Sharder
+from eppo_client.sharders import DeterministicSharder, MD5Sharder
 
 VARIATION_A = Variation(key="a", value="A")
 VARIATION_B = Variation(key="b", value="B")
@@ -59,6 +59,9 @@ def test_matches_shard_full_range_split():
     evaluator = Evaluator(sharder=MD5Sharder())
     assert evaluator.matches_shard(shard, "subject_key", 100) is True
 
+    deterministic_evaluator = Evaluator(sharder=DeterministicSharder({"subject": 50}))
+    assert deterministic_evaluator.matches_shard(shard, "subject_key", 100) is True
+
 
 def test_matches_shard_no_match():
     shard = Shard(
@@ -86,6 +89,7 @@ def test_eval_empty_flag():
     evaluator = Evaluator(sharder=MD5Sharder())
     assert evaluator.evaluate_flag(empty_flag, "subject_key", {}) == FlagEvaluation(
         flag_key="empty",
+        variation_type=VariationType.STRING,
         subject_key="subject_key",
         subject_attributes={},
         allocation_key=None,

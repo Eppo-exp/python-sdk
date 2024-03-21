@@ -1,16 +1,17 @@
 from typing import Dict, Optional
-from eppo_client.sharding import Sharder
-from eppo_client.models import Flag, Range, Shard, Variation
+from eppo_client.sharders import Sharder
+from eppo_client.models import Flag, Range, Shard, Variation, VariationType
 from eppo_client.rules import matches_rule
 from dataclasses import dataclass
 import datetime
 
-from eppo_client.types import SubjectAttributes
+from eppo_client.types import SubjectAttributes, ValueType
 
 
 @dataclass
 class FlagEvaluation:
     flag_key: str
+    variation_type: VariationType
     subject_key: str
     subject_attributes: SubjectAttributes
     allocation_key: Optional[str]
@@ -30,7 +31,9 @@ class Evaluator:
         subject_attributes: SubjectAttributes,
     ) -> FlagEvaluation:
         if not flag.enabled:
-            return none_result(flag.key, subject_key, subject_attributes)
+            return none_result(
+                flag.key, flag.variation_type, subject_key, subject_attributes
+            )
 
         now = utcnow()
         for allocation in flag.allocations:
@@ -55,6 +58,7 @@ class Evaluator:
                     ):
                         return FlagEvaluation(
                             flag_key=flag.key,
+                            variation_type=flag.variation_type,
                             subject_key=subject_key,
                             subject_attributes=subject_attributes,
                             allocation_key=allocation.key,
@@ -64,9 +68,12 @@ class Evaluator:
                         )
 
         # No allocations matched, return the None result
-        return none_result(flag.key, subject_key, subject_attributes)
+        return none_result(
+            flag.key, flag.variation_type, subject_key, subject_attributes
+        )
 
     def matches_shard(self, shard: Shard, subject_key: str, total_shards: int) -> bool:
+        assert total_shards > 0, "Expect total_shards to be strictly positive"
         h = self.sharder.get_shard(hash_key(shard.salt, subject_key), total_shards)
         return any(is_in_shard_range(h, r) for r in shard.ranges)
 
@@ -80,10 +87,14 @@ def hash_key(salt: str, subject_key: str) -> str:
 
 
 def none_result(
-    flag_key: str, subject_key: str, subject_attributes: SubjectAttributes
+    flag_key: str,
+    variation_type: ValueType,
+    subject_key: str,
+    subject_attributes: SubjectAttributes,
 ) -> FlagEvaluation:
     return FlagEvaluation(
         flag_key=flag_key,
+        variation_type=variation_type,
         subject_key=subject_key,
         subject_attributes=subject_attributes,
         allocation_key=None,
