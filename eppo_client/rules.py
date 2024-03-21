@@ -46,12 +46,12 @@ def evaluate_condition(
             )
         elif condition.operator == OperatorType.ONE_OF:
             return isinstance(condition.value, list) and str(subject_value).lower() in [
-                value.lower() for value in condition.value
+                str(value).lower() for value in condition.value
             ]
         elif condition.operator == OperatorType.NOT_ONE_OF:
             return isinstance(condition.value, list) and str(
                 subject_value
-            ).lower() not in [value.lower() for value in condition.value]
+            ).lower() not in [str(value).lower() for value in condition.value]
         else:
             # Numeric operator: value could be numeric or semver.
             if isinstance(subject_value, numbers.Number):

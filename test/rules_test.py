@@ -198,6 +198,27 @@ def test_evaluate_condition_semver():
     )
 
 
+def test_evaluate_condition_one_of_int():
+    one_of_condition_int = Condition(
+        operator=OperatorType.ONE_OF, value=[10, 20, 30], attribute="number"
+    )
+    assert evaluate_condition(one_of_condition_int, {"number": 20})
+    assert not evaluate_condition(one_of_condition_int, {"number": 40})
+    assert not evaluate_condition(one_of_condition_int, {})
+
+
+def test_evaluate_condition_one_of_boolean():
+    one_of_condition_boolean = Condition(
+        operator=OperatorType.ONE_OF, value=[True, False], attribute="status"
+    )
+    assert evaluate_condition(one_of_condition_boolean, {"status": False})
+    assert evaluate_condition(one_of_condition_boolean, {"status": "False"})
+    assert not evaluate_condition(one_of_condition_boolean, {"status": "Maybe"})
+    assert not evaluate_condition(one_of_condition_boolean, {"status": 0})
+    assert not evaluate_condition(one_of_condition_boolean, {"status": 1})
+    assert not evaluate_condition(one_of_condition_boolean, {})
+
+
 def test_one_of_operator_with_number():
     one_of_condition = Condition(
         operator=OperatorType.ONE_OF, value=["14", "15.11"], attribute="number"
