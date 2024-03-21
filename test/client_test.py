@@ -144,7 +144,11 @@ def test_with_null_experiment_config(mock_config_requestor):
     client = EppoClient(
         config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
     )
-    assert client.get_assignment("user-1", "flag-key-1") is None
+    assert client.get_string_assignment("user-1", "flag-key-1") is None
+    assert (
+        client.get_string_assignment("user-1", "flag-key-1", default="hello world")
+        == "hello world"
+    )
 
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
@@ -158,9 +162,9 @@ def test_graceful_mode_on(get_assignment_detail, mock_config_requestor):
         is_graceful_mode=True,
     )
 
-    assert client.get_assignment("user-1", "experiment-key-1") is None
+    assert client.get_assignment_variation("user-1", "experiment-key-1") is None
     assert client.get_boolean_assignment("user-1", "experiment-key-1", default=True)
-    assert client.get_float_assignment("user-1", "experiment-key-1") is None
+    assert client.get_numeric_assignment("user-1", "experiment-key-1") is None
     assert (
         client.get_string_assignment("user-1", "experiment-key-1", default="control")
         == "control"
@@ -180,7 +184,6 @@ def test_graceful_mode_off(mock_get_assignment_detail, mock_config_requestor):
     )
 
     with pytest.raises(Exception):
-        client.get_assignment("user-1", "experiment-key-1")
         client.get_boolean_assignment("user-1", "experiment-key-1")
         client.get_numeric_assignment("user-1", "experiment-key-1")
         client.get_string_assignment("user-1", "experiment-key-1")
@@ -200,7 +203,7 @@ def test_assign_subject_in_sample(test_case):
     get_typed_assignment = {
         "string": client.get_string_assignment,
         "integer": client.get_integer_assignment,
-        "float": client.get_float_assignment,
+        "float": client.get_numeric_assignment,
         "boolean": client.get_boolean_assignment,
         "json": client.get_parsed_json_assignment,
     }[test_case["variationType"]]
@@ -231,7 +234,7 @@ def test_get_numeric_assignment_on_bool_feature_flag_should_return_none(test_cas
     client = get_instance()
     if test_case["variationType"] == "boolean":
         assignments = get_assignments(
-            test_case=test_case, get_assignment_fn=client.get_float_assignment
+            test_case=test_case, get_assignment_fn=client.get_numeric_assignment
         )
         for _, assigned_variation in assignments:
             assert assigned_variation is None

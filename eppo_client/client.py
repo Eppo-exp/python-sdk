@@ -67,7 +67,7 @@ class EppoClient:
             default=default,
         )
 
-    def get_float_assignment(
+    def get_numeric_assignment(
         self,
         subject_key: str,
         flag_key: str,
@@ -78,22 +78,7 @@ class EppoClient:
             subject_key,
             flag_key,
             subject_attributes,
-            VariationType.FLOAT,
-            default=default,
-        )
-
-    @deprecated("get_numeric_assignment is deprecated in favor of get_float_assignment")
-    def get_numeric_assignment(
-        self,
-        subject_key: str,
-        flag_key: str,
-        subject_attributes: Optional[SubjectAttributes] = None,
-        default=None,
-    ) -> Optional[float]:
-        return self.get_float_assignment(
-            subject_key,
-            flag_key,
-            subject_attributes,
+            VariationType.NUMERIC,
             default=default,
         )
 
@@ -129,20 +114,6 @@ class EppoClient:
         if variation_jsons is None:
             return None
         return json.loads(variation_jsons)
-
-    @deprecated(
-        "get_assignment is deprecated in favor of the typed get_<type>_assignment methods"
-    )
-    def get_assignment(
-        self,
-        subject_key: str,
-        flag_key: str,
-        subject_attributes: Optional[SubjectAttributes] = None,
-        default=None,
-    ) -> Optional[str]:
-        return self.get_assignment_variation(
-            subject_key, flag_key, subject_attributes, default=default
-        )
 
     def get_assignment_variation(
         self,

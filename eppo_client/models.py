@@ -11,7 +11,7 @@ from eppo_client.types import ValueType
 class VariationType(Enum):
     STRING = "string"
     INTEGER = "integer"
-    FLOAT = "float"
+    NUMERIC = "numeric"
     BOOLEAN = "boolean"
     JSON = "json"
 
