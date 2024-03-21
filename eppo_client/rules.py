@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any, List
 
 from eppo_client.models import SdkBaseModel
-from eppo_client.types import AttributeType, ConditionValueType, SubjectAttributes
+from eppo_client.types import ConditionValueType, SubjectAttributes
 
 
 class OperatorType(Enum):
@@ -41,15 +41,17 @@ def evaluate_condition(
     subject_value = subject_attributes.get(condition.attribute, None)
     if subject_value is not None:
         if condition.operator == OperatorType.MATCHES:
-            return bool(re.match(condition.value, str(subject_value)))
+            return isinstance(condition.value, str) and bool(
+                re.match(condition.value, str(subject_value))
+            )
         elif condition.operator == OperatorType.ONE_OF:
-            return str(subject_value).lower() in [
+            return isinstance(condition.value, list) and str(subject_value).lower() in [
                 value.lower() for value in condition.value
             ]
         elif condition.operator == OperatorType.NOT_ONE_OF:
-            return str(subject_value).lower() not in [
-                value.lower() for value in condition.value
-            ]
+            return isinstance(condition.value, list) and str(
+                subject_value
+            ).lower() not in [value.lower() for value in condition.value]
         else:
             # Numeric operator: value could be numeric or semver.
             if isinstance(subject_value, numbers.Number):
@@ -61,20 +63,26 @@ def evaluate_condition(
     return False
 
 
-def evaluate_numeric_condition(subject_value: numbers.Number, condition: Condition):
-    if condition.operator == OperatorType.GT:
-        return subject_value > condition.value
+def evaluate_numeric_condition(
+    subject_value: numbers.Number, condition: Condition
+) -> bool:
+    if not isinstance(condition.value, numbers.Number):
+        # this ensures we are comparing numbers to numbers below
+        # but mypy is not smart enough to tell, so we ignore types below
+        return False
+    elif condition.operator == OperatorType.GT:
+        return subject_value > condition.value  # type: ignore
     elif condition.operator == OperatorType.GTE:
-        return subject_value >= condition.value
+        return subject_value >= condition.value  # type: ignore
     elif condition.operator == OperatorType.LT:
-        return subject_value < condition.value
+        return subject_value < condition.value  # type: ignore
     elif condition.operator == OperatorType.LTE:
-        return subject_value <= condition.value
+        return subject_value <= condition.value  # type: ignore
 
     return False
 
 
-def is_valid_semver(value: str):
+def is_valid_semver(value: str) -> bool:
     try:
         # Parse the string. If it's a valid semver, it will return without errors.
         semver.VersionInfo.parse(value)
@@ -84,7 +92,9 @@ def is_valid_semver(value: str):
         return False
 
 
-def compare_semver(attribute_value: Any, condition_value: Any, operator: OperatorType):
+def compare_semver(
+    attribute_value: Any, condition_value: Any, operator: OperatorType
+) -> bool:
     if not is_valid_semver(attribute_value) or not is_valid_semver(condition_value):
         return False
 

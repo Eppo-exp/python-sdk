@@ -2,7 +2,6 @@ import datetime
 import logging
 import json
 from typing import Any, Dict, Optional
-from typing_extensions import deprecated
 from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationRequestor,
