@@ -1,7 +1,7 @@
 import datetime
 import logging
 import json
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 from typing_extensions import deprecated
 from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.configuration_requestor import (
@@ -11,14 +11,12 @@ from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
 from eppo_client.models import VariationType
 from eppo_client.poller import Poller
 from eppo_client.sharding import MD5Sharder
+from eppo_client.types import SubjectAttributes
 from eppo_client.validation import validate_not_blank
 from eppo_client.eval import FlagEvaluation, Evaluator
 
 
 logger = logging.getLogger(__name__)
-
-AttributeValue = Union[str, float, int, bool]
-SubjectAttributes = Dict[str, AttributeValue]
 
 
 class EppoClient:

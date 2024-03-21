@@ -2,9 +2,10 @@ import numbers
 import re
 import semver
 from enum import Enum
-from typing import Any, List, Dict, Union
+from typing import Any, List
 
 from eppo_client.models import SdkBaseModel
+from eppo_client.types import AttributeType, ConditionValueType, SubjectAttributes
 
 
 class OperatorType(Enum):
@@ -20,16 +21,14 @@ class OperatorType(Enum):
 class Condition(SdkBaseModel):
     operator: OperatorType
     attribute: Any
-    value: Any = None
+    value: ConditionValueType
 
 
 class Rule(SdkBaseModel):
     conditions: List[Condition]
 
 
-def matches_rule(
-    rule: Rule, subject_attributes: Dict[str, Union[str, float, int, bool]]
-) -> bool:
+def matches_rule(rule: Rule, subject_attributes: SubjectAttributes) -> bool:
     return all(
         evaluate_condition(condition, subject_attributes)
         for condition in rule.conditions
@@ -37,7 +36,7 @@ def matches_rule(
 
 
 def evaluate_condition(
-    condition: Condition, subject_attributes: Dict[str, Union[str, float, int, bool]]
+    condition: Condition, subject_attributes: SubjectAttributes
 ) -> bool:
     subject_value = subject_attributes.get(condition.attribute, None)
     if subject_value is not None:

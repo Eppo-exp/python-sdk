@@ -1,10 +1,11 @@
 from datetime import datetime
 from enum import Enum
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 from eppo_client.base_model import SdkBaseModel
 from eppo_client.rules import Rule
+from eppo_client.types import ValueType
 
 
 class VariationType(Enum):
@@ -13,9 +14,6 @@ class VariationType(Enum):
     FLOAT = "float"
     BOOLEAN = "boolean"
     JSON = "json"
-
-
-ValueType = Union[str, int, float, bool]
 
 
 class Variation(SdkBaseModel):
