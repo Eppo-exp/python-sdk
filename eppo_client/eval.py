@@ -88,7 +88,7 @@ def hash_key(salt: str, subject_key: str) -> str:
 
 def none_result(
     flag_key: str,
-    variation_type: ValueType,
+    variation_type: VariationType,
     subject_key: str,
     subject_attributes: SubjectAttributes,
 ) -> FlagEvaluation:
