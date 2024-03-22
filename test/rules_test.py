@@ -143,6 +143,27 @@ def test_evaluate_condition_matches():
     )
 
 
+def test_evaluate_condition_not_matches():
+    assert not evaluate_condition(
+        Condition(
+            operator=OperatorType.NOT_MATCHES, value="^test.*", attribute="email"
+        ),
+        {"email": "test@example.com"},
+    )
+    assert not evaluate_condition(
+        Condition(
+            operator=OperatorType.NOT_MATCHES, value="^test.*", attribute="email"
+        ),
+        {},
+    )
+    assert evaluate_condition(
+        Condition(
+            operator=OperatorType.NOT_MATCHES, value="^test.*", attribute="email"
+        ),
+        {"email": "example@test.com"},
+    )
+
+
 def test_evaluate_condition_gte():
     assert evaluate_condition(
         Condition(operator=OperatorType.GTE, value=18, attribute="age"),

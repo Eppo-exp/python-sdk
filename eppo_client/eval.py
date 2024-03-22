@@ -5,7 +5,7 @@ from eppo_client.rules import matches_rule
 from dataclasses import dataclass
 import datetime
 
-from eppo_client.types import SubjectAttributes, ValueType
+from eppo_client.types import SubjectAttributes
 
 
 @dataclass

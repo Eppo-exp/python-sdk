@@ -10,6 +10,7 @@ from eppo_client.types import ConditionValueType, SubjectAttributes
 
 class OperatorType(Enum):
     MATCHES = "MATCHES"
+    NOT_MATCHES = "NOT_MATCHES"
     GTE = "GTE"
     GT = "GT"
     LTE = "LTE"
@@ -42,6 +43,10 @@ def evaluate_condition(
     if subject_value is not None:
         if condition.operator == OperatorType.MATCHES:
             return isinstance(condition.value, str) and bool(
+                re.match(condition.value, str(subject_value))
+            )
+        if condition.operator == OperatorType.NOT_MATCHES:
+            return isinstance(condition.value, str) and not bool(
                 re.match(condition.value, str(subject_value))
             )
         elif condition.operator == OperatorType.ONE_OF:
