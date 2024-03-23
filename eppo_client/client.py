@@ -57,7 +57,7 @@ class EppoClient:
         flag_key: str,
         subject_attributes: Optional[SubjectAttributes] = None,
         default=None,
-    ) -> Optional[float]:
+    ) -> Optional[int]:
         return self.get_assignment_variation(
             subject_key,
             flag_key,
