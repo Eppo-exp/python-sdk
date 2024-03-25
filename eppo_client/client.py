@@ -10,7 +10,7 @@ from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
 from eppo_client.models import VariationType
 from eppo_client.poller import Poller
 from eppo_client.sharders import MD5Sharder
-from eppo_client.types import SubjectAttributes
+from eppo_client.types import SubjectAttributes, ValueType
 from eppo_client.validation import validate_not_blank
 from eppo_client.eval import FlagEvaluation, Evaluator
 
@@ -41,7 +41,7 @@ class EppoClient:
         subject_key: str,
         flag_key: str,
         subject_attributes: Optional[SubjectAttributes] = None,
-        default=None,
+        default: Optional[str] = None,
     ) -> Optional[str]:
         return self.get_assignment_variation(
             subject_key,
@@ -56,7 +56,7 @@ class EppoClient:
         subject_key: str,
         flag_key: str,
         subject_attributes: Optional[SubjectAttributes] = None,
-        default=None,
+        default: Optional[int] = None,
     ) -> Optional[int]:
         return self.get_assignment_variation(
             subject_key,
@@ -71,7 +71,7 @@ class EppoClient:
         subject_key: str,
         flag_key: str,
         subject_attributes: Optional[SubjectAttributes] = None,
-        default=None,
+        default: Optional[float] = None,
     ) -> Optional[float]:
         return self.get_assignment_variation(
             subject_key,
@@ -86,7 +86,7 @@ class EppoClient:
         subject_key: str,
         flag_key: str,
         subject_attributes: Optional[SubjectAttributes] = None,
-        default=None,
+        default: Optional[bool] = None,
     ) -> Optional[bool]:
         return self.get_assignment_variation(
             subject_key,
@@ -101,17 +101,17 @@ class EppoClient:
         subject_key: str,
         flag_key: str,
         subject_attributes: Optional[SubjectAttributes] = None,
-        default=None,
+        default: Optional[Dict[Any, Any]] = None,
     ) -> Optional[Dict[Any, Any]]:
         variation_json_string = self.get_assignment_variation(
             subject_key,
             flag_key,
             subject_attributes,
             VariationType.JSON,
-            default=default,
+            default=None,
         )
         if variation_json_string is None:
-            return None
+            return default
         return json.loads(variation_json_string)
 
     def get_assignment_variation(
@@ -120,7 +120,7 @@ class EppoClient:
         flag_key: str,
         subject_attributes: Optional[SubjectAttributes] = None,
         expected_variation_type: Optional[VariationType] = None,
-        default=None,
+        default: Optional[ValueType] = None,
     ):
         try:
             result = self.get_assignment_detail(
