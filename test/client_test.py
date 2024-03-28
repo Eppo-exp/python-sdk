@@ -203,7 +203,7 @@ def test_assign_subject_in_sample(test_case):
     get_typed_assignment = {
         "string": client.get_string_assignment,
         "integer": client.get_integer_assignment,
-        "float": client.get_numeric_assignment,
+        "numeric": client.get_numeric_assignment,
         "boolean": client.get_boolean_assignment,
         "json": client.get_parsed_json_assignment,
     }[test_case["variationType"]]
