@@ -27,3 +27,6 @@ class ConfigurationStore(Generic[T]):
                 self.__cache[key] = config
         finally:
             self.__lock.release_write()
+
+    def get_keys(self):
+        return list(self.__cache.keys())
