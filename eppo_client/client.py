@@ -40,75 +40,75 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
+        default: str,
         subject_attributes: Optional[SubjectAttributes] = None,
-        default: Optional[str] = None,
-    ) -> Optional[str]:
+    ) -> str:
         return self.get_assignment_variation(
             subject_key,
             flag_key,
+            default,
             subject_attributes,
             VariationType.STRING,
-            default=default,
         )
 
     def get_integer_assignment(
         self,
         subject_key: str,
         flag_key: str,
+        default: int,
         subject_attributes: Optional[SubjectAttributes] = None,
-        default: Optional[int] = None,
-    ) -> Optional[int]:
+    ) -> int:
         return self.get_assignment_variation(
             subject_key,
             flag_key,
+            default,
             subject_attributes,
             VariationType.INTEGER,
-            default=default,
         )
 
     def get_numeric_assignment(
         self,
         subject_key: str,
         flag_key: str,
+        default: float,
         subject_attributes: Optional[SubjectAttributes] = None,
-        default: Optional[float] = None,
-    ) -> Optional[float]:
+    ) -> float:
         return self.get_assignment_variation(
             subject_key,
             flag_key,
+            default,
             subject_attributes,
             VariationType.NUMERIC,
-            default=default,
         )
 
     def get_boolean_assignment(
         self,
         subject_key: str,
         flag_key: str,
+        default: bool,
         subject_attributes: Optional[SubjectAttributes] = None,
-        default: Optional[bool] = None,
-    ) -> Optional[bool]:
+    ) -> bool:
         return self.get_assignment_variation(
             subject_key,
             flag_key,
+            default,
             subject_attributes,
             VariationType.BOOLEAN,
-            default=default,
         )
 
-    def get_parsed_json_assignment(
+    def get_json_assignment(
         self,
         subject_key: str,
         flag_key: str,
+        default: Dict[Any, Any],
         subject_attributes: Optional[SubjectAttributes] = None,
-        default: Optional[Dict[Any, Any]] = None,
-    ) -> Optional[Dict[Any, Any]]:
+    ) -> Dict[Any, Any]:
         variation_json_string = self.get_assignment_variation(
             subject_key,
             flag_key,
+            None,
             subject_attributes,
             VariationType.JSON,
-            default=None,
         )
         if variation_json_string is None:
             return default
@@ -118,9 +118,9 @@ class EppoClient:
         self,
         subject_key: str,
         flag_key: str,
+        default: Optional[ValueType] = None,
         subject_attributes: Optional[SubjectAttributes] = None,
         expected_variation_type: Optional[VariationType] = None,
-        default: Optional[ValueType] = None,
     ):
         try:
             result = self.get_assignment_detail(

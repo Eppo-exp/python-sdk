@@ -61,7 +61,7 @@ def test_assign_blank_flag_key(mock_config_requestor):
         config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
     )
     with pytest.raises(Exception) as exc_info:
-        client.get_string_assignment("subject-1", "")
+        client.get_string_assignment("subject-1", "", "default value")
     assert exc_info.value.args[0] == "Invalid value for flag_key: cannot be blank"
 
 
@@ -71,7 +71,7 @@ def test_assign_blank_subject(mock_config_requestor):
         config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
     )
     with pytest.raises(Exception) as exc_info:
-        client.get_string_assignment("", "experiment-1")
+        client.get_string_assignment("", "experiment-1", "default value")
     assert exc_info.value.args[0] == "Invalid value for subject_key: cannot be blank"
 
 
@@ -102,7 +102,9 @@ def test_log_assignment(mock_config_requestor, mock_logger):
     client = EppoClient(
         config_requestor=mock_config_requestor, assignment_logger=mock_logger
     )
-    assert client.get_string_assignment("user-1", "flag-key") == "control"
+    assert (
+        client.get_string_assignment("user-1", "flag-key", "default value") == "control"
+    )
     assert mock_logger.log_assignment.call_count == 1
 
 
@@ -135,7 +137,9 @@ def test_get_assignment_handles_logging_exception(mock_config_requestor, mock_lo
     client = EppoClient(
         config_requestor=mock_config_requestor, assignment_logger=mock_logger
     )
-    assert client.get_string_assignment("user-1", "flag-key") == "control"
+    assert (
+        client.get_string_assignment("user-1", "flag-key", "default value") == "control"
+    )
 
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
@@ -144,7 +148,10 @@ def test_with_null_experiment_config(mock_config_requestor):
     client = EppoClient(
         config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
     )
-    assert client.get_string_assignment("user-1", "flag-key-1") is None
+    assert (
+        client.get_string_assignment("user-1", "flag-key-1", "default value")
+        == "default value"
+    )
     assert (
         client.get_string_assignment("user-1", "flag-key-1", default="hello world")
         == "hello world"
@@ -162,14 +169,19 @@ def test_graceful_mode_on(get_assignment_detail, mock_config_requestor):
         is_graceful_mode=True,
     )
 
-    assert client.get_assignment_variation("user-1", "experiment-key-1") is None
+    assert (
+        client.get_assignment_variation("user-1", "experiment-key-1", "default")
+        == "default"
+    )
     assert client.get_boolean_assignment("user-1", "experiment-key-1", default=True)
-    assert client.get_numeric_assignment("user-1", "experiment-key-1") is None
+    assert client.get_numeric_assignment("user-1", "experiment-key-1", 1.0) == 1.0
     assert (
         client.get_string_assignment("user-1", "experiment-key-1", default="control")
         == "control"
     )
-    assert client.get_parsed_json_assignment("user-1", "experiment-key-1") is None
+    assert client.get_json_assignment(
+        "user-1", "experiment-key-1", {"hello": "world"}
+    ) == {"hello": "world"}
 
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
@@ -184,10 +196,11 @@ def test_graceful_mode_off(mock_get_assignment_detail, mock_config_requestor):
     )
 
     with pytest.raises(Exception):
-        client.get_boolean_assignment("user-1", "experiment-key-1")
-        client.get_numeric_assignment("user-1", "experiment-key-1")
-        client.get_string_assignment("user-1", "experiment-key-1")
-        client.get_parsed_json_assignment("user-1", "experiment-key-1")
+        client.get_boolean_assignment("user-1", "experiment-key-1", True)
+        client.get_numeric_assignment("user-1", "experiment-key-1", 0.0)
+        client.get_integer_assignment("user-1", "experiment-key-1", 1)
+        client.get_string_assignment("user-1", "experiment-key-1", "default value")
+        client.get_json_assignment("user-1", "experiment-key-1", {"hello": "world"})
 
 
 def test_client_has_flags():
@@ -201,11 +214,11 @@ def test_assign_subject_in_sample(test_case):
     print("---- Test case for {} Experiment".format(test_case["flag"]))
 
     get_typed_assignment = {
-        "string": client.get_string_assignment,
-        "integer": client.get_integer_assignment,
-        "numeric": client.get_numeric_assignment,
-        "boolean": client.get_boolean_assignment,
-        "json": client.get_parsed_json_assignment,
+        "STRING": client.get_string_assignment,
+        "INTEGER": client.get_integer_assignment,
+        "NUMERIC": client.get_numeric_assignment,
+        "BOOLEAN": client.get_boolean_assignment,
+        "JSON": client.get_json_assignment,
     }[test_case["variationType"]]
 
     assignments = get_assignments(test_case, get_typed_assignment)
@@ -223,7 +236,10 @@ def get_assignments(test_case, get_assignment_fn):
     assignments = []
     for subject in test_case.get("subjects", []):
         variation = get_assignment_fn(
-            subject["subjectKey"], test_case["flag"], subject["subjectAttributes"]
+            subject["subjectKey"],
+            test_case["flag"],
+            test_case["defaultValue"],
+            subject["subjectAttributes"],
         )
         assignments.append((subject, variation))
     return assignments

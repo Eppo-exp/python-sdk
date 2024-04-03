@@ -9,11 +9,11 @@ from eppo_client.types import ValueType
 
 
 class VariationType(Enum):
-    STRING = "string"
-    INTEGER = "integer"
-    NUMERIC = "numeric"
-    BOOLEAN = "boolean"
-    JSON = "json"
+    STRING = "STRING"
+    INTEGER = "INTEGER"
+    NUMERIC = "NUMERIC"
+    BOOLEAN = "BOOLEAN"
+    JSON = "JSON"
 
 
 class Variation(SdkBaseModel):
