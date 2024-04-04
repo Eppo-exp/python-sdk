@@ -55,6 +55,11 @@ def init_fixture():
         httpretty.disable()
 
 
+def test_is_initialized():
+    client = get_instance()
+    assert client.is_initialized()
+
+
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
 def test_assign_blank_flag_key(mock_config_requestor):
     client = EppoClient(

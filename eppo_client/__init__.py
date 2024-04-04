@@ -9,8 +9,8 @@ from eppo_client.constants import MAX_CACHE_ENTRIES
 from eppo_client.http_client import HttpClient, SdkParams
 from eppo_client.models import Flag
 from eppo_client.read_write_lock import ReadWriteLock
+from eppo_client.version import __version__
 
-__version__ = "3.0.0"
 
 __client: Optional[EppoClient] = None
 __lock = ReadWriteLock()

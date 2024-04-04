@@ -13,6 +13,7 @@ from eppo_client.sharders import MD5Sharder
 from eppo_client.types import SubjectAttributes, ValueType
 from eppo_client.validation import validate_not_blank
 from eppo_client.eval import FlagEvaluation, Evaluator
+from eppo_client.version import __version__
 
 
 logger = logging.getLogger(__name__)
@@ -190,6 +191,7 @@ class EppoClient:
             "subject": subject_key,
             "timestamp": datetime.datetime.utcnow().isoformat(),
             "subjectAttributes": subject_attributes,
+            "metaData": {"sdkLanguage": "python", "sdkVersion": __version__},
         }
         try:
             if result and result.do_log:
@@ -206,6 +208,13 @@ class EppoClient:
         Note that it is generally not a good idea to pre-load all flag configurations.
         """
         return self.__config_requestor.get_flag_keys()
+
+    def is_initialized(self):
+        """
+        Returns True if the client has successfully initialized
+        the flag configuration and is ready to serve requests.
+        """
+        return self.__config_requestor.is_initialized()
 
     def _shutdown(self):
         """Stops all background processes used by the client
