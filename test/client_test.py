@@ -5,7 +5,7 @@ from unittest.mock import patch
 import httpretty  # type: ignore
 import pytest
 from eppo_client.assignment_logger import AssignmentLogger
-from eppo_client.client import EppoClient, check_type_match
+from eppo_client.client import EppoClient, check_type_match, check_value_type_match
 from eppo_client.config import Config
 from eppo_client.models import (
     Allocation,
@@ -270,3 +270,16 @@ def test_get_numeric_assignment_on_bool_feature_flag_should_return_none(test_cas
 def test_check_type_match():
     assert check_type_match(VariationType.STRING, VariationType.STRING)
     assert check_type_match(None, VariationType.STRING)
+
+
+def test_check_value_type_match():
+    assert check_value_type_match(VariationType.STRING, "hello")
+    assert check_value_type_match(VariationType.INTEGER, 1)
+    assert check_value_type_match(VariationType.NUMERIC, 1.0)
+    assert check_value_type_match(VariationType.NUMERIC, 1)
+    assert check_value_type_match(VariationType.BOOLEAN, True)
+    assert check_value_type_match(VariationType.JSON, '{"hello": "world"}')
+
+    assert not check_type_match(VariationType.STRING, 1)
+    assert not check_type_match(VariationType.INTEGER, 1.0)
+    assert not check_type_match(VariationType.BOOLEAN, "true")

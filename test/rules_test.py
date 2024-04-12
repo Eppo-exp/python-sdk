@@ -255,3 +255,21 @@ def test_one_of_operator_with_number():
     assert not evaluate_condition(not_one_of_condition, {"number": 10})
     assert evaluate_condition(not_one_of_condition, {"number": "11"})
     assert evaluate_condition(not_one_of_condition, {"number": 11})
+
+
+def test_is_null_operator():
+    is_null_condition = Condition(
+        operator=OperatorType.IS_NULL, value=True, attribute="size"
+    )
+    assert evaluate_condition(is_null_condition, {"size": None})
+    assert not evaluate_condition(is_null_condition, {"size": 10})
+    assert evaluate_condition(is_null_condition, {})
+
+
+def test_is_not_null_operator():
+    is_not_null_condition = Condition(
+        operator=OperatorType.IS_NULL, value=False, attribute="size"
+    )
+    assert not evaluate_condition(is_not_null_condition, {"size": None})
+    assert evaluate_condition(is_not_null_condition, {"size": 10})
+    assert not evaluate_condition(is_not_null_condition, {})

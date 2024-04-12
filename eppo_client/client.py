@@ -74,12 +74,15 @@ class EppoClient:
         default: float,
         subject_attributes: Optional[SubjectAttributes] = None,
     ) -> float:
-        return self.get_assignment_variation(
-            subject_key,
-            flag_key,
-            default,
-            subject_attributes,
-            VariationType.NUMERIC,
+        # convert to float in case we get an int
+        return float(
+            self.get_assignment_variation(
+                subject_key,
+                flag_key,
+                default,
+                subject_attributes,
+                VariationType.NUMERIC,
+            )
         )
 
     def get_boolean_assignment(
@@ -182,6 +185,12 @@ class EppoClient:
 
         result = self.__evaluator.evaluate_flag(flag, subject_key, subject_attributes)
 
+        if not check_value_type_match(expected_variation_type, result.variation.value):
+            logger.error(
+                f"[Eppo SDK] Variation value does not have the correct type for the flag: {flag_key} and variation key {result.variation.key}"
+            )
+            return None
+
         assignment_event = {
             **(result.extra_logging if result else {}),
             "allocation": result.allocation_key if result else None,
@@ -227,3 +236,20 @@ def check_type_match(
     expected_type: Optional[VariationType], actual_type: VariationType
 ):
     return expected_type is None or actual_type == expected_type
+
+
+def check_value_type_match(
+    expected_type: Optional[VariationType], value: ValueType
+) -> bool:
+    if expected_type is None:
+        return True
+    if expected_type in [VariationType.JSON, VariationType.STRING]:
+        return isinstance(value, str)
+    if expected_type == VariationType.INTEGER:
+        return isinstance(value, int)
+    if expected_type == VariationType.NUMERIC:
+        # we can convert int to float
+        return isinstance(value, float) or isinstance(value, int)
+    if expected_type == VariationType.BOOLEAN:
+        return isinstance(value, bool)
+    return False
