@@ -185,9 +185,12 @@ class EppoClient:
 
         result = self.__evaluator.evaluate_flag(flag, subject_key, subject_attributes)
 
-        if not check_value_type_match(expected_variation_type, result.variation.value):
+        if result.variation and not check_value_type_match(
+            expected_variation_type, result.variation.value
+        ):
             logger.error(
-                f"[Eppo SDK] Variation value does not have the correct type for the flag: {flag_key} and variation key {result.variation.key}"
+                "[Eppo SDK] Variation value does not have the correct type for the flag: "
+                f"{flag_key} and variation key {result.variation.key}"
             )
             return None
 
