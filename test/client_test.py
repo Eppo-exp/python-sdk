@@ -39,7 +39,7 @@ def init_fixture():
     with open(CONFIG_FILE) as mock_ufc_response:
         httpretty.register_uri(
             httpretty.GET,
-            MOCK_BASE_URL + "/flag_config/v1/config",
+            MOCK_BASE_URL + "/flag-config/v1/config",
             body=json.dumps(json.load(mock_ufc_response)),
         )
         client = init(

@@ -7,7 +7,7 @@ from eppo_client.models import Flag
 logger = logging.getLogger(__name__)
 
 
-UFC_ENDPOINT = "/flag_config/v1/config"
+UFC_ENDPOINT = "/flag-config/v1/config"
 
 
 class ExperimentConfigurationRequestor:
