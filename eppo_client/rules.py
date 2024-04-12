@@ -17,6 +17,7 @@ class OperatorType(Enum):
     LT = "LT"
     ONE_OF = "ONE_OF"
     NOT_ONE_OF = "NOT_ONE_OF"
+    IS_NULL = "IS_NULL"
 
 
 class Condition(SdkBaseModel):
@@ -40,6 +41,11 @@ def evaluate_condition(
     condition: Condition, subject_attributes: SubjectAttributes
 ) -> bool:
     subject_value = subject_attributes.get(condition.attribute, None)
+    if condition.operator == OperatorType.IS_NULL:
+        if condition.value:
+            return subject_value is None
+        return subject_value is not None
+
     if subject_value is not None:
         if condition.operator == OperatorType.MATCHES:
             return isinstance(condition.value, str) and bool(

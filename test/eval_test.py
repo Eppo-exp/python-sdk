@@ -9,7 +9,13 @@ from eppo_client.models import (
     Split,
     Shard,
 )
-from eppo_client.eval import Evaluator, FlagEvaluation, is_in_shard_range, hash_key
+from eppo_client.eval import (
+    Evaluator,
+    FlagEvaluation,
+    is_in_shard_range,
+    hash_key,
+    matches_rules,
+)
 from eppo_client.rules import Condition, OperatorType, Rule
 from eppo_client.sharders import DeterministicSharder, MD5Sharder
 
@@ -422,6 +428,46 @@ def test_eval_after_alloc(mocker):
     assert result.flag_key == "flag"
     assert result.allocation_key is None
     assert result.variation is None
+
+
+def test_matches_rules_empty():
+    rules = []
+    subject_attributes = {"size": 10}
+    assert matches_rules(rules, subject_attributes)
+
+
+def test_matches_rules_with_conditions():
+    rules = [
+        Rule(
+            conditions=[
+                Condition(attribute="size", operator=OperatorType.IS_NULL, value=True)
+            ]
+        ),
+        Rule(
+            conditions=[
+                Condition(
+                    attribute="country", operator=OperatorType.ONE_OF, value=["UK"]
+                )
+            ]
+        ),
+    ]
+    subject_attributes_1 = {"size": None, "country": "US"}
+    subject_attributes_2 = {"size": 10, "country": "UK"}
+    subject_attributes_3 = {"size": 5, "country": "US"}
+    subject_attributes_4 = {"country": "US"}
+
+    assert (
+        matches_rules(rules, subject_attributes_1) is True
+    ), f"{subject_attributes_1} should match first rule"
+    assert (
+        matches_rules(rules, subject_attributes_2) is True
+    ), f"{subject_attributes_2} should match second rule"
+    assert (
+        matches_rules(rules, subject_attributes_3) is False
+    ), f"{subject_attributes_3} should not match any rule"
+    assert (
+        matches_rules(rules, subject_attributes_4) is True
+    ), f"{subject_attributes_4} should match first rule"
 
 
 def test_seed():

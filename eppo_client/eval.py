@@ -43,12 +43,8 @@ class Evaluator:
             if allocation.end_at and now > allocation.end_at:
                 continue
 
-            # Skip allocations when none of the rules match
-            # So we look for (rule 1) OR (rule 2) OR (rule 3) etc.
-            # If there are no rules, then we always match
-            if not allocation.rules or any(
-                matches_rule(rule, {"id": subject_key, **subject_attributes})
-                for rule in allocation.rules
+            if matches_rules(
+                allocation.rules, {"id": subject_key, **subject_attributes}
             ):
                 for split in allocation.splits:
                     # Split needs to match all shards
@@ -84,6 +80,13 @@ def is_in_shard_range(shard: int, range: Range) -> bool:
 
 def hash_key(salt: str, subject_key: str) -> str:
     return f"{salt}-{subject_key}"
+
+
+def matches_rules(rules, subject_attributes):
+    # Skip allocations when none of the rules match
+    # So we look for (rule 1) OR (rule 2) OR (rule 3) etc.
+    # If there are no rules, then we always match
+    return not rules or any(matches_rule(rule, subject_attributes) for rule in rules)
 
 
 def none_result(
