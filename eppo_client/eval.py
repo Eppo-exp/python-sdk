@@ -108,4 +108,4 @@ def none_result(
 
 
 def utcnow() -> datetime.datetime:
-    return datetime.datetime.utcnow()
+    return datetime.datetime.now(datetime.timezone.utc)

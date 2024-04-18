@@ -66,7 +66,7 @@ def test_assign_blank_flag_key(mock_config_requestor):
         config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
     )
     with pytest.raises(Exception) as exc_info:
-        client.get_string_assignment("subject-1", "", "default value")
+        client.get_string_assignment("", "subject-1", {}, "default value")
     assert exc_info.value.args[0] == "Invalid value for flag_key: cannot be blank"
 
 
@@ -76,7 +76,7 @@ def test_assign_blank_subject(mock_config_requestor):
         config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
     )
     with pytest.raises(Exception) as exc_info:
-        client.get_string_assignment("", "experiment-1", "default value")
+        client.get_string_assignment("experiment-1", "", {}, "default value")
     assert exc_info.value.args[0] == "Invalid value for subject_key: cannot be blank"
 
 
@@ -91,7 +91,6 @@ def test_log_assignment(mock_config_requestor, mock_logger):
         allocations=[
             Allocation(
                 key="allocation",
-                rules=[],
                 splits=[
                     Split(
                         variation_key="control",
@@ -108,7 +107,8 @@ def test_log_assignment(mock_config_requestor, mock_logger):
         config_requestor=mock_config_requestor, assignment_logger=mock_logger
     )
     assert (
-        client.get_string_assignment("user-1", "flag-key", "default value") == "control"
+        client.get_string_assignment("falg-key", "user-1", {}, "default value")
+        == "control"
     )
     assert mock_logger.log_assignment.call_count == 1
 
@@ -143,7 +143,8 @@ def test_get_assignment_handles_logging_exception(mock_config_requestor, mock_lo
         config_requestor=mock_config_requestor, assignment_logger=mock_logger
     )
     assert (
-        client.get_string_assignment("user-1", "flag-key", "default value") == "control"
+        client.get_string_assignment("flag-key", "user-1", {}, "default value")
+        == "control"
     )
 
 
@@ -154,11 +155,11 @@ def test_with_null_experiment_config(mock_config_requestor):
         config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
     )
     assert (
-        client.get_string_assignment("user-1", "flag-key-1", "default value")
+        client.get_string_assignment("flag-key-1", "user-1", {}, "default value")
         == "default value"
     )
     assert (
-        client.get_string_assignment("user-1", "flag-key-1", default="hello world")
+        client.get_string_assignment("flag-key-1", "user-1", {}, "hello world")
         == "hello world"
     )
 
@@ -175,17 +176,19 @@ def test_graceful_mode_on(get_assignment_detail, mock_config_requestor):
     )
 
     assert (
-        client.get_assignment_variation("user-1", "experiment-key-1", "default")
+        client.get_assignment_variation("experiment-key-1", "user-1", {}, "default")
         == "default"
     )
-    assert client.get_boolean_assignment("user-1", "experiment-key-1", default=True)
-    assert client.get_numeric_assignment("user-1", "experiment-key-1", 1.0) == 1.0
+    assert client.get_boolean_assignment("experiment-key-1", "user-1", {}, default=True)
+    assert client.get_numeric_assignment("experiment-key-1", "user-1", {}, 1.0) == 1.0
     assert (
-        client.get_string_assignment("user-1", "experiment-key-1", default="control")
+        client.get_string_assignment(
+            "experiment-key-1", "user-1", {}, default="control"
+        )
         == "control"
     )
     assert client.get_json_assignment(
-        "user-1", "experiment-key-1", {"hello": "world"}
+        "experiment-key-1", "user-1", {}, {"hello": "world"}
     ) == {"hello": "world"}
 
 
@@ -201,11 +204,11 @@ def test_graceful_mode_off(mock_get_assignment_detail, mock_config_requestor):
     )
 
     with pytest.raises(Exception):
-        client.get_boolean_assignment("user-1", "experiment-key-1", True)
-        client.get_numeric_assignment("user-1", "experiment-key-1", 0.0)
-        client.get_integer_assignment("user-1", "experiment-key-1", 1)
-        client.get_string_assignment("user-1", "experiment-key-1", "default value")
-        client.get_json_assignment("user-1", "experiment-key-1", {"hello": "world"})
+        client.get_boolean_assignment("experiment-key-1", "user-1", {}, True)
+        client.get_numeric_assignment("experiment-key-1", "user-1", {}, 0.0)
+        client.get_integer_assignment("experiment-key-1", "user-1", {}, 1)
+        client.get_string_assignment("experiment-key-1", "user-1", {}, "default value")
+        client.get_json_assignment("experiment-key-1", "user-1", {}, {"hello": "world"})
 
 
 def test_client_has_flags():
@@ -241,10 +244,10 @@ def get_assignments(test_case, get_assignment_fn):
     assignments = []
     for subject in test_case.get("subjects", []):
         variation = get_assignment_fn(
-            subject["subjectKey"],
             test_case["flag"],
-            test_case["defaultValue"],
+            subject["subjectKey"],
             subject["subjectAttributes"],
+            test_case["defaultValue"],
         )
         assignments.append((subject, variation))
     return assignments

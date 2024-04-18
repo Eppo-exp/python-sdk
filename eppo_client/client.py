@@ -39,79 +39,79 @@ class EppoClient:
 
     def get_string_assignment(
         self,
-        subject_key: str,
         flag_key: str,
+        subject_key: str,
+        subject_attributes: SubjectAttributes,
         default: str,
-        subject_attributes: Optional[SubjectAttributes] = None,
     ) -> str:
         return self.get_assignment_variation(
-            subject_key,
             flag_key,
-            default,
+            subject_key,
             subject_attributes,
+            default,
             VariationType.STRING,
         )
 
     def get_integer_assignment(
         self,
-        subject_key: str,
         flag_key: str,
+        subject_key: str,
+        subject_attributes: SubjectAttributes,
         default: int,
-        subject_attributes: Optional[SubjectAttributes] = None,
     ) -> int:
         return self.get_assignment_variation(
-            subject_key,
             flag_key,
-            default,
+            subject_key,
             subject_attributes,
+            default,
             VariationType.INTEGER,
         )
 
     def get_numeric_assignment(
         self,
-        subject_key: str,
         flag_key: str,
+        subject_key: str,
+        subject_attributes: SubjectAttributes,
         default: float,
-        subject_attributes: Optional[SubjectAttributes] = None,
     ) -> float:
         # convert to float in case we get an int
         return float(
             self.get_assignment_variation(
-                subject_key,
                 flag_key,
-                default,
+                subject_key,
                 subject_attributes,
+                default,
                 VariationType.NUMERIC,
             )
         )
 
     def get_boolean_assignment(
         self,
-        subject_key: str,
         flag_key: str,
+        subject_key: str,
+        subject_attributes: SubjectAttributes,
         default: bool,
-        subject_attributes: Optional[SubjectAttributes] = None,
     ) -> bool:
         return self.get_assignment_variation(
-            subject_key,
             flag_key,
-            default,
+            subject_key,
             subject_attributes,
+            default,
             VariationType.BOOLEAN,
         )
 
     def get_json_assignment(
         self,
-        subject_key: str,
         flag_key: str,
+        subject_key: str,
+        subject_attributes: SubjectAttributes,
         default: Dict[Any, Any],
-        subject_attributes: Optional[SubjectAttributes] = None,
     ) -> Dict[Any, Any]:
         variation_json_string = self.get_assignment_variation(
-            subject_key,
             flag_key,
-            None,
+            subject_key,
             subject_attributes,
+            None,
             VariationType.JSON,
         )
         if variation_json_string is None:
@@ -120,15 +120,15 @@ class EppoClient:
 
     def get_assignment_variation(
         self,
-        subject_key: str,
         flag_key: str,
+        subject_key: str,
+        subject_attributes: SubjectAttributes,
         default: Optional[ValueType] = None,
-        subject_attributes: Optional[SubjectAttributes] = None,
         expected_variation_type: Optional[VariationType] = None,
     ):
         try:
             result = self.get_assignment_detail(
-                subject_key, flag_key, subject_attributes, expected_variation_type
+                flag_key, subject_key, subject_attributes, expected_variation_type
             )
             if not result or not result.variation:
                 return default
@@ -144,9 +144,9 @@ class EppoClient:
 
     def get_assignment_detail(
         self,
-        subject_key: str,
         flag_key: str,
-        subject_attributes: Optional[SubjectAttributes] = None,
+        subject_key: str,
+        subject_attributes: SubjectAttributes,
         expected_variation_type: Optional[VariationType] = None,
     ) -> Optional[FlagEvaluation]:
         """Maps a subject to a variation for a given flag
