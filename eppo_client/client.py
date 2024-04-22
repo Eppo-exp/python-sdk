@@ -12,7 +12,7 @@ from eppo_client.poller import Poller
 from eppo_client.sharders import MD5Sharder
 from eppo_client.types import SubjectAttributes, ValueType
 from eppo_client.validation import validate_not_blank
-from eppo_client.eval import FlagEvaluation, Evaluator
+from eppo_client.eval import FlagEvaluation, Evaluator, none_result
 from eppo_client.version import __version__
 
 
@@ -169,7 +169,7 @@ class EppoClient:
             logger.warning(
                 "[Eppo SDK] No assigned variation. Flag not found: " + flag_key
             )
-            return None
+            return none_result(flag_key, None, subject_key, subject_attributes)
 
         if not check_type_match(expected_variation_type, flag.variation_type):
             raise TypeError(
@@ -181,7 +181,7 @@ class EppoClient:
             logger.info(
                 "[Eppo SDK] No assigned variation. Flag is disabled: " + flag_key
             )
-            return None
+            return none_result(flag_key, None, subject_key, subject_attributes)
 
         result = self.__evaluator.evaluate_flag(flag, subject_key, subject_attributes)
 
@@ -192,7 +192,9 @@ class EppoClient:
                 "[Eppo SDK] Variation value does not have the correct type for the flag: "
                 f"{flag_key} and variation key {result.variation.key}"
             )
-            return None
+            return none_result(
+                flag_key, flag.variation_type, subject_key, subject_attributes
+            )
 
         assignment_event = {
             **(result.extra_logging if result else {}),
