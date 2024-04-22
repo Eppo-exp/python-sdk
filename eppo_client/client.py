@@ -107,24 +107,25 @@ class EppoClient:
         subject_attributes: SubjectAttributes,
         default: Dict[Any, Any],
     ) -> Dict[Any, Any]:
-        variation_json_string = self.get_assignment_variation(
+        json_value = self.get_assignment_variation(
             flag_key,
             subject_key,
             subject_attributes,
             None,
             VariationType.JSON,
         )
-        if variation_json_string is None:
+        if json_value is None:
             return default
-        return json.loads(variation_json_string)
+
+        return json.loads(json_value)
 
     def get_assignment_variation(
         self,
         flag_key: str,
         subject_key: str,
         subject_attributes: SubjectAttributes,
-        default: Optional[ValueType] = None,
-        expected_variation_type: Optional[VariationType] = None,
+        default: Optional[ValueType],
+        expected_variation_type: VariationType,
     ):
         try:
             result = self.get_assignment_detail(
@@ -147,8 +148,8 @@ class EppoClient:
         flag_key: str,
         subject_key: str,
         subject_attributes: SubjectAttributes,
-        expected_variation_type: Optional[VariationType] = None,
-    ) -> Optional[FlagEvaluation]:
+        expected_variation_type: VariationType,
+    ) -> FlagEvaluation:
         """Maps a subject to a variation for a given flag
         Returns None if the subject is not allocated in the flag
 
@@ -169,7 +170,9 @@ class EppoClient:
             logger.warning(
                 "[Eppo SDK] No assigned variation. Flag not found: " + flag_key
             )
-            return none_result(flag_key, None, subject_key, subject_attributes)
+            return none_result(
+                flag_key, expected_variation_type, subject_key, subject_attributes
+            )
 
         if not check_type_match(expected_variation_type, flag.variation_type):
             raise TypeError(
@@ -181,7 +184,9 @@ class EppoClient:
             logger.info(
                 "[Eppo SDK] No assigned variation. Flag is disabled: " + flag_key
             )
-            return none_result(flag_key, None, subject_key, subject_attributes)
+            return none_result(
+                flag_key, expected_variation_type, subject_key, subject_attributes
+            )
 
         result = self.__evaluator.evaluate_flag(flag, subject_key, subject_attributes)
 

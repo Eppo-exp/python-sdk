@@ -1,4 +1,4 @@
-from typing import List, Union, Dict
+from typing import Dict, List, Union
 
 ValueType = Union[str, int, float, bool]
 AttributeType = Union[str, int, float, bool]

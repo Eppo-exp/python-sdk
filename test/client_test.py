@@ -176,7 +176,9 @@ def test_graceful_mode_on(get_assignment_detail, mock_config_requestor):
     )
 
     assert (
-        client.get_assignment_variation("experiment-key-1", "user-1", {}, "default")
+        client.get_assignment_variation(
+            "experiment-key-1", "user-1", {}, "default", VariationType.STRING
+        )
         == "default"
     )
     assert client.get_boolean_assignment("experiment-key-1", "user-1", {}, default=True)
