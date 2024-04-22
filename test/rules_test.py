@@ -208,13 +208,110 @@ def test_evaluate_condition_lt():
     )
 
 
-def test_evaluate_condition_semver():
+def test_evaluate_condition_semver_gte():
     assert evaluate_condition(
         Condition(operator=OperatorType.GTE, value="1.0.0", attribute="version"),
         {"version": "1.0.1"},
     )
+
+    assert evaluate_condition(
+        Condition(operator=OperatorType.GTE, value="1.0.0", attribute="version"),
+        {"version": "1.0.0"},
+    )
+
+    assert not evaluate_condition(
+        Condition(operator=OperatorType.GTE, value="1.10.0", attribute="version"),
+        {"version": "1.2.0"},
+    )
+
+    assert evaluate_condition(
+        Condition(operator=OperatorType.GTE, value="1.5.0", attribute="version"),
+        {"version": "1.13.0"},
+    )
+
     assert not evaluate_condition(
         Condition(operator=OperatorType.GTE, value="1.0.0", attribute="version"),
+        {"version": "0.9.9"},
+    )
+
+
+def test_evaluate_condition_semver_gt():
+    assert evaluate_condition(
+        Condition(operator=OperatorType.GT, value="1.0.0", attribute="version"),
+        {"version": "1.0.1"},
+    )
+
+    assert not evaluate_condition(
+        Condition(operator=OperatorType.GT, value="1.0.0", attribute="version"),
+        {"version": "1.0.0"},
+    )
+
+    assert not evaluate_condition(
+        Condition(operator=OperatorType.GT, value="1.10.0", attribute="version"),
+        {"version": "1.2.903"},
+    )
+
+    assert evaluate_condition(
+        Condition(operator=OperatorType.GT, value="1.5.0", attribute="version"),
+        {"version": "1.13.0"},
+    )
+
+    assert not evaluate_condition(
+        Condition(operator=OperatorType.GT, value="1.0.0", attribute="version"),
+        {"version": "0.9.9"},
+    )
+
+
+def test_evaluate_condition_semver_lte():
+    assert not evaluate_condition(
+        Condition(operator=OperatorType.LTE, value="1.0.0", attribute="version"),
+        {"version": "1.0.1"},
+    )
+
+    assert evaluate_condition(
+        Condition(operator=OperatorType.LTE, value="1.0.0", attribute="version"),
+        {"version": "1.0.0"},
+    )
+
+    assert evaluate_condition(
+        Condition(operator=OperatorType.LTE, value="1.10.0", attribute="version"),
+        {"version": "1.2.0"},
+    )
+
+    assert not evaluate_condition(
+        Condition(operator=OperatorType.LTE, value="1.5.0", attribute="version"),
+        {"version": "1.13.0"},
+    )
+
+    assert evaluate_condition(
+        Condition(operator=OperatorType.LTE, value="1.0.0", attribute="version"),
+        {"version": "0.9.9"},
+    )
+
+
+def test_evaluate_condition_semver_lt():
+    assert not evaluate_condition(
+        Condition(operator=OperatorType.LT, value="1.0.0", attribute="version"),
+        {"version": "1.0.1"},
+    )
+
+    assert not evaluate_condition(
+        Condition(operator=OperatorType.LT, value="1.0.0", attribute="version"),
+        {"version": "1.0.0"},
+    )
+
+    assert evaluate_condition(
+        Condition(operator=OperatorType.LT, value="1.10.0", attribute="version"),
+        {"version": "1.2.0"},
+    )
+
+    assert not evaluate_condition(
+        Condition(operator=OperatorType.LT, value="1.5.0", attribute="version"),
+        {"version": "1.13.0"},
+    )
+
+    assert evaluate_condition(
+        Condition(operator=OperatorType.LT, value="1.0.0", attribute="version"),
         {"version": "0.9.9"},
     )
 
