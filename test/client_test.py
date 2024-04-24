@@ -5,20 +5,28 @@ from unittest.mock import patch
 import httpretty  # type: ignore
 import pytest
 from eppo_client.assignment_logger import AssignmentLogger
-from eppo_client.client import EppoClient
+from eppo_client.client import EppoClient, check_type_match, check_value_type_match
 from eppo_client.config import Config
-from eppo_client.configuration_requestor import (
-    AllocationDto,
-    ExperimentConfigurationDto,
-    VariationDto,
+from eppo_client.models import (
+    Allocation,
+    Flag,
+    Range,
+    Shard,
+    Split,
+    VariationType,
+    Variation,
 )
-from eppo_client.rules import Condition, OperatorType, Rule
-from eppo_client.shard import ShardRange
 from eppo_client import init, get_instance
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+TEST_DIR = "test/test-data/ufc/tests"
+CONFIG_FILE = "test/test-data/ufc/flags-v1.json"
 test_data = []
-for file_name in [file for file in os.listdir("test/test-data/assignment-v2")]:
-    with open("test/test-data/assignment-v2/{}".format(file_name)) as test_case_json:
+for file_name in [file for file in os.listdir(TEST_DIR)]:
+    with open("{}/{}".format(TEST_DIR, file_name)) as test_case_json:
         test_case_dict = json.load(test_case_json)
         test_data.append(test_case_dict)
 
@@ -28,11 +36,11 @@ MOCK_BASE_URL = "http://localhost:4001/api"
 @pytest.fixture(scope="session", autouse=True)
 def init_fixture():
     httpretty.enable()
-    with open("test/test-data/rac-experiments-v3.json") as mock_rac_response:
+    with open(CONFIG_FILE) as mock_ufc_response:
         httpretty.register_uri(
             httpretty.GET,
-            MOCK_BASE_URL + "/randomized_assignment/v3/config",
-            body=json.dumps(json.load(mock_rac_response)),
+            MOCK_BASE_URL + "/flag-config/v1/config",
+            body=json.dumps(json.load(mock_ufc_response)),
         )
         client = init(
             Config(
@@ -47,13 +55,18 @@ def init_fixture():
         httpretty.disable()
 
 
+def test_is_initialized():
+    client = get_instance()
+    assert client.is_initialized()
+
+
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
-def test_assign_blank_experiment(mock_config_requestor):
+def test_assign_blank_flag_key(mock_config_requestor):
     client = EppoClient(
         config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
     )
     with pytest.raises(Exception) as exc_info:
-        client.get_assignment("subject-1", "")
+        client.get_string_assignment("", "subject-1", {}, "default value")
     assert exc_info.value.args[0] == "Invalid value for flag_key: cannot be blank"
 
 
@@ -63,184 +76,76 @@ def test_assign_blank_subject(mock_config_requestor):
         config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
     )
     with pytest.raises(Exception) as exc_info:
-        client.get_assignment("", "experiment-1")
+        client.get_string_assignment("experiment-1", "", {}, "default value")
     assert exc_info.value.args[0] == "Invalid value for subject_key: cannot be blank"
-
-
-@patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
-def test_assign_subject_not_in_sample(mock_config_requestor):
-    allocation = AllocationDto(
-        percent_exposure=0,
-        variations=[
-            VariationDto(
-                name="control",
-                value="control",
-                shard_range=ShardRange(start=0, end=10000),
-            )
-        ],
-    )
-    mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
-        subject_shards=10000,
-        enabled=True,
-        name="recommendation_algo",
-        overrides=dict(),
-        allocations={"allocation": allocation},
-    )
-    client = EppoClient(
-        config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
-    )
-    assert client.get_assignment("user-1", "experiment-key-1") is None
 
 
 @patch("eppo_client.assignment_logger.AssignmentLogger")
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
 def test_log_assignment(mock_config_requestor, mock_logger):
-    allocation = AllocationDto(
-        percent_exposure=1,
-        variations=[
-            VariationDto(
-                name="control",
-                value="control",
-                shard_range=ShardRange(start=0, end=10000),
+    flag = Flag(
+        key="flag-key",
+        enabled=True,
+        variation_type=VariationType.STRING,
+        variations={"control": Variation(key="control", value="control")},
+        allocations=[
+            Allocation(
+                key="allocation",
+                splits=[
+                    Split(
+                        variation_key="control",
+                        shards=[Shard(salt="salt", ranges=[Range(start=0, end=10000)])],
+                    )
+                ],
             )
         ],
+        total_shards=10_000,
     )
-    mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
-        allocations={"allocation": allocation},
-        rules=[Rule(conditions=[], allocation_key="allocation")],
-        subject_shards=10000,
-        enabled=True,
-        name="recommendation_algo",
-        overrides=dict(),
-    )
+
+    mock_config_requestor.get_configuration.return_value = flag
     client = EppoClient(
         config_requestor=mock_config_requestor, assignment_logger=mock_logger
     )
-    assert client.get_assignment("user-1", "experiment-key-1") == "control"
+    assert (
+        client.get_string_assignment("falg-key", "user-1", {}, "default value")
+        == "control"
+    )
     assert mock_logger.log_assignment.call_count == 1
 
 
 @patch("eppo_client.assignment_logger.AssignmentLogger")
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
 def test_get_assignment_handles_logging_exception(mock_config_requestor, mock_logger):
-    allocation = AllocationDto(
-        percent_exposure=1,
-        variations=[
-            VariationDto(
-                name="control",
-                value="control",
-                shard_range=ShardRange(start=0, end=10000),
+    flag = Flag(
+        key="flag-key",
+        enabled=True,
+        variation_type=VariationType.STRING,
+        variations={"control": Variation(key="control", value="control")},
+        allocations=[
+            Allocation(
+                key="allocation",
+                rules=[],
+                splits=[
+                    Split(
+                        variation_key="control",
+                        shards=[Shard(salt="salt", ranges=[Range(start=0, end=10000)])],
+                    )
+                ],
             )
         ],
+        total_shards=10_000,
     )
-    mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
-        subject_shards=10000,
-        allocations={"allocation": allocation},
-        enabled=True,
-        rules=[Rule(conditions=[], allocation_key="allocation")],
-        name="recommendation_algo",
-        overrides=dict(),
-    )
+
+    mock_config_requestor.get_configuration.return_value = flag
     mock_logger.log_assignment.side_effect = ValueError("logging error")
+
     client = EppoClient(
         config_requestor=mock_config_requestor, assignment_logger=mock_logger
     )
-
-    assert client.get_assignment("user-1", "experiment-key-1") == "control"
-
-
-@patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
-def test_assign_subject_with_with_attributes_and_rules(mock_config_requestor):
-    allocation = AllocationDto(
-        percent_exposure=1,
-        variations=[
-            VariationDto(
-                name="control",
-                value="control",
-                shard_range=ShardRange(start=0, end=10000),
-            )
-        ],
-    )
-    matches_email_condition = Condition(
-        operator=OperatorType.MATCHES, value=".*@eppo.com", attribute="email"
-    )
-    text_rule = Rule(conditions=[matches_email_condition], allocation_key="allocation")
-    mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
-        subject_shards=10000,
-        allocations={"allocation": allocation},
-        enabled=True,
-        name="experiment-key-1",
-        overrides=dict(),
-        rules=[text_rule],
-    )
-    client = EppoClient(
-        config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
-    )
-    assert client.get_assignment("user-1", "experiment-key-1") is None
     assert (
-        client.get_assignment(
-            "user1", "experiment-key-1", {"email": "test@example.com"}
-        )
-        is None
-    )
-    assert (
-        client.get_assignment("user1", "experiment-key-1", {"email": "test@eppo.com"})
+        client.get_string_assignment("flag-key", "user-1", {}, "default value")
         == "control"
     )
-
-
-@patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
-def test_with_subject_in_overrides(mock_config_requestor):
-    allocation = AllocationDto(
-        percent_exposure=1,
-        variations=[
-            VariationDto(
-                name="control",
-                value="control",
-                shard_range=ShardRange(start=0, end=10000),
-            )
-        ],
-    )
-    mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
-        subject_shards=10000,
-        allocations={"allocation": allocation},
-        enabled=True,
-        rules=[Rule(conditions=[], allocation_key="allocation")],
-        name="recommendation_algo",
-        overrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
-        typed_overrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
-    )
-    client = EppoClient(
-        config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
-    )
-    assert client.get_assignment("user-1", "experiment-key-1") == "override-variation"
-
-
-@patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
-def test_with_subject_in_overrides_exp_disabled(mock_config_requestor):
-    allocation = AllocationDto(
-        percent_exposure=0,
-        variations=[
-            VariationDto(
-                name="control",
-                value="control",
-                shard_range=ShardRange(start=0, end=10000),
-            )
-        ],
-    )
-    mock_config_requestor.get_configuration.return_value = ExperimentConfigurationDto(
-        subject_shards=10000,
-        allocations={"allocation": allocation},
-        enabled=False,
-        rules=[Rule(conditions=[], allocation_key="allocation")],
-        name="recommendation_algo",
-        overrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
-        typed_overrides={"d6d7705392bc7af633328bea8c4c6904": "override-variation"},
-    )
-    client = EppoClient(
-        config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
-    )
-    assert client.get_assignment("user-1", "experiment-key-1") == "override-variation"
 
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
@@ -249,13 +154,20 @@ def test_with_null_experiment_config(mock_config_requestor):
     client = EppoClient(
         config_requestor=mock_config_requestor, assignment_logger=AssignmentLogger()
     )
-    assert client.get_assignment("user-1", "experiment-key-1") is None
+    assert (
+        client.get_string_assignment("flag-key-1", "user-1", {}, "default value")
+        == "default value"
+    )
+    assert (
+        client.get_string_assignment("flag-key-1", "user-1", {}, "hello world")
+        == "hello world"
+    )
 
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
-@patch.object(EppoClient, "get_assignment_variation")
-def test_graceful_mode_on(mock_get_assignment_variation, mock_config_requestor):
-    mock_get_assignment_variation.side_effect = Exception("This is a mock exception!")
+@patch.object(EppoClient, "get_assignment_detail")
+def test_graceful_mode_on(get_assignment_detail, mock_config_requestor):
+    get_assignment_detail.side_effect = Exception("This is a mock exception!")
 
     client = EppoClient(
         config_requestor=mock_config_requestor,
@@ -263,18 +175,29 @@ def test_graceful_mode_on(mock_get_assignment_variation, mock_config_requestor):
         is_graceful_mode=True,
     )
 
-    assert client.get_assignment("user-1", "experiment-key-1") is None
-    assert client.get_boolean_assignment("user-1", "experiment-key-1") is None
-    assert client.get_json_string_assignment("user-1", "experiment-key-1") is None
-    assert client.get_numeric_assignment("user-1", "experiment-key-1") is None
-    assert client.get_string_assignment("user-1", "experiment-key-1") is None
-    assert client.get_parsed_json_assignment("user-1", "experiment-key-1") is None
+    assert (
+        client.get_assignment_variation(
+            "experiment-key-1", "user-1", {}, "default", VariationType.STRING
+        )
+        == "default"
+    )
+    assert client.get_boolean_assignment("experiment-key-1", "user-1", {}, default=True)
+    assert client.get_numeric_assignment("experiment-key-1", "user-1", {}, 1.0) == 1.0
+    assert (
+        client.get_string_assignment(
+            "experiment-key-1", "user-1", {}, default="control"
+        )
+        == "control"
+    )
+    assert client.get_json_assignment(
+        "experiment-key-1", "user-1", {}, {"hello": "world"}
+    ) == {"hello": "world"}
 
 
 @patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
-@patch.object(EppoClient, "get_assignment_variation")
-def test_graceful_mode_off(mock_get_assignment_variation, mock_config_requestor):
-    mock_get_assignment_variation.side_effect = Exception("This is a mock exception!")
+@patch.object(EppoClient, "get_assignment_detail")
+def test_graceful_mode_off(mock_get_assignment_detail, mock_config_requestor):
+    mock_get_assignment_detail.side_effect = Exception("This is a mock exception!")
 
     client = EppoClient(
         config_requestor=mock_config_requestor,
@@ -283,49 +206,85 @@ def test_graceful_mode_off(mock_get_assignment_variation, mock_config_requestor)
     )
 
     with pytest.raises(Exception):
-        client.get_assignment("user-1", "experiment-key-1")
-        client.get_boolean_assignment("user-1", "experiment-key-1")
-        client.get_json_string_assignment("user-1", "experiment-key-1")
-        client.get_numeric_assignment("user-1", "experiment-key-1")
-        client.get_string_assignment("user-1", "experiment-key-1")
-        client.get_parsed_json_assignment("user-1", "experiment-key-1")
+        client.get_boolean_assignment("experiment-key-1", "user-1", {}, True)
+        client.get_numeric_assignment("experiment-key-1", "user-1", {}, 0.0)
+        client.get_integer_assignment("experiment-key-1", "user-1", {}, 1)
+        client.get_string_assignment("experiment-key-1", "user-1", {}, "default value")
+        client.get_json_assignment("experiment-key-1", "user-1", {}, {"hello": "world"})
+
+
+def test_client_has_flags():
+    client = get_instance()
+    assert len(client.get_flag_keys()) > 0, "No flags have been loaded by the client"
 
 
 @pytest.mark.parametrize("test_case", test_data)
 def test_assign_subject_in_sample(test_case):
-    print("---- Test case for {} Experiment".format(test_case["experiment"]))
-    assignments = get_assignments(test_case=test_case)
-    assert assignments == test_case["expectedAssignments"]
-
-
-def get_assignments(test_case):
     client = get_instance()
-    get_typed_assignment = {
-        "string": client.get_string_assignment,
-        "numeric": client.get_numeric_assignment,
-        "boolean": client.get_boolean_assignment,
-        "json": client.get_json_string_assignment,
-    }[test_case["valueType"]]
+    print("---- Test case for {} Experiment".format(test_case["flag"]))
 
-    return [
-        get_typed_assignment(subjectKey, test_case["experiment"])
-        for subjectKey in test_case.get("subjects", [])
-    ] + [
-        get_typed_assignment(
-            subject_key=subject["subjectKey"],
-            flag_key=test_case["experiment"],
-            subject_attributes=subject["subjectAttributes"],
+    get_typed_assignment = {
+        "STRING": client.get_string_assignment,
+        "INTEGER": client.get_integer_assignment,
+        "NUMERIC": client.get_numeric_assignment,
+        "BOOLEAN": client.get_boolean_assignment,
+        "JSON": client.get_json_assignment,
+    }[test_case["variationType"]]
+
+    assignments = get_assignments(test_case, get_typed_assignment)
+    for subject, assigned_variation in assignments:
+        assert (
+            assigned_variation == subject["assignment"]
+        ), f"expected <{subject['assignment']}> for subject {subject['subjectKey']}, found <{assigned_variation}>"
+
+
+def get_assignments(test_case, get_assignment_fn):
+    client = get_instance()
+    client.__is_graceful_mode = False
+
+    print(test_case["flag"])
+    assignments = []
+    for subject in test_case.get("subjects", []):
+        variation = get_assignment_fn(
+            test_case["flag"],
+            subject["subjectKey"],
+            subject["subjectAttributes"],
+            test_case["defaultValue"],
         )
-        for subject in test_case.get("subjectsWithAttributes", [])
-    ]
+        assignments.append((subject, variation))
+    return assignments
 
 
 @pytest.mark.parametrize("test_case", test_data)
 def test_get_numeric_assignment_on_bool_feature_flag_should_return_none(test_case):
-    if test_case["valueType"] == "boolean":
-        assignments = get_assignments(test_case=test_case)
-        assert assignments == test_case["expectedAssignments"]
-        # Change to get_numeric_assignment and try again
-        test_case["valueType"] = "numeric"
-        assignments = get_assignments(test_case=test_case)
-        assert assignments == [None] * len(test_case["expectedAssignments"])
+    client = get_instance()
+    if test_case["variationType"] == "boolean":
+        assignments = get_assignments(
+            test_case=test_case, get_assignment_fn=client.get_numeric_assignment
+        )
+        for _, assigned_variation in assignments:
+            assert assigned_variation is None
+
+        assignments = get_assignments(
+            test_case=test_case, get_assignment_fn=client.get_integer_assignment
+        )
+        for _, assigned_variation in assignments:
+            assert assigned_variation is None
+
+
+def test_check_type_match():
+    assert check_type_match(VariationType.STRING, VariationType.STRING)
+    assert check_type_match(None, VariationType.STRING)
+
+
+def test_check_value_type_match():
+    assert check_value_type_match(VariationType.STRING, "hello")
+    assert check_value_type_match(VariationType.INTEGER, 1)
+    assert check_value_type_match(VariationType.NUMERIC, 1.0)
+    assert check_value_type_match(VariationType.NUMERIC, 1)
+    assert check_value_type_match(VariationType.BOOLEAN, True)
+    assert check_value_type_match(VariationType.JSON, '{"hello": "world"}')
+
+    assert not check_type_match(VariationType.STRING, 1)
+    assert not check_type_match(VariationType.INTEGER, 1.0)
+    assert not check_type_match(VariationType.BOOLEAN, "true")

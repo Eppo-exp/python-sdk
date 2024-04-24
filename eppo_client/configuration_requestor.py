@@ -1,62 +1,45 @@
 import logging
-from typing import Any, Dict, List, Optional, cast
-from eppo_client.base_model import SdkBaseModel
+from typing import Dict, Optional, cast
 from eppo_client.configuration_store import ConfigurationStore
 from eppo_client.http_client import HttpClient
-from eppo_client.rules import Rule
-from eppo_client.shard import ShardRange
+from eppo_client.models import Flag
 
 logger = logging.getLogger(__name__)
 
 
-class VariationDto(SdkBaseModel):
-    name: str
-    value: str
-    typed_value: Any = None
-    shard_range: ShardRange
-
-
-class AllocationDto(SdkBaseModel):
-    percent_exposure: float
-    variations: List[VariationDto]
-
-
-class ExperimentConfigurationDto(SdkBaseModel):
-    subject_shards: int
-    enabled: bool
-    name: Optional[str] = None
-    overrides: Dict[str, str] = {}
-    typed_overrides: Dict[str, Any] = {}
-    rules: List[Rule] = []
-    allocations: Dict[str, AllocationDto]
-
-
-RAC_ENDPOINT = "/randomized_assignment/v3/config"
+UFC_ENDPOINT = "/flag-config/v1/config"
 
 
 class ExperimentConfigurationRequestor:
     def __init__(
         self,
         http_client: HttpClient,
-        config_store: ConfigurationStore[ExperimentConfigurationDto],
+        config_store: ConfigurationStore[Flag],
     ):
         self.__http_client = http_client
         self.__config_store = config_store
+        self.__is_initialized = False
 
-    def get_configuration(
-        self, experiment_key: str
-    ) -> Optional[ExperimentConfigurationDto]:
+    def get_configuration(self, flag_key: str) -> Optional[Flag]:
         if self.__http_client.is_unauthorized():
             raise ValueError("Unauthorized: please check your API key")
-        return self.__config_store.get_configuration(experiment_key)
+        return self.__config_store.get_configuration(flag_key)
 
-    def fetch_and_store_configurations(self) -> Dict[str, ExperimentConfigurationDto]:
+    def get_flag_keys(self):
+        return self.__config_store.get_keys()
+
+    def fetch_and_store_configurations(self) -> Dict[str, Flag]:
         try:
-            configs = cast(dict, self.__http_client.get(RAC_ENDPOINT).get("flags", {}))
-            for exp_key, exp_config in configs.items():
-                configs[exp_key] = ExperimentConfigurationDto(**exp_config)
+            configs_dict = cast(
+                dict, self.__http_client.get(UFC_ENDPOINT).get("flags", {})
+            )
+            configs = {key: Flag(**config) for key, config in configs_dict.items()}
             self.__config_store.set_configurations(configs)
+            self.__is_initialized = True
             return configs
         except Exception as e:
-            logger.error("Error retrieving assignment configurations: " + str(e))
+            logger.error("Error retrieving flag configurations: " + str(e))
             return {}
+
+    def is_initialized(self):
+        return self.__is_initialized
