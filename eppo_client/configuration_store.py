@@ -23,6 +23,7 @@ class ConfigurationStore(Generic[T]):
     def set_configurations(self, configs: Dict[str, T]):
         try:
             self.__lock.acquire_write()
+            self.__cache.clear()
             for key, config in configs.items():
                 self.__cache[key] = config
         finally:

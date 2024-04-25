@@ -39,3 +39,16 @@ def test_evicts_old_entries_when_max_size_exceeded():
     assert (
         store.get_configuration("test-entry-{}".format(TEST_MAX_SIZE - 1)) == test_exp
     )
+
+
+def test_evicts_old_entries_when_setting_new_flags():
+    store: ConfigurationStore[str] = ConfigurationStore(max_size=TEST_MAX_SIZE)
+
+    store.set_configurations({"flag": mock_flag, "second_flag": mock_flag})
+    assert store.get_configuration("flag") == mock_flag
+    assert store.get_configuration("second_flag") == mock_flag
+
+    # Updating the flags should evict flags that no longer exist
+    store.set_configurations({"flag": mock_flag})
+    assert store.get_configuration("flag") == mock_flag
+    assert store.get_configuration("second_flag") is None
