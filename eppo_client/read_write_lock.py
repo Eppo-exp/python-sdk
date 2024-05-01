@@ -1,6 +1,8 @@
 import threading
 from contextlib import contextmanager
 
+# Adapted from: https://www.oreilly.com/library/view/python-cookbook/0596001673/ch06s04.html
+
 
 class ReadWriteLock:
     """A lock object that allows many simultaneous "read locks", but
