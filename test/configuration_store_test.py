@@ -5,7 +5,7 @@ from eppo_client.models import VariationType
 
 TEST_MAX_SIZE = 10
 
-store: ConfigurationStore[str] = ConfigurationStore(max_size=TEST_MAX_SIZE)
+store: ConfigurationStore[str] = ConfigurationStore()
 mock_flag = Flag(
     key="mock_flag",
     variation_type=VariationType.STRING,
@@ -40,7 +40,7 @@ def test_evicts_old_entries_when_max_size_exceeded():
 
 
 def test_evicts_old_entries_when_setting_new_flags():
-    store: ConfigurationStore[str] = ConfigurationStore(max_size=TEST_MAX_SIZE)
+    store: ConfigurationStore[str] = ConfigurationStore()
 
     store.set_configurations({"flag": mock_flag, "second_flag": mock_flag})
     assert store.get_configuration("flag") == mock_flag

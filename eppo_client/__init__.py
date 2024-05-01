@@ -5,7 +5,6 @@ from eppo_client.configuration_requestor import (
     ExperimentConfigurationRequestor,
 )
 from eppo_client.configuration_store import ConfigurationStore
-from eppo_client.constants import MAX_CACHE_ENTRIES
 from eppo_client.http_client import HttpClient, SdkParams
 from eppo_client.models import Flag
 from eppo_client.read_write_lock import ReadWriteLock
@@ -31,9 +30,7 @@ def init(config: Config) -> EppoClient:
         apiKey=config.api_key, sdkName="python", sdkVersion=__version__
     )
     http_client = HttpClient(base_url=config.base_url, sdk_params=sdk_params)
-    config_store: ConfigurationStore[Flag] = ConfigurationStore(
-        max_size=MAX_CACHE_ENTRIES
-    )
+    config_store: ConfigurationStore[Flag] = ConfigurationStore()
     config_requestor = ExperimentConfigurationRequestor(
         http_client=http_client, config_store=config_store
     )
