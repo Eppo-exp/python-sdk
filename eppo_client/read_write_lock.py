@@ -1,6 +1,5 @@
 import threading
-
-# Copied from: https://www.oreilly.com/library/view/python-cookbook/0596001673/ch06s04.html
+from contextlib import contextmanager
 
 
 class ReadWriteLock:
@@ -40,3 +39,19 @@ class ReadWriteLock:
     def release_write(self):
         """Release a write lock."""
         self._read_ready.release()
+
+    @contextmanager
+    def reader(self):
+        try:
+            self.acquire_read()
+            yield
+        finally:
+            self.release_read()
+
+    @contextmanager
+    def writer(self):
+        try:
+            self.acquire_write()
+            yield
+        finally:
+            self.release_write()
