@@ -1,6 +1,7 @@
 import threading
+from contextlib import contextmanager
 
-# Copied from: https://www.oreilly.com/library/view/python-cookbook/0596001673/ch06s04.html
+# Adapted from: https://www.oreilly.com/library/view/python-cookbook/0596001673/ch06s04.html
 
 
 class ReadWriteLock:
@@ -14,21 +15,15 @@ class ReadWriteLock:
     def acquire_read(self):
         """Acquire a read lock. Blocks only if a thread has
         acquired the write lock."""
-        self._read_ready.acquire()
-        try:
+        with self._read_ready:
             self._readers += 1
-        finally:
-            self._read_ready.release()
 
     def release_read(self):
         """Release a read lock."""
-        self._read_ready.acquire()
-        try:
+        with self._read_ready:
             self._readers -= 1
             if not self._readers:
                 self._read_ready.notify_all()
-        finally:
-            self._read_ready.release()
 
     def acquire_write(self):
         """Acquire a write lock. Blocks until there are no
@@ -40,3 +35,19 @@ class ReadWriteLock:
     def release_write(self):
         """Release a write lock."""
         self._read_ready.release()
+
+    @contextmanager
+    def reader(self):
+        try:
+            self.acquire_read()
+            yield
+        finally:
+            self.release_read()
+
+    @contextmanager
+    def writer(self):
+        try:
+            self.acquire_write()
+            yield
+        finally:
+            self.release_write()
