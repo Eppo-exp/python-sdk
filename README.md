@@ -11,12 +11,11 @@
 - Progressive rollouts
 - A/B/n experiments
 - Mutually exclusive experiments (Layers)
-- Global holdouts
 - Dynamic configuration
 
 ## Installation
 
-```javascript
+```shell
 pip install eppo-server-sdk
 ```
 
@@ -43,18 +42,20 @@ import eppo_client
 client = eppo_client.get_instance()
 user = get_current_user()
 
-variation = eppoClient.get_boolean_assignment('show-new-feature', user.id, {
-    'country': user.country,
-    'device': user.device,
-}, False)
+variation = eppoClient.get_boolean_assignment(
+    'show-new-feature', 
+    user.id, 
+    { 'country': user.country }, 
+    False
+)
 ```
 
 ## Assignment functions
 
 Every Eppo flag has a return type that is set once on creation in the dashboard. Once a flag is created, assignments in code should be made using the corresponding typed function:
 
-```javascript
-get_bool_assignment(...)
+```python
+get_boolean_assignment(...)
 get_numeric_assignment(...)
 get_integer_assignment(...)
 get_string_assignment(...)
@@ -104,4 +105,4 @@ client_config = Config(api_key="<SDK-KEY-FROM-DASHBOARD>", assignment_logger=Seg
 
 ## Philosophy
 
-Eppo's SDKs are built for simplicity, speed and reliability. Flag configurations are compressed and distributed over a global CDN (Fastly), typically reaching your servers in under 15ms. Server SDKs continue polling Eppo’s API at 30-second intervals. Configurations are then cached locally, ensuring that each assignment is made instantly. Each SDK is as light as possible, with evaluation logic at around [25 simple lines of code](https://github.com/Eppo-exp/python-sdk/blob/ebc1a0b781769fe9d2e2be6fc81779eb8685a6c7/eppo_client/eval.py#L39-L69). The simple typed functions listed above are all developers need to know about, abstracting away the complexity of the underlying set of features.
+Eppo's SDKs are built for simplicity, speed and reliability. Flag configurations are compressed and distributed over a global CDN (Fastly), typically reaching your servers in under 15ms. Server SDKs continue polling Eppo’s API at 30-second intervals. Configurations are then cached locally, ensuring that each assignment is made instantly. Evaluation logic within each SDK consists of a few lines of simple numeric and string comparisons. The typed functions listed above are all developers need to understand, abstracting away the complexity of the Eppo's underlying (and expanding) feature set.
