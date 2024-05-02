@@ -16,9 +16,7 @@ class ConfigurationStore(Generic[T]):
 
     def set_configurations(self, configs: Dict[str, T]):
         with self.__lock.writer():
-            self.__cache.clear()
-            for key, config in configs.items():
-                self.__cache[key] = config
+            self.__cache = configs
 
     def get_keys(self):
         with self.__lock.reader():
