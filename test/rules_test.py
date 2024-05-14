@@ -143,6 +143,27 @@ def test_evaluate_condition_matches():
     )
 
 
+def test_evaluate_condition_matches_partial():
+    assert evaluate_condition(
+        Condition(
+            operator=OperatorType.MATCHES, value="@example\\.com", attribute="email"
+        ),
+        {"email": "alice@example.com"},
+    )
+    assert not evaluate_condition(
+        Condition(
+            operator=OperatorType.MATCHES, value="@example\\.com", attribute="email"
+        ),
+        {"email": "alice@sample.com"},
+    )
+    assert evaluate_condition(
+        Condition(
+            operator=OperatorType.MATCHES, value="@example\\.com", attribute="email"
+        ),
+        {"email": "bob@example.com"},
+    )
+
+
 def test_evaluate_condition_not_matches():
     assert not evaluate_condition(
         Condition(
