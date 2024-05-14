@@ -49,11 +49,11 @@ def evaluate_condition(
     if subject_value is not None:
         if condition.operator == OperatorType.MATCHES:
             return isinstance(condition.value, str) and bool(
-                re.match(condition.value, str(subject_value))
+                re.search(condition.value, str(subject_value))
             )
         if condition.operator == OperatorType.NOT_MATCHES:
             return isinstance(condition.value, str) and not bool(
-                re.match(condition.value, str(subject_value))
+                re.search(condition.value, str(subject_value))
             )
         elif condition.operator == OperatorType.ONE_OF:
             return isinstance(condition.value, list) and str(subject_value).lower() in [
