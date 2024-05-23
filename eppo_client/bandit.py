@@ -12,6 +12,18 @@ from eppo_client.sharders import Sharder
 
 
 @dataclass
+class BanditEvaluation:
+    flag_key: str
+    subject_key: str
+    subject_attributes: Attributes
+    action_key: str
+    action_attributes: Attributes
+    action_score: float
+    action_weight: float
+    gamma: float
+
+
+@dataclass
 class BanditEvaluator:
     sharder: Sharder
     total_shards: int = 10_000
@@ -21,12 +33,11 @@ class BanditEvaluator:
         flag_key: str,
         subject_key: str,
         subject_attributes: Attributes,
-        action_attributes: Attributes,
         actions_with_contexts: List[ActionContext],
         bandit_model: BanditModelData,
     ):
         action_scores = self.score_actions(
-            subject_attributes, action_attributes, actions_with_contexts, bandit_model
+            subject_attributes, actions_with_contexts, bandit_model
         )
 
         action_weights = self.weight_actions(
@@ -35,23 +46,33 @@ class BanditEvaluator:
             bandit_model.action_probability_floor,
         )
 
-        selected_action = self.select_action(flag_key, subject_key, action_weights)
-        return selected_action
+        selected_idx, selected_action = self.select_action(
+            flag_key, subject_key, action_weights
+        )
+        return BanditEvaluation(
+            flag_key,
+            subject_key,
+            subject_attributes,
+            selected_action,
+            actions_with_contexts[selected_idx].attributes,
+            action_scores[selected_idx][1],
+            action_weights[selected_idx][1],
+            bandit_model.gamma,
+        )
 
     def score_actions(
         self,
         subject_attributes: Attributes,
-        action_attributes: Attributes,
         actions_with_contexts: List[ActionContext],
         bandit_model: BanditModelData,
-    ):
+    ) -> List[Tuple[str, float]]:
         return [
             (
                 action_context.action_key,
                 (
                     score_action(
                         subject_attributes,
-                        action_attributes,
+                        action_context.attributes,
                         bandit_model.coefficients[action_context.action_key],
                     )
                     if action_context.action_key in bandit_model.coefficients
@@ -61,7 +82,9 @@ class BanditEvaluator:
             for action_context in actions_with_contexts
         ]
 
-    def weight_actions(self, action_scores, gamma, probability_floor):
+    def weight_actions(
+        self, action_scores, gamma, probability_floor
+    ) -> List[Tuple[str, float]]:
         number_of_actions = len(action_scores)
         best_action, best_score = max(action_scores, key=lambda t: t[1])
 
@@ -100,20 +123,20 @@ class BanditEvaluator:
         cumulative_weight = 0.0
         shard_value = shard / self.total_shards
 
-        for action_key, weight in sorted_action_weights:
+        for idx, (action_key, weight) in enumerate(sorted_action_weights):
             cumulative_weight += weight
             if cumulative_weight > shard_value:
-                return action_key, weight
+                return idx, action_key
 
         # If no action is selected, return the last action (fallback)
-        return sorted_action_weights[-1]
+        return (len(sorted_action_weights) - 1, sorted_action_weights[-1][0])
 
 
 def score_action(
     subject_attributes: Attributes,
     action_attributes: Attributes,
     coefficients: BanditCoefficients,
-):
+) -> float:
     score = coefficients.intercept
     score += score_numeric_attributes(
         subject_attributes.numeric_attributes, coefficients.subject_numeric_coefficients

@@ -1,13 +1,14 @@
 import datetime
 import logging
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from eppo_client.assignment_logger import AssignmentLogger
+from eppo_client.bandit import BanditEvaluator
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationRequestor,
 )
 from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
-from eppo_client.models import VariationType
+from eppo_client.models import ActionContext, Attributes, VariationType
 from eppo_client.poller import Poller
 from eppo_client.sharders import MD5Sharder
 from eppo_client.types import SubjectAttributes, ValueType
@@ -36,6 +37,7 @@ class EppoClient:
         )
         self.__poller.start()
         self.__evaluator = Evaluator(sharder=MD5Sharder())
+        self.__bandit_evaluator = BanditEvaluator(sharder=MD5Sharder())
 
     def get_string_assignment(
         self,
@@ -218,6 +220,63 @@ class EppoClient:
         except Exception as e:
             logger.error("[Eppo SDK] Error logging assignment event: " + str(e))
         return result
+
+    def get_bandit_action(
+        self,
+        bandit_key: str,
+        subject_key: str,
+        subject_attributes: Attributes,
+        actions_with_contexts: List[ActionContext],
+    ) -> Optional[str]:
+
+        # get experiment assignment
+        assignment = self.get_string_assignment(
+            bandit_key, subject_key, subject_attributes.categorical_attributes, None
+        )
+
+        # if the assignment is not the bandit key, then the subject is not allocated in the bandit
+        if assignment != bandit_key:
+            return None
+
+        bandit_data = self.__config_requestor.get_bandit_model(bandit_key)
+
+        if not bandit_data:
+            logger.warning(
+                "[Eppo SDK] No assigned action. Bandit not found: " + bandit_key
+            )
+            return None
+
+        action = self.__bandit_evaluator.get_bandit_action(
+            bandit_key,
+            subject_key,
+            subject_attributes,
+            actions_with_contexts,
+            bandit_data.model_data,
+        )
+
+        # log bandit action
+        bandit_event = {
+            "banditKey": bandit_key,
+            "subject": subject_key,
+            "action": action.action_key if action else None,
+            "actionProbability": action.weight if action else None,
+            "modelVersion": bandit_data.model_version if action else None,
+            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "subjectNumericAttributes": (
+                subject_attributes.numeric_attributes if action else None
+            ),
+            "subjectCategoricalAttributes": (
+                subject_attributes.categorical_attributes if action else None
+            ),
+            "actionNumericAttributes": (action.numeric_attributes if action else None),
+            "actionCategoricalAttributes": (
+                action.categorical_attributes if action else None
+            ),
+            "metaData": {"sdkLanguage": "python", "sdkVersion": __version__},
+        }
+        self.__assignment_logger.log_bandit_action(bandit_event)
+
+        return action.action_key if action else None
 
     def get_flag_keys(self):
         """

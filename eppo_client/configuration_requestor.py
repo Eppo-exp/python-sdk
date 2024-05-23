@@ -2,7 +2,7 @@ import logging
 from typing import Dict, Optional, cast
 from eppo_client.configuration_store import ConfigurationStore
 from eppo_client.http_client import HttpClient
-from eppo_client.models import Flag
+from eppo_client.models import BanditData, Flag
 
 logger = logging.getLogger(__name__)
 
@@ -14,10 +14,12 @@ class ExperimentConfigurationRequestor:
     def __init__(
         self,
         http_client: HttpClient,
-        config_store: ConfigurationStore[Flag],
+        flag_config_store: ConfigurationStore[Flag],
+        bandit_config_store: ConfigurationStore[BanditData],
     ):
         self.__http_client = http_client
-        self.__config_store = config_store
+        self.__flag_config_store = flag_config_store
+        self.__bandit_config_store = bandit_config_store
         self.__is_initialized = False
 
     def get_configuration(self, flag_key: str) -> Optional[Flag]:
@@ -25,8 +27,16 @@ class ExperimentConfigurationRequestor:
             raise ValueError("Unauthorized: please check your API key")
         return self.__config_store.get_configuration(flag_key)
 
+    def get_bandit_model(self, bandit_key: str) -> Optional[BanditData]:
+        if self.__http_client.is_unauthorized():
+            raise ValueError("Unauthorized: please check your API key")
+        return self.__bandit_config_store.get_configuration(bandit_key)
+
     def get_flag_keys(self):
-        return self.__config_store.get_keys()
+        return self.__flag_config_store.get_keys()
+
+    def get_bandit_keys(self):
+        return self.__bandit_config_store.get_keys()
 
     def fetch_and_store_configurations(self) -> Dict[str, Flag]:
         try:
