@@ -3,12 +3,12 @@ import logging
 import json
 from typing import Any, Dict, List, Optional
 from eppo_client.assignment_logger import AssignmentLogger
-from eppo_client.bandit import BanditEvaluator
+from eppo_client.bandit import BanditEvaluator, BanditResult, ActionContext, Attributes
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationRequestor,
 )
 from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
-from eppo_client.models import ActionContext, Attributes, VariationType
+from eppo_client.models import VariationType
 from eppo_client.poller import Poller
 from eppo_client.sharders import MD5Sharder
 from eppo_client.types import SubjectAttributes, ValueType
@@ -223,31 +223,58 @@ class EppoClient:
 
     def get_bandit_action(
         self,
-        bandit_key: str,
+        flag_key: str,
         subject_key: str,
         subject_attributes: Attributes,
         actions_with_contexts: List[ActionContext],
-    ) -> Optional[str]:
+        default: str,
+    ) -> BanditResult:
+        """
+        Determines the bandit action for a given subject based on the provided bandit key and subject attributes.
 
+        This method performs the following steps:
+        1. Retrieves the experiment assignment for the given bandit key and subject.
+        2. Checks if the assignment matches the bandit key. If not, it means the subject is not allocated in the bandit,
+           and the method returns a BanditResult with the assignment.
+        3. If the subject is part of the bandit, it fetches the bandit model data.
+        4. Evaluates the bandit action using the bandit evaluator.
+        5. Logs the bandit action event.
+        6. Returns the BanditResult containing the selected action key and the assignment.
+
+        Args:
+            flag_key (str): The feature flag key that contains the bandit as one of the variations.
+            subject_key (str): The key identifying the subject.
+            subject_attributes (Attributes): The attributes of the subject.
+            actions_with_contexts (List[ActionContext]): The list of actions with their contexts.
+
+        Returns:
+            BanditResult: The result containing either the bandit action if the subject is part of the bandit,
+                          or the assignment if they are not. The BanditResult includes:
+                          - action (str): The key of the selected action if the subject is part of the bandit.
+                          - assignment (str): The assignment key indicating the subject's variation.
+        """
         # get experiment assignment
         assignment = self.get_string_assignment(
-            bandit_key, subject_key, subject_attributes.categorical_attributes, None
+            flag_key, subject_key, subject_attributes.categorical_attributes, default
         )
 
-        # if the assignment is not the bandit key, then the subject is not allocated in the bandit
-        if assignment != bandit_key:
-            return None
+        print(flag_key, assignment)
 
-        bandit_data = self.__config_requestor.get_bandit_model(bandit_key)
+        # if the assignment is not the bandit key, then the subject is not allocated in the bandit
+        if assignment not in self.get_bandit_keys():
+            return BanditResult(None, assignment)
+
+        # for now, assume that the assignment is equal to the bandit key
+        bandit_data = self.__config_requestor.get_bandit_model(assignment)
 
         if not bandit_data:
             logger.warning(
-                "[Eppo SDK] No assigned action. Bandit not found: " + bandit_key
+                f"[Eppo SDK] No assigned action. Bandit not found for flag: {flag_key}"
             )
-            return None
+            return BanditResult(None, assignment)
 
-        action = self.__bandit_evaluator.get_bandit_action(
-            bandit_key,
+        evaluation = self.__bandit_evaluator.evaluate_bandit(
+            flag_key,
             subject_key,
             subject_attributes,
             actions_with_contexts,
@@ -256,27 +283,32 @@ class EppoClient:
 
         # log bandit action
         bandit_event = {
-            "banditKey": bandit_key,
+            "flagKey": flag_key,
+            "banditKey": bandit_data.bandit_key,
             "subject": subject_key,
-            "action": action.action_key if action else None,
-            "actionProbability": action.weight if action else None,
-            "modelVersion": bandit_data.model_version if action else None,
+            "action": evaluation.action_key if evaluation else None,
+            "actionProbability": evaluation.action_weight if evaluation else None,
+            "modelVersion": bandit_data.model_version if evaluation else None,
             "timestamp": datetime.datetime.utcnow().isoformat(),
             "subjectNumericAttributes": (
-                subject_attributes.numeric_attributes if action else None
+                subject_attributes.numeric_attributes if evaluation else None
             ),
             "subjectCategoricalAttributes": (
-                subject_attributes.categorical_attributes if action else None
+                subject_attributes.categorical_attributes if evaluation else None
             ),
-            "actionNumericAttributes": (action.numeric_attributes if action else None),
+            "actionNumericAttributes": (
+                evaluation.action_attributes.numeric_attributes if evaluation else None
+            ),
             "actionCategoricalAttributes": (
-                action.categorical_attributes if action else None
+                evaluation.action_attributes.categorical_attributes
+                if evaluation
+                else None
             ),
             "metaData": {"sdkLanguage": "python", "sdkVersion": __version__},
         }
         self.__assignment_logger.log_bandit_action(bandit_event)
 
-        return action.action_key if action else None
+        return BanditResult(evaluation.action_key if evaluation else None, assignment)
 
     def get_flag_keys(self):
         """
@@ -286,6 +318,13 @@ class EppoClient:
         Note that it is generally not a good idea to pre-load all flag configurations.
         """
         return self.__config_requestor.get_flag_keys()
+
+    def get_bandit_keys(self):
+        """
+        Returns a list of all bandit keys that have been initialized.
+        This can be useful to debug the initialization process.
+        """
+        return self.__config_requestor.get_bandit_keys()
 
     def is_initialized(self):
         """

@@ -54,16 +54,6 @@ class Flag(SdkBaseModel):
     total_shards: int = 10_000
 
 
-class Attributes(SdkBaseModel):
-    numeric_attributes: Dict[str, float]
-    categorical_attributes: Dict[str, str]
-
-
-class ActionContext(SdkBaseModel):
-    action_key: str
-    attributes: Attributes
-
-
 class BanditVariation(SdkBaseModel):
     key: str
     flag_key: str
@@ -75,6 +65,11 @@ class BanditNumericAttributeCoefficient(SdkBaseModel):
     attribute_key: str
     coefficient: float
     missing_value_coefficient: float
+
+
+class ValueCoefficient(SdkBaseModel):
+    value: str
+    coefficient: float
 
 
 class BanditCategoricalAttributeCoefficient(SdkBaseModel):

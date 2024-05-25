@@ -1,8 +1,6 @@
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 from eppo_client.models import (
-    ActionContext,
-    Attributes,
     BanditCategoricalAttributeCoefficient,
     BanditCoefficients,
     BanditModelData,
@@ -12,15 +10,71 @@ from eppo_client.sharders import Sharder
 
 
 @dataclass
+class Attributes:
+    numeric_attributes: Dict[str, float]
+    categorical_attributes: Dict[str, str]
+
+
+@dataclass
+class ActionContext:
+    action_key: str
+    attributes: Attributes
+
+    @classmethod
+    def create(
+        cls,
+        action_key: str,
+        numeric_attributes: Dict[str, float],
+        categorical_attributes: Dict[str, str],
+    ):
+        return cls(
+            action_key,
+            Attributes(
+                numeric_attributes=numeric_attributes,
+                categorical_attributes=categorical_attributes,
+            ),
+        )
+
+    @property
+    def numeric_attributes(self):
+        return self.attributes.numeric_attributes
+
+    @property
+    def categorical_attributes(self):
+        return self.attributes.categorical_attributes
+
+
+@dataclass
 class BanditEvaluation:
     flag_key: str
     subject_key: str
     subject_attributes: Attributes
-    action_key: str
-    action_attributes: Attributes
+    action_key: Optional[str]
+    action_attributes: Optional[Attributes]
     action_score: float
     action_weight: float
     gamma: float
+
+
+@dataclass
+class BanditResult:
+    action: str
+    assignment: str
+
+
+def null_evaluation(
+    flag_key: str, subject_key: str, subject_attributes: Attributes, gamma
+):
+    return BanditEvaluation(
+        flag_key,
+        subject_key,
+        subject_attributes,
+        None,
+        None,
+        0.0,
+        0.0,
+        gamma,
+    )
 
 
 @dataclass
@@ -35,7 +89,13 @@ class BanditEvaluator:
         subject_attributes: Attributes,
         actions_with_contexts: List[ActionContext],
         bandit_model: BanditModelData,
-    ):
+    ) -> BanditEvaluation:
+        # handle the edge case that there are no actions
+        if not actions_with_contexts:
+            return null_evaluation(
+                flag_key, subject_key, subject_attributes, bandit_model.gamma
+            )
+
         action_scores = self.score_actions(
             subject_attributes, actions_with_contexts, bandit_model
         )
@@ -139,17 +199,20 @@ def score_action(
 ) -> float:
     score = coefficients.intercept
     score += score_numeric_attributes(
-        subject_attributes.numeric_attributes, coefficients.subject_numeric_coefficients
+        coefficients.subject_numeric_coefficients,
+        subject_attributes.numeric_attributes,
     )
     score += score_categorical_attributes(
-        subject_attributes.categorical_attributes,
         coefficients.subject_categorical_coefficients,
+        subject_attributes.categorical_attributes,
     )
     score += score_numeric_attributes(
-        action_attributes.numeric_attributes, coefficients.action_numeric_coefficients
+        coefficients.action_numeric_coefficients,
+        action_attributes.numeric_attributes,
     )
-    score += score_numeric_attributes(
-        action_attributes.numeric_attributes, coefficients.action_numeric_coefficients
+    score += score_categorical_attributes(
+        coefficients.action_categorical_coefficients,
+        action_attributes.categorical_attributes,
     )
     return score
 
@@ -159,6 +222,7 @@ def score_numeric_attributes(
     attributes: Dict[str, float],
 ) -> float:
     score = 0.0
+    print(coefficients)
     for coefficient in coefficients:
         if coefficient.attribute_key in attributes:
             score += coefficient.coefficient * attributes[coefficient.attribute_key]
