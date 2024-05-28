@@ -254,8 +254,9 @@ class EppoClient:
                           - assignment (str): The assignment key indicating the subject's variation.
         """
         # get experiment assignment
+        # ignoring type because Dict[str, str] satisfies Dict[str, str | ...] but mypy does not understand
         variation = self.get_string_assignment(
-            flag_key, subject_key, subject_attributes.categorical_attributes, default
+            flag_key, subject_key, subject_attributes.categorical_attributes, default  # type: ignore
         )
 
         # if the variation is not the bandit key, then the subject is not allocated in the bandit
@@ -289,17 +290,23 @@ class EppoClient:
             "modelVersion": bandit_data.model_version if evaluation else None,
             "timestamp": datetime.datetime.utcnow().isoformat(),
             "subjectNumericAttributes": (
-                subject_attributes.numeric_attributes if evaluation else None
+                subject_attributes.numeric_attributes
+                if evaluation.subject_attributes
+                else None
             ),
             "subjectCategoricalAttributes": (
-                subject_attributes.categorical_attributes if evaluation else None
+                subject_attributes.categorical_attributes
+                if evaluation.subject_attributes
+                else None
             ),
             "actionNumericAttributes": (
-                evaluation.action_attributes.numeric_attributes if evaluation else None
+                evaluation.action_attributes.numeric_attributes
+                if evaluation.action_attributes
+                else None
             ),
             "actionCategoricalAttributes": (
                 evaluation.action_attributes.categorical_attributes
-                if evaluation
+                if evaluation.action_attributes
                 else None
             ),
             "metaData": {"sdkLanguage": "python", "sdkVersion": __version__},

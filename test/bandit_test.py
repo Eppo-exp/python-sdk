@@ -3,6 +3,8 @@ import pytest
 from eppo_client.sharders import MD5Sharder, DeterministicSharder
 
 from eppo_client.bandit import (
+    ActionContext,
+    Attributes,
     score_numeric_attributes,
     score_categorical_attributes,
     BanditEvaluator,
@@ -13,7 +15,6 @@ from eppo_client.models import (
     BanditNumericAttributeCoefficient,
     BanditCategoricalAttributeCoefficient,
 )
-from eppo_client.bandit import BanditEvaluator, ActionContext, Attributes
 
 bandit_evaluator = BanditEvaluator(MD5Sharder(), 10_000)
 

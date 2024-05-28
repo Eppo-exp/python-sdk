@@ -149,9 +149,11 @@ def test_bandit_generic_test_cases(test_case):
             subject["assignment"]["variation"], subject["assignment"]["action"]
         )
 
-        assert (
-            result.variation == expected_result.variation
-        ), f"Flag {flag} failed for subject {subject['subjectKey']}: expected assignment {expected_result.variation}, got {result.variation}"
-        assert (
-            result.action == expected_result.action
-        ), f"Flag {flag} failed for subject {subject['subjectKey']}: expected action {expected_result.action}, got {result.action}"
+        assert result.variation == expected_result.variation, (
+            f"Flag {flag} failed for subject {subject['subjectKey']}:"
+            f"expected assignment {expected_result.variation}, got {result.variation}"
+        )
+        assert result.action == expected_result.action, (
+            f"Flag {flag} failed for subject {subject['subjectKey']}:"
+            f"expected action {expected_result.action}, got {result.action}"
+        )

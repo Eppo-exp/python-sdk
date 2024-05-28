@@ -70,7 +70,7 @@ class BanditEvaluation:
 @dataclass
 class BanditResult:
     variation: str
-    action: str
+    action: Optional[str]
 
 
 def null_evaluation(
@@ -180,7 +180,7 @@ class BanditEvaluator:
         weights.append((best_action, remaining_weight))
         return weights
 
-    def select_action(self, flag_key, subject_key, action_weights) -> Tuple[str, float]:
+    def select_action(self, flag_key, subject_key, action_weights) -> Tuple[int, str]:
         # deterministic ordering
         sorted_action_weights = sorted(
             action_weights,
@@ -200,7 +200,9 @@ class BanditEvaluator:
                 return idx, action_key
 
         # If no action is selected, return the last action (fallback)
-        return (len(sorted_action_weights) - 1, sorted_action_weights[-1][0])
+        action_index = len(sorted_action_weights) - 1
+        action_key = sorted_action_weights[action_index][0]
+        return action_index, action_key
 
 
 def score_action(
