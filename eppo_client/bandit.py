@@ -27,6 +27,17 @@ class ActionContext:
         numeric_attributes: Dict[str, float],
         categorical_attributes: Dict[str, str],
     ):
+        """
+        Create an instance of ActionContext.
+
+        Args:
+            action_key (str): The key representing the action.
+            numeric_attributes (Dict[str, float]): A dictionary of numeric attributes.
+            categorical_attributes (Dict[str, str]): A dictionary of categorical attributes.
+
+        Returns:
+            ActionContext: An instance of ActionContext with the provided action key and attributes.
+        """
         return cls(
             action_key,
             Attributes(
@@ -58,12 +69,12 @@ class BanditEvaluation:
 
 @dataclass
 class BanditResult:
+    variation: str
     action: str
-    assignment: str
 
 
 def null_evaluation(
-    flag_key: str, subject_key: str, subject_attributes: Attributes, gamma
+    flag_key: str, subject_key: str, subject_attributes: Attributes, gamma: float
 ):
     return BanditEvaluation(
         flag_key,
@@ -217,15 +228,22 @@ def score_action(
     return score
 
 
+def coalesce(value, default=0):
+    return value if value is not None else default
+
+
 def score_numeric_attributes(
     coefficients: List[BanditNumericAttributeCoefficient],
     attributes: Dict[str, float],
 ) -> float:
     score = 0.0
-    print(coefficients)
     for coefficient in coefficients:
+        print(coefficient, attributes)
         if coefficient.attribute_key in attributes:
-            score += coefficient.coefficient * attributes[coefficient.attribute_key]
+            score += coefficient.coefficient * coalesce(
+                attributes[coefficient.attribute_key],
+                coefficient.missing_value_coefficient,
+            )
         else:
             score += coefficient.missing_value_coefficient
 
@@ -240,7 +258,10 @@ def score_categorical_attributes(
     for coefficient in coefficients:
         if coefficient.attribute_key in attributes:
             score += coefficient.value_coefficients.get(
-                attributes[coefficient.attribute_key],
+                coalesce(
+                    attributes[coefficient.attribute_key],
+                    coefficient.missing_value_coefficient,
+                ),
                 coefficient.missing_value_coefficient,
             )
         else:

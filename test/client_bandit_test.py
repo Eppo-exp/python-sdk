@@ -25,6 +25,8 @@ for file_name in [file for file in os.listdir(TEST_DIR)]:
         test_case_dict = json.load(test_case_json)
         test_data.append(test_case_dict)
 
+print(test_data)
+
 MOCK_BASE_URL = "http://localhost:4001/api"
 
 DEFAULT_SUBJECT_ATTRIBUTES = Attributes(
@@ -90,7 +92,7 @@ def test_get_bandit_action_bandit_does_not_exist():
         "default_variation",
     )
     print(result)
-    assert result == BanditResult(None, "default_variation")
+    assert result == BanditResult("default_variation", None)
 
 
 def test_get_bandit_action_flag_without_bandit():
@@ -98,7 +100,7 @@ def test_get_bandit_action_flag_without_bandit():
     result = client.get_bandit_action(
         "a_flag", "subject_key", DEFAULT_SUBJECT_ATTRIBUTES, [], "default_variation"
     )
-    assert result == BanditResult(None, "default_variation")
+    assert result == BanditResult("default_variation", None)
 
 
 def test_get_bandit_action_with_subject_attributes():
@@ -111,5 +113,45 @@ def test_get_bandit_action_with_subject_attributes():
         [ActionContext.create("adidas", {}, {}), ActionContext.create("nike", {}, {})],
         "default_variation",
     )
-    assert result.assignment == "banner_bandit"
+    assert result.variation == "banner_bandit"
     assert result.action in ["adidas", "nike"]
+
+
+@pytest.mark.parametrize("test_case", test_data)
+def test_bandit_generic_test_cases(test_case):
+    client = get_instance()
+
+    flag = test_case["flag"]
+    default_value = test_case["defaultValue"]
+
+    for subject in test_case["subjects"]:
+        result = client.get_bandit_action(
+            flag,
+            subject["subjectKey"],
+            Attributes(
+                numeric_attributes=subject["subjectAttributes"]["numeric_attributes"],
+                categorical_attributes=subject["subjectAttributes"][
+                    "categorical_attributes"
+                ],
+            ),
+            [
+                ActionContext.create(
+                    action["actionKey"],
+                    action["numericAttributes"],
+                    action["categoricalAttributes"],
+                )
+                for action in subject["actions"]
+            ],
+            default_value,
+        )
+
+        expected_result = BanditResult(
+            subject["assignment"]["variation"], subject["assignment"]["action"]
+        )
+
+        assert (
+            result.variation == expected_result.variation
+        ), f"Flag {flag} failed for subject {subject['subjectKey']}: expected assignment {expected_result.variation}, got {result.variation}"
+        assert (
+            result.action == expected_result.action
+        ), f"Flag {flag} failed for subject {subject['subjectKey']}: expected action {expected_result.action}, got {result.action}"

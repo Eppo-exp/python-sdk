@@ -254,24 +254,22 @@ class EppoClient:
                           - assignment (str): The assignment key indicating the subject's variation.
         """
         # get experiment assignment
-        assignment = self.get_string_assignment(
+        variation = self.get_string_assignment(
             flag_key, subject_key, subject_attributes.categorical_attributes, default
         )
 
-        print(flag_key, assignment)
+        # if the variation is not the bandit key, then the subject is not allocated in the bandit
+        if variation not in self.get_bandit_keys():
+            return BanditResult(variation, None)
 
-        # if the assignment is not the bandit key, then the subject is not allocated in the bandit
-        if assignment not in self.get_bandit_keys():
-            return BanditResult(None, assignment)
-
-        # for now, assume that the assignment is equal to the bandit key
-        bandit_data = self.__config_requestor.get_bandit_model(assignment)
+        # for now, assume that the variation is equal to the bandit key
+        bandit_data = self.__config_requestor.get_bandit_model(variation)
 
         if not bandit_data:
             logger.warning(
                 f"[Eppo SDK] No assigned action. Bandit not found for flag: {flag_key}"
             )
-            return BanditResult(None, assignment)
+            return BanditResult(variation, None)
 
         evaluation = self.__bandit_evaluator.evaluate_bandit(
             flag_key,
@@ -308,7 +306,7 @@ class EppoClient:
         }
         self.__assignment_logger.log_bandit_action(bandit_event)
 
-        return BanditResult(evaluation.action_key if evaluation else None, assignment)
+        return BanditResult(variation, evaluation.action_key if evaluation else None)
 
     def get_flag_keys(self):
         """
