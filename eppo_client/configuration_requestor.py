@@ -56,7 +56,6 @@ class ExperimentConfigurationRequestor:
             config["banditKey"]: BanditData(**config)
             for config in cast(dict, bandit_data.get("bandits", []))
         }
-        print(bandit_configs)
         self.__bandit_config_store.set_configurations(bandit_configs)
         return bandit_configs
 
@@ -67,6 +66,7 @@ class ExperimentConfigurationRequestor:
 
             if flag_data.get("bandits", {}):
                 bandit_data = self.fetch_bandits()
+                print(bandit_data)
                 self.store_bandits(bandit_data)
             self.__is_initialized = True
         except Exception as e:
