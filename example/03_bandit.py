@@ -1,5 +1,5 @@
 """
-Run using 
+Run using
 `fastapi dev 03_bandit.py`
 
 Test using

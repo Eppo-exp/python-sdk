@@ -1,5 +1,5 @@
 """
-Run using 
+Run using
 `fastapi dev 02_fastapi.py`
 
 Test using
