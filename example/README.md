@@ -8,7 +8,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Set your API key in `main.py`:
+Set your API key in `01_script.py`:
 ```
 API_KEY = "[replace with your API key]"
 ```

@@ -30,7 +30,9 @@ def init_eppo_and_assign():
     subject = "user_1234"
     flag_key = "my-flag-key"
 
-    assigned_variation = eppo.get_assignment(subject, flag_key)
+    assigned_variation = eppo.get_string_assignment(
+        flag_key, subject, subject_attributes={}, default="control"
+    )
     if assigned_variation == "control":
         print("Assigned to control")
     elif assigned_variation == "treatment":
