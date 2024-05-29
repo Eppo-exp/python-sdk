@@ -25,6 +25,9 @@ class LocalLogger(AssignmentLogger):
     def log_assignment(self, assignment_event):
         print(assignment_event)
 
+    def log_bandit_assignment(self, bandit_assignment):
+        print(bandit_assignment)
+
 
 client_config = Config(api_key=EPPO_API_KEY, assignment_logger=LocalLogger())
 
