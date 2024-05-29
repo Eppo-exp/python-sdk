@@ -190,6 +190,8 @@ def test_weight_actions_probability_floor():
     probability_floor = 0.3
     weights = bandit_evaluator.weigh_actions(action_scores, gamma, probability_floor)
     assert len(weights) == 3
+
+    # note probability floor is normalized by number of actions: 0.3/3 = 0.1
     for _, weight in weights:
         assert weight == pytest.approx(0.1, rel=1e-6) or weight > 0.1
 
