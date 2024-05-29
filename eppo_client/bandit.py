@@ -111,7 +111,7 @@ class BanditEvaluator:
             subject_attributes, actions_with_contexts, bandit_model
         )
 
-        action_weights = self.weight_actions(
+        action_weights = self.weigh_actions(
             action_scores,
             bandit_model.gamma,
             bandit_model.action_probability_floor,
@@ -153,7 +153,7 @@ class BanditEvaluator:
             for action_context in actions_with_contexts
         ]
 
-    def weight_actions(
+    def weigh_actions(
         self, action_scores, gamma, probability_floor
     ) -> List[Tuple[str, float]]:
         number_of_actions = len(action_scores)
@@ -240,12 +240,11 @@ def score_numeric_attributes(
 ) -> float:
     score = 0.0
     for coefficient in coefficients:
-        print(coefficient, attributes)
-        if coefficient.attribute_key in attributes:
-            score += coefficient.coefficient * coalesce(
-                attributes[coefficient.attribute_key],
-                coefficient.missing_value_coefficient,
-            )
+        if (
+            coefficient.attribute_key in attributes
+            and attributes[coefficient.attribute_key] is not None
+        ):
+            score += coefficient.coefficient * attributes[coefficient.attribute_key]
         else:
             score += coefficient.missing_value_coefficient
 
@@ -260,10 +259,7 @@ def score_categorical_attributes(
     for coefficient in coefficients:
         if coefficient.attribute_key in attributes:
             score += coefficient.value_coefficients.get(
-                coalesce(
-                    attributes[coefficient.attribute_key],
-                    coefficient.missing_value_coefficient,
-                ),
+                attributes[coefficient.attribute_key],
                 coefficient.missing_value_coefficient,
             )
         else:

@@ -52,7 +52,6 @@ class ExperimentConfigurationRequestor:
         return flag_configs
 
     def store_bandits(self, bandit_data) -> Dict[str, BanditData]:
-        print(bandit_data)
         bandit_configs = {
             config["banditKey"]: BanditData(**config)
             for config in cast(dict, bandit_data.get("bandits", []))
@@ -62,7 +61,6 @@ class ExperimentConfigurationRequestor:
         return bandit_configs
 
     def fetch_and_store_configurations(self):
-        print("fetch and store...")
         try:
             flag_data = self.fetch_flags()
             self.store_flags(flag_data)
@@ -73,7 +71,6 @@ class ExperimentConfigurationRequestor:
             self.__is_initialized = True
         except Exception as e:
             logger.error("Error retrieving configurations: " + str(e))
-        print("... done")
 
     def is_initialized(self):
         return self.__is_initialized

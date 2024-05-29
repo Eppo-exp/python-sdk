@@ -161,52 +161,64 @@ def test_score_categorical_attributes_mixed_coefficients():
     assert score_categorical_attributes(coefficients, attributes) == expected_score
 
 
-def test_weight_actions_single_action():
+def test_weigh_actions_single_action():
     action_scores = [("action1", 1.0)]
     gamma = 0.1
     probability_floor = 0.1
     expected_weights = [("action1", 1.0)]
     assert (
-        bandit_evaluator.weight_actions(action_scores, gamma, probability_floor)
+        bandit_evaluator.weigh_actions(action_scores, gamma, probability_floor)
         == expected_weights
     )
 
 
-def test_weight_actions_multiple_actions():
+def test_weigh_actions_multiple_actions():
     action_scores = [("action1", 1.0), ("action2", 0.5)]
-    gamma = 0.1
+    gamma = 10
     probability_floor = 0.1
-    weights = bandit_evaluator.weight_actions(action_scores, gamma, probability_floor)
+    weights = bandit_evaluator.weigh_actions(action_scores, gamma, probability_floor)
     assert len(weights) == 2
-    assert any(action == "action1" and weight > 0.5 for action, weight in weights)
-    assert any(action == "action2" and weight <= 0.5 for action, weight in weights)
+    action_1_weight = next(weight for action, weight in weights if action == "action1")
+    assert action_1_weight == pytest.approx(6 / 7, rel=1e-6)
+    action_2_weight = next(weight for action, weight in weights if action == "action2")
+    assert action_2_weight == pytest.approx(1 / 7, rel=1e-6)
 
 
 def test_weight_actions_probability_floor():
     action_scores = [("action1", 1.0), ("action2", 0.5), ("action3", 0.2)]
-    gamma = 0.1
+    gamma = 10
     probability_floor = 0.3
-    weights = bandit_evaluator.weight_actions(action_scores, gamma, probability_floor)
+    weights = bandit_evaluator.weigh_actions(action_scores, gamma, probability_floor)
     assert len(weights) == 3
-    for action, weight in weights:
-        assert weight >= 0.1
+    for _, weight in weights:
+        assert weight == pytest.approx(0.1, rel=1e-6) or weight > 0.1
 
 
 def test_weight_actions_gamma_effect():
     action_scores = [("action1", 1.0), ("action2", 0.5)]
-    gamma = 1.0
+    small_gamma = 1.0
+    large_gamma = 10.0
     probability_floor = 0.1
-    weights = bandit_evaluator.weight_actions(action_scores, gamma, probability_floor)
-    assert len(weights) == 2
-    assert any(action == "action1" and weight > 0.5 for action, weight in weights)
-    assert any(action == "action2" and weight <= 0.5 for action, weight in weights)
+    weights_small_gamma = bandit_evaluator.weigh_actions(
+        action_scores, small_gamma, probability_floor
+    )
+    weights_large_gamma = bandit_evaluator.weigh_actions(
+        action_scores, large_gamma, probability_floor
+    )
+
+    assert next(
+        weight for action, weight in weights_small_gamma if action == "action1"
+    ) < next(weight for action, weight in weights_large_gamma if action == "action1")
+    assert next(
+        weight for action, weight in weights_small_gamma if action == "action2"
+    ) > next(weight for action, weight in weights_large_gamma if action == "action2")
 
 
 def test_weight_actions_all_equal_scores():
     action_scores = [("action1", 1.0), ("action2", 1.0), ("action3", 1.0)]
     gamma = 0.1
     probability_floor = 0.1
-    weights = bandit_evaluator.weight_actions(action_scores, gamma, probability_floor)
+    weights = bandit_evaluator.weigh_actions(action_scores, gamma, probability_floor)
     assert len(weights) == 3
     for _, weight in weights:
         assert weight == pytest.approx(1.0 / 3, rel=1e-2)

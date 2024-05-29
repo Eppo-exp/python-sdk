@@ -250,8 +250,8 @@ class EppoClient:
         Returns:
             BanditResult: The result containing either the bandit action if the subject is part of the bandit,
                           or the assignment if they are not. The BanditResult includes:
+                          - variation (str): The assignment key indicating the subject's variation.
                           - action (str): The key of the selected action if the subject is part of the bandit.
-                          - assignment (str): The assignment key indicating the subject's variation.
         """
         # get experiment assignment
         # ignoring type because Dict[str, str] satisfies Dict[str, str | ...] but mypy does not understand
