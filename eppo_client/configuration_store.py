@@ -20,4 +20,4 @@ class ConfigurationStore(Generic[T]):
 
     def get_keys(self):
         with self.__lock.reader():
-            return list(self.__cache.keys())
+            return set(self.__cache.keys())

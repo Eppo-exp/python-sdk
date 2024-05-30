@@ -6,7 +6,7 @@ from eppo_client.configuration_requestor import (
 )
 from eppo_client.configuration_store import ConfigurationStore
 from eppo_client.http_client import HttpClient, SdkParams
-from eppo_client.models import Flag
+from eppo_client.models import BanditData, Flag
 from eppo_client.read_write_lock import ReadWriteLock
 from eppo_client.version import __version__
 
@@ -30,9 +30,12 @@ def init(config: Config) -> EppoClient:
         apiKey=config.api_key, sdkName="python", sdkVersion=__version__
     )
     http_client = HttpClient(base_url=config.base_url, sdk_params=sdk_params)
-    config_store: ConfigurationStore[Flag] = ConfigurationStore()
+    flag_config_store: ConfigurationStore[Flag] = ConfigurationStore()
+    bandit_config_store: ConfigurationStore[BanditData] = ConfigurationStore()
     config_requestor = ExperimentConfigurationRequestor(
-        http_client=http_client, config_store=config_store
+        http_client=http_client,
+        flag_config_store=flag_config_store,
+        bandit_config_store=bandit_config_store,
     )
     assignment_logger = config.assignment_logger
     is_graceful_mode = config.is_graceful_mode
