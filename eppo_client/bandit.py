@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+import logging
 from typing import Dict, List, Optional, Tuple
+
 from eppo_client.models import (
     BanditCategoricalAttributeCoefficient,
     BanditCoefficients,
@@ -7,6 +9,13 @@ from eppo_client.models import (
     BanditNumericAttributeCoefficient,
 )
 from eppo_client.sharders import Sharder
+
+
+logger = logging.getLogger(__name__)
+
+
+class BanditEvaluationError(Exception):
+    pass
 
 
 @dataclass
@@ -71,6 +80,9 @@ class BanditEvaluation:
 class BanditResult:
     variation: str
     action: Optional[str]
+
+    def to_string(self) -> str:
+        return coalesce(self.action, self.variation)
 
 
 def null_evaluation(
@@ -176,7 +188,7 @@ class BanditEvaluator:
         ]
 
         # remaining weight goes to best action
-        remaining_weight = 1.0 - sum(weight for _, weight in weights)
+        remaining_weight = max(0.0, 1.0 - sum(weight for _, weight in weights))
         weights.append((best_action, remaining_weight))
         return weights
 
@@ -184,8 +196,11 @@ class BanditEvaluator:
         # deterministic ordering
         sorted_action_weights = sorted(
             action_weights,
-            key=lambda t: self.sharder.get_shard(
-                f"{flag_key}-{subject_key}-{t[0]}", self.total_shards
+            key=lambda t: (
+                self.sharder.get_shard(
+                    f"{flag_key}-{subject_key}-{t[0]}", self.total_shards
+                ),
+                t[0],  # tie-break using action name
             ),
         )
 
@@ -200,9 +215,9 @@ class BanditEvaluator:
                 return idx, action_key
 
         # If no action is selected, return the last action (fallback)
-        action_index = len(sorted_action_weights) - 1
-        action_key = sorted_action_weights[action_index][0]
-        return action_index, action_key
+        raise BanditEvaluationError(
+            f"[Eppo SDK] No action selected for {flag_key} {subject_key}"
+        )
 
 
 def score_action(

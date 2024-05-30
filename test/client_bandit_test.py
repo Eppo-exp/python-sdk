@@ -25,7 +25,6 @@ for file_name in [file for file in os.listdir(TEST_DIR)]:
         test_case_dict = json.load(test_case_json)
         test_data.append(test_case_dict)
 
-print(test_data)
 
 MOCK_BASE_URL = "http://localhost:4001/api"
 
@@ -69,8 +68,6 @@ def init_fixture():
         )
     )
     sleep(0.1)  # wait for initialization
-    print(client.get_flag_keys())
-    print(client.get_bandit_keys())
     yield
     client._shutdown()
     httpretty.disable()
@@ -91,7 +88,6 @@ def test_get_bandit_action_bandit_does_not_exist():
         [],
         "default_variation",
     )
-    print(result)
     assert result == BanditResult("default_variation", None)
 
 

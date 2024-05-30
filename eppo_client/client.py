@@ -253,6 +253,28 @@ class EppoClient:
                           - variation (str): The assignment key indicating the subject's variation.
                           - action (str): The key of the selected action if the subject is part of the bandit.
         """
+        try:
+            return self.get_bandit_action_detail(
+                flag_key,
+                subject_key,
+                subject_attributes,
+                actions_with_contexts,
+                default,
+            )
+        except Exception as e:
+            if self.__is_graceful_mode:
+                logger.error("[Eppo SDK] Error getting bandit action: " + str(e))
+                return BanditResult(default, None)
+            raise e
+
+    def get_bandit_action_detail(
+        self,
+        flag_key: str,
+        subject_key: str,
+        subject_attributes: Attributes,
+        actions_with_contexts: List[ActionContext],
+        default: str,
+    ) -> BanditResult:
         # get experiment assignment
         # ignoring type because Dict[str, str] satisfies Dict[str, str | ...] but mypy does not understand
         variation = self.get_string_assignment(
@@ -292,22 +314,22 @@ class EppoClient:
             "subjectNumericAttributes": (
                 subject_attributes.numeric_attributes
                 if evaluation.subject_attributes
-                else None
+                else {}
             ),
             "subjectCategoricalAttributes": (
                 subject_attributes.categorical_attributes
                 if evaluation.subject_attributes
-                else None
+                else {}
             ),
             "actionNumericAttributes": (
                 evaluation.action_attributes.numeric_attributes
                 if evaluation.action_attributes
-                else None
+                else {}
             ),
             "actionCategoricalAttributes": (
                 evaluation.action_attributes.categorical_attributes
                 if evaluation.action_attributes
-                else None
+                else {}
             ),
             "metaData": {"sdkLanguage": "python", "sdkVersion": __version__},
         }
