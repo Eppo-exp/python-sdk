@@ -225,7 +225,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: Attributes,
+        subject_context: Attributes,
         actions_with_contexts: List[ActionContext],
         default: str,
     ) -> BanditResult:
@@ -244,7 +244,7 @@ class EppoClient:
         Args:
             flag_key (str): The feature flag key that contains the bandit as one of the variations.
             subject_key (str): The key identifying the subject.
-            subject_attributes (Attributes): The attributes of the subject.
+            subject_context (Attributes): The subject context
             actions_with_contexts (List[ActionContext]): The list of actions with their contexts.
 
         Returns:
@@ -257,7 +257,7 @@ class EppoClient:
             return self.get_bandit_action_detail(
                 flag_key,
                 subject_key,
-                subject_attributes,
+                subject_context,
                 actions_with_contexts,
                 default,
             )
@@ -271,14 +271,14 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: Attributes,
+        subject_context: Attributes,
         actions_with_contexts: List[ActionContext],
         default: str,
     ) -> BanditResult:
         # get experiment assignment
         # ignoring type because Dict[str, str] satisfies Dict[str, str | ...] but mypy does not understand
         variation = self.get_string_assignment(
-            flag_key, subject_key, subject_attributes.categorical_attributes, default  # type: ignore
+            flag_key, subject_key, subject_context.categorical_attributes, default  # type: ignore
         )
 
         # if the variation is not the bandit key, then the subject is not allocated in the bandit
@@ -297,7 +297,7 @@ class EppoClient:
         evaluation = self.__bandit_evaluator.evaluate_bandit(
             flag_key,
             subject_key,
-            subject_attributes,
+            subject_context,
             actions_with_contexts,
             bandit_data.model_data,
         )
@@ -312,12 +312,12 @@ class EppoClient:
             "modelVersion": bandit_data.model_version if evaluation else None,
             "timestamp": datetime.datetime.utcnow().isoformat(),
             "subjectNumericAttributes": (
-                subject_attributes.numeric_attributes
+                subject_context.numeric_attributes
                 if evaluation.subject_attributes
                 else {}
             ),
             "subjectCategoricalAttributes": (
-                subject_attributes.categorical_attributes
+                subject_context.categorical_attributes
                 if evaluation.subject_attributes
                 else {}
             ),
