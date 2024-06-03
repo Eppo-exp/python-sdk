@@ -66,7 +66,6 @@ class ExperimentConfigurationRequestor:
 
             if flag_data.get("bandits", {}):
                 bandit_data = self.fetch_bandits()
-                print(bandit_data)
                 self.store_bandits(bandit_data)
             self.__is_initialized = True
         except Exception as e:
