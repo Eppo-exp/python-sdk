@@ -53,8 +53,8 @@ class ExperimentConfigurationRequestor:
 
     def store_bandits(self, bandit_data) -> Dict[str, BanditData]:
         bandit_configs = {
-            config["banditKey"]: BanditData(**config)
-            for config in cast(dict, bandit_data.get("bandits", []))
+            key: BanditData(**data)
+            for key, data in cast(dict, bandit_data.get("bandits", {})).items()
         }
         self.__bandit_config_store.set_configurations(bandit_configs)
         return bandit_configs
