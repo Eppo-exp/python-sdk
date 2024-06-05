@@ -129,9 +129,13 @@ class BanditEvaluator:
             bandit_model.action_probability_floor,
         )
 
-        selected_idx, selected_action = self.select_action(
-            flag_key, subject_key, action_weights
+        selected_action = self.select_action(flag_key, subject_key, action_weights)
+        selected_idx = next(
+            idx
+            for idx, action_context in enumerate(actions_with_contexts)
+            if action_context.action_key == selected_action
         )
+
         return BanditEvaluation(
             flag_key,
             subject_key,
@@ -192,7 +196,7 @@ class BanditEvaluator:
         weights.append((best_action, remaining_weight))
         return weights
 
-    def select_action(self, flag_key, subject_key, action_weights) -> Tuple[int, str]:
+    def select_action(self, flag_key, subject_key, action_weights) -> str:
         # deterministic ordering
         sorted_action_weights = sorted(
             action_weights,
@@ -209,10 +213,10 @@ class BanditEvaluator:
         cumulative_weight = 0.0
         shard_value = shard / self.total_shards
 
-        for idx, (action_key, weight) in enumerate(sorted_action_weights):
+        for action_key, weight in sorted_action_weights:
             cumulative_weight += weight
             if cumulative_weight > shard_value:
-                return idx, action_key
+                return action_key
 
         # If no action is selected, return the last action (fallback)
         raise BanditEvaluationError(
