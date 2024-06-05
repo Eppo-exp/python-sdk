@@ -142,6 +142,8 @@ def test_get_bandit_action_with_subject_attributes():
         == DEFAULT_SUBJECT_ATTRIBUTES.categorical_attributes
     )
     assert bandit_log_statement["action"] == result.action
+    assert bandit_log_statement["optimalityGap"] >= 0
+    assert bandit_log_statement["actionProbability"] >= 0
 
     chosen_action = next(
         action for action in actions if action.action_key == result.action
