@@ -74,6 +74,7 @@ class BanditEvaluation:
     action_score: float
     action_weight: float
     gamma: float
+    optimality_gap: float
 
 
 @dataclass
@@ -89,14 +90,7 @@ def null_evaluation(
     flag_key: str, subject_key: str, subject_attributes: Attributes, gamma: float
 ):
     return BanditEvaluation(
-        flag_key,
-        subject_key,
-        subject_attributes,
-        None,
-        None,
-        0.0,
-        0.0,
-        gamma,
+        flag_key, subject_key, subject_attributes, None, None, 0.0, 0.0, gamma, 0.0
     )
 
 
@@ -136,6 +130,10 @@ class BanditEvaluator:
             if action_context.action_key == selected_action
         )
 
+        optimality_gap = (
+            max(score for _, score in action_scores) - action_scores[selected_idx][1]
+        )
+
         return BanditEvaluation(
             flag_key,
             subject_key,
@@ -145,6 +143,7 @@ class BanditEvaluator:
             action_scores[selected_idx][1],
             action_weights[selected_idx][1],
             bandit_model.gamma,
+            optimality_gap,
         )
 
     def score_actions(
