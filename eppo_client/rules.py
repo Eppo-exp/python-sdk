@@ -56,13 +56,13 @@ def evaluate_condition(
                 re.search(condition.value, str(subject_value))
             )
         elif condition.operator == OperatorType.ONE_OF:
-            return isinstance(condition.value, list) and str(subject_value).lower() in [
-                str(value).lower() for value in condition.value
+            return isinstance(condition.value, list) and str(subject_value) in [
+                str(value) for value in condition.value
             ]
         elif condition.operator == OperatorType.NOT_ONE_OF:
-            return isinstance(condition.value, list) and str(
-                subject_value
-            ).lower() not in [str(value).lower() for value in condition.value]
+            return isinstance(condition.value, list) and str(subject_value) not in [
+                str(value) for value in condition.value
+            ]
         else:
             # Numeric operator: value could be numeric or semver.
             if isinstance(subject_value, numbers.Number):
