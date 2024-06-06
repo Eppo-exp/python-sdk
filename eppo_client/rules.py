@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any, List
 
 from eppo_client.models import SdkBaseModel
-from eppo_client.types import ConditionValueType, SubjectAttributes
+from eppo_client.types import AttributeType, ConditionValueType, SubjectAttributes
 
 
 class OperatorType(Enum):
@@ -49,20 +49,20 @@ def evaluate_condition(
     if subject_value is not None:
         if condition.operator == OperatorType.MATCHES:
             return isinstance(condition.value, str) and bool(
-                re.search(condition.value, str(subject_value))
+                re.search(condition.value, to_string(subject_value))
             )
         if condition.operator == OperatorType.NOT_MATCHES:
             return isinstance(condition.value, str) and not bool(
-                re.search(condition.value, str(subject_value))
+                re.search(condition.value, to_string(subject_value))
             )
         elif condition.operator == OperatorType.ONE_OF:
-            return isinstance(condition.value, list) and str(subject_value) in [
+            return isinstance(condition.value, list) and to_string(subject_value) in [
                 str(value) for value in condition.value
             ]
         elif condition.operator == OperatorType.NOT_ONE_OF:
-            return isinstance(condition.value, list) and str(subject_value) not in [
-                str(value) for value in condition.value
-            ]
+            return isinstance(condition.value, list) and to_string(
+                subject_value
+            ) not in [str(value) for value in condition.value]
         else:
             # Numeric operator: value could be numeric or semver.
             if isinstance(subject_value, numbers.Number):
@@ -119,3 +119,13 @@ def compare_semver(
         return semver.compare(attribute_value, condition_value) <= 0
 
     return False
+
+
+def to_string(value: AttributeType) -> str:
+    if isinstance(value, str):
+        return value
+    elif isinstance(value, bool):
+        return "true" if value else "false"
+    elif isinstance(value, float):
+        return str(int(value)) if value.is_integer() else str(value)
+    return str(value)
