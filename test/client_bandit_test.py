@@ -5,7 +5,7 @@
 import json
 import os
 from time import sleep
-from typing import Dict
+from typing import Dict, List
 from eppo_client.bandit import BanditResult, ActionContext, Attributes
 
 import httpretty  # type: ignore
@@ -34,11 +34,17 @@ DEFAULT_SUBJECT_ATTRIBUTES = Attributes(
 
 
 class MockAssignmentLogger(AssignmentLogger):
+    assignment_events: List[Dict] = []
+    bandit_events: List[Dict] = []
+
     def log_assignment(self, assignment_event: Dict):
-        print(f"Assignment Event: {assignment_event}")
+        self.assignment_events.append(assignment_event)
 
     def log_bandit_action(self, bandit_event: Dict):
-        print(f"Bandit Event: {bandit_event}")
+        self.bandit_events.append(bandit_event)
+
+
+mock_assignment_logger = MockAssignmentLogger()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -64,7 +70,7 @@ def init_fixture():
         Config(
             base_url=MOCK_BASE_URL,
             api_key="dummy",
-            assignment_logger=AssignmentLogger(),
+            assignment_logger=mock_assignment_logger,
         )
     )
     sleep(0.1)  # wait for initialization
@@ -102,15 +108,54 @@ def test_get_bandit_action_flag_without_bandit():
 def test_get_bandit_action_with_subject_attributes():
     # tests that allocation filtering based on subject attributes works correctly
     client = get_instance()
+    actions = [
+        ActionContext.create("adidas", {"discount": 0.1}, {"from": "germany"}),
+        ActionContext.create("nike", {"discount": 0.2}, {"from": "usa"}),
+    ]
     result = client.get_bandit_action(
         "banner_bandit_flag_uk_only",
-        "subject_key",
+        "alice",
         DEFAULT_SUBJECT_ATTRIBUTES,
-        [ActionContext.create("adidas", {}, {}), ActionContext.create("nike", {}, {})],
+        actions,
         "default_variation",
     )
     assert result.variation == "banner_bandit"
     assert result.action in ["adidas", "nike"]
+
+    # testing assignment logger
+    assignment_log_statement = mock_assignment_logger.assignment_events[-1]
+    assert assignment_log_statement["featureFlag"] == "banner_bandit_flag_uk_only"
+    assert assignment_log_statement["variation"] == "banner_bandit"
+    assert assignment_log_statement["subject"] == "alice"
+
+    # testing bandit logger
+    bandit_log_statement = mock_assignment_logger.bandit_events[-1]
+    assert bandit_log_statement["flagKey"] == "banner_bandit_flag_uk_only"
+    assert bandit_log_statement["banditKey"] == "banner_bandit"
+    assert bandit_log_statement["subject"] == "alice"
+    assert (
+        bandit_log_statement["subjectNumericAttributes"]
+        == DEFAULT_SUBJECT_ATTRIBUTES.numeric_attributes
+    )
+    assert (
+        bandit_log_statement["subjectCategoricalAttributes"]
+        == DEFAULT_SUBJECT_ATTRIBUTES.categorical_attributes
+    )
+    assert bandit_log_statement["action"] == result.action
+    assert bandit_log_statement["optimalityGap"] >= 0
+    assert bandit_log_statement["actionProbability"] >= 0
+
+    chosen_action = next(
+        action for action in actions if action.action_key == result.action
+    )
+    assert (
+        bandit_log_statement["actionNumericAttributes"]
+        == chosen_action.attributes.numeric_attributes
+    )
+    assert (
+        bandit_log_statement["actionCategoricalAttributes"]
+        == chosen_action.attributes.categorical_attributes
+    )
 
 
 @pytest.mark.parametrize("test_case", test_data)

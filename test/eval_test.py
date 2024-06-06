@@ -167,6 +167,8 @@ def test_flag_target_on_id():
     assert result.variation == Variation(key="control", value="control")
     result = evaluator.evaluate_flag(flag, "user-3", {})
     assert result.variation is None
+    result = evaluator.evaluate_flag(flag, "user-1", {"id": "do-not-overwrite-me"})
+    assert result.variation is None
 
 
 def test_catch_all_allocation():

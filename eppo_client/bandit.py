@@ -74,6 +74,7 @@ class BanditEvaluation:
     action_score: float
     action_weight: float
     gamma: float
+    optimality_gap: float
 
 
 @dataclass
@@ -89,14 +90,7 @@ def null_evaluation(
     flag_key: str, subject_key: str, subject_attributes: Attributes, gamma: float
 ):
     return BanditEvaluation(
-        flag_key,
-        subject_key,
-        subject_attributes,
-        None,
-        None,
-        0.0,
-        0.0,
-        gamma,
+        flag_key, subject_key, subject_attributes, None, None, 0.0, 0.0, gamma, 0.0
     )
 
 
@@ -129,9 +123,17 @@ class BanditEvaluator:
             bandit_model.action_probability_floor,
         )
 
-        selected_idx, selected_action = self.select_action(
-            flag_key, subject_key, action_weights
+        selected_action = self.select_action(flag_key, subject_key, action_weights)
+        selected_idx = next(
+            idx
+            for idx, action_context in enumerate(actions_with_contexts)
+            if action_context.action_key == selected_action
         )
+
+        optimality_gap = (
+            max(score for _, score in action_scores) - action_scores[selected_idx][1]
+        )
+
         return BanditEvaluation(
             flag_key,
             subject_key,
@@ -141,6 +143,7 @@ class BanditEvaluator:
             action_scores[selected_idx][1],
             action_weights[selected_idx][1],
             bandit_model.gamma,
+            optimality_gap,
         )
 
     def score_actions(
@@ -192,7 +195,7 @@ class BanditEvaluator:
         weights.append((best_action, remaining_weight))
         return weights
 
-    def select_action(self, flag_key, subject_key, action_weights) -> Tuple[int, str]:
+    def select_action(self, flag_key, subject_key, action_weights) -> str:
         # deterministic ordering
         sorted_action_weights = sorted(
             action_weights,
@@ -209,10 +212,10 @@ class BanditEvaluator:
         cumulative_weight = 0.0
         shard_value = shard / self.total_shards
 
-        for idx, (action_key, weight) in enumerate(sorted_action_weights):
+        for action_key, weight in sorted_action_weights:
             cumulative_weight += weight
             if cumulative_weight > shard_value:
-                return idx, action_key
+                return action_key
 
         # If no action is selected, return the last action (fallback)
         raise BanditEvaluationError(

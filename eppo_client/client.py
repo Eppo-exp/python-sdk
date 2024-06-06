@@ -309,6 +309,7 @@ class EppoClient:
             "subject": subject_key,
             "action": evaluation.action_key if evaluation else None,
             "actionProbability": evaluation.action_weight if evaluation else None,
+            "optimalityGap": evaluation.optimality_gap if evaluation else None,
             "modelVersion": bandit_data.model_version if evaluation else None,
             "timestamp": datetime.datetime.utcnow().isoformat(),
             "subjectNumericAttributes": (
