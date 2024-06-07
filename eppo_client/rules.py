@@ -130,4 +130,6 @@ def to_string(value: AttributeType) -> str:
         return "true" if value else "false"
     elif isinstance(value, float):
         return f"{value:.0f}" if value.is_integer() else str(value)
+    elif isinstance(value, int):
+        return str(value)
     return json.dumps(value)
