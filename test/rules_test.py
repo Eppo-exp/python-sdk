@@ -423,3 +423,7 @@ def test_to_string_float():
 def test_to_string_bool():
     assert to_string(True) == "true"
     assert to_string(False) == "false"
+
+
+def test_to_string_null():
+    assert to_string(None) == "null"

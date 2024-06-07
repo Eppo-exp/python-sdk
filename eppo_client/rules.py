@@ -1,8 +1,10 @@
+import json
 import numbers
 import re
-import semver
 from enum import Enum
 from typing import Any, List
+
+import semver
 
 from eppo_client.models import SdkBaseModel
 from eppo_client.types import AttributeType, ConditionValueType, SubjectAttributes
@@ -51,7 +53,7 @@ def evaluate_condition(
             return isinstance(condition.value, str) and bool(
                 re.search(condition.value, to_string(subject_value))
             )
-        if condition.operator == OperatorType.NOT_MATCHES:
+        elif condition.operator == OperatorType.NOT_MATCHES:
             return isinstance(condition.value, str) and not bool(
                 re.search(condition.value, to_string(subject_value))
             )
@@ -127,5 +129,5 @@ def to_string(value: AttributeType) -> str:
     elif isinstance(value, bool):
         return "true" if value else "false"
     elif isinstance(value, float):
-        return str(int(value)) if value.is_integer() else str(value)
-    return str(value)
+        return f"{value:.0f}" if value.is_integer() else str(value)
+    return json.dumps(value)
