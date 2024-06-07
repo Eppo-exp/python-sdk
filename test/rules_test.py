@@ -4,6 +4,7 @@ from eppo_client.rules import (
     Condition,
     evaluate_condition,
     matches_rule,
+    to_string,
 )
 
 greater_than_condition = Condition(operator=OperatorType.GT, value=10, attribute="age")
@@ -137,9 +138,21 @@ def test_evaluate_condition_matches():
         Condition(operator=OperatorType.MATCHES, value="^test.*", attribute="email"),
         {"email": "test@example.com"},
     )
+    assert evaluate_condition(
+        Condition(operator=OperatorType.MATCHES, value="true", attribute="flag"),
+        {"flag": True},
+    )
+    assert evaluate_condition(
+        Condition(operator=OperatorType.MATCHES, value="false", attribute="flag"),
+        {"flag": False},
+    )
     assert not evaluate_condition(
         Condition(operator=OperatorType.MATCHES, value="^test.*", attribute="email"),
         {"email": "example@test.com"},
+    )
+    assert not evaluate_condition(
+        Condition(operator=OperatorType.MATCHES, value="False", attribute="flag"),
+        {"flag": False},
     )
 
 
@@ -348,10 +361,10 @@ def test_evaluate_condition_one_of_int():
 
 def test_evaluate_condition_one_of_boolean():
     one_of_condition_boolean = Condition(
-        operator=OperatorType.ONE_OF, value=[True, False], attribute="status"
+        operator=OperatorType.ONE_OF, value=["true", "false"], attribute="status"
     )
     assert evaluate_condition(one_of_condition_boolean, {"status": False})
-    assert evaluate_condition(one_of_condition_boolean, {"status": "False"})
+    assert evaluate_condition(one_of_condition_boolean, {"status": "false"})
     assert not evaluate_condition(one_of_condition_boolean, {"status": "Maybe"})
     assert not evaluate_condition(one_of_condition_boolean, {"status": 0})
     assert not evaluate_condition(one_of_condition_boolean, {"status": 1})
@@ -391,3 +404,26 @@ def test_is_not_null_operator():
     assert not evaluate_condition(is_not_null_condition, {"size": None})
     assert evaluate_condition(is_not_null_condition, {"size": 10})
     assert not evaluate_condition(is_not_null_condition, {})
+
+
+def test_to_string_string():
+    assert to_string("test") == "test"
+
+
+def test_to_string_int():
+    assert to_string(10) == "10"
+
+
+def test_to_string_float():
+    assert to_string(10.5) == "10.5"
+    assert to_string(10.0) == "10"
+    assert to_string(123456789.0) == "123456789"
+
+
+def test_to_string_bool():
+    assert to_string(True) == "true"
+    assert to_string(False) == "false"
+
+
+def test_to_string_null():
+    assert to_string(None) == "null"
