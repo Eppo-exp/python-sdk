@@ -108,10 +108,15 @@ def test_get_bandit_action_flag_without_bandit():
 def test_get_bandit_action_with_subject_attributes():
     # tests that allocation filtering based on subject attributes works correctly
     client = get_instance()
-    actions = [
-        ActionContext.create("adidas", {"discount": 0.1}, {"from": "germany"}),
-        ActionContext.create("nike", {"discount": 0.2}, {"from": "usa"}),
-    ]
+    actions = {
+        "adidas": Attributes(
+            numeric_attributes={"discount": 0.1},
+            categorical_attributes={"from": "germany"},
+        ),
+        "nike": Attributes(
+            numeric_attributes={"discount": 0.2}, categorical_attributes={"from": "usa"}
+        ),
+    }
     result = client.get_bandit_action(
         "banner_bandit_flag_uk_only",
         "alice",
@@ -145,16 +150,15 @@ def test_get_bandit_action_with_subject_attributes():
     assert bandit_log_statement["optimalityGap"] >= 0
     assert bandit_log_statement["actionProbability"] >= 0
 
-    chosen_action = next(
-        action for action in actions if action.action_key == result.action
-    )
+    chosen_action = actions[result.action]
+
     assert (
         bandit_log_statement["actionNumericAttributes"]
-        == chosen_action.attributes.numeric_attributes
+        == chosen_action.numeric_attributes
     )
     assert (
         bandit_log_statement["actionCategoricalAttributes"]
-        == chosen_action.attributes.categorical_attributes
+        == chosen_action.categorical_attributes
     )
 
 
@@ -175,14 +179,12 @@ def test_bandit_generic_test_cases(test_case):
                     "categorical_attributes"
                 ],
             ),
-            [
-                ActionContext.create(
-                    action["actionKey"],
-                    action["numericAttributes"],
-                    action["categoricalAttributes"],
+            {
+                action["actionKey"]: Attributes(
+                    action["numericAttributes"], action["categoricalAttributes"]
                 )
                 for action in subject["actions"]
-            ],
+            },
             default_value,
         )
 

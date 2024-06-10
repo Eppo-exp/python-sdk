@@ -23,6 +23,10 @@ class Attributes:
     numeric_attributes: Dict[str, float]
     categorical_attributes: Dict[str, str]
 
+    @classmethod
+    def empty(cls):
+        return cls({}, {})
+
 
 @dataclass
 class ActionContext:

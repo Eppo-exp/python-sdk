@@ -226,7 +226,7 @@ class EppoClient:
         flag_key: str,
         subject_key: str,
         subject_context: Attributes,
-        actions_with_contexts: List[ActionContext],
+        actions: Dict[str, Attributes],
         default: str,
     ) -> BanditResult:
         """
@@ -245,7 +245,8 @@ class EppoClient:
             flag_key (str): The feature flag key that contains the bandit as one of the variations.
             subject_key (str): The key identifying the subject.
             subject_context (Attributes): The subject context
-            actions_with_contexts (List[ActionContext]): The list of actions with their contexts.
+            actions (Dict[str, Attributes]): The dictionary that maps action keys to their context of actions with their contexts.
+            default (str): The default variation to use if the subject is not part of the bandit.
 
         Returns:
             BanditResult: The result containing either the bandit action if the subject is part of the bandit,
@@ -258,7 +259,7 @@ class EppoClient:
                 flag_key,
                 subject_key,
                 subject_context,
-                actions_with_contexts,
+                actions,
                 default,
             )
         except Exception as e:
@@ -272,7 +273,7 @@ class EppoClient:
         flag_key: str,
         subject_key: str,
         subject_context: Attributes,
-        actions_with_contexts: List[ActionContext],
+        actions: Dict[str, Attributes],
         default: str,
     ) -> BanditResult:
         # get experiment assignment
@@ -294,6 +295,10 @@ class EppoClient:
             )
             return BanditResult(variation, None)
 
+        actions_with_contexts = [
+            ActionContext(action_key, attributes)
+            for action_key, attributes in actions.items()
+        ]
         evaluation = self.__bandit_evaluator.evaluate_bandit(
             flag_key,
             subject_key,
