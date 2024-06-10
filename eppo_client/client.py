@@ -254,7 +254,26 @@ class EppoClient:
                           or the assignment if they are not. The BanditResult includes:
                           - variation (str): The assignment key indicating the subject's variation.
                           - action (str): The key of the selected action if the subject is part of the bandit.
+
+        Example:
+        result = client.get_bandit_action(
+            "flag_key",
+            "subject_key",
+            Attributes(
+                numeric_attributes={"age": 25},
+                categorical_attributes={"country": "USA"}),
+            {
+                "action1": Attributes(numeric_attributes={"price": 10.0}, categorical_attributes={"category": "A"}),
+                "action2": Attributes.empty()
+            },
+            "default"
+        )
+        if result.action is None:
+            do_variation(result.variation)
+        else:
+            do_action(result.action)
         """
+
         try:
             return self.get_bandit_action_detail(
                 flag_key,
