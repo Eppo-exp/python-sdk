@@ -6,7 +6,7 @@ import json
 import os
 from time import sleep
 from typing import Dict, List
-from eppo_client.bandit import BanditResult, ActionContext, Attributes
+from eppo_client.bandit import BanditResult, Attributes
 
 import httpretty  # type: ignore
 import pytest

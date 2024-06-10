@@ -28,44 +28,7 @@ class Attributes:
         return cls({}, {})
 
 
-@dataclass
-class ActionContext:
-    action_key: str
-    attributes: Attributes
-
-    @classmethod
-    def create(
-        cls,
-        action_key: str,
-        numeric_attributes: Dict[str, float],
-        categorical_attributes: Dict[str, str],
-    ):
-        """
-        Create an instance of ActionContext.
-
-        Args:
-            action_key (str): The key representing the action.
-            numeric_attributes (Dict[str, float]): A dictionary of numeric attributes.
-            categorical_attributes (Dict[str, str]): A dictionary of categorical attributes.
-
-        Returns:
-            ActionContext: An instance of ActionContext with the provided action key and attributes.
-        """
-        return cls(
-            action_key,
-            Attributes(
-                numeric_attributes=numeric_attributes,
-                categorical_attributes=categorical_attributes,
-            ),
-        )
-
-    @property
-    def numeric_attributes(self):
-        return self.attributes.numeric_attributes
-
-    @property
-    def categorical_attributes(self):
-        return self.attributes.categorical_attributes
+ActionContexts = Dict[str, Attributes]
 
 
 @dataclass
@@ -108,19 +71,16 @@ class BanditEvaluator:
         flag_key: str,
         subject_key: str,
         subject_attributes: Attributes,
-        actions_with_contexts: List[ActionContext],
+        actions: ActionContexts,
         bandit_model: BanditModelData,
     ) -> BanditEvaluation:
         # handle the edge case that there are no actions
-        if not actions_with_contexts:
+        if not actions:
             return null_evaluation(
                 flag_key, subject_key, subject_attributes, bandit_model.gamma
             )
 
-        action_scores = self.score_actions(
-            subject_attributes, actions_with_contexts, bandit_model
-        )
-
+        action_scores = self.score_actions(subject_attributes, actions, bandit_model)
         action_weights = self.weigh_actions(
             action_scores,
             bandit_model.gamma,
@@ -128,24 +88,16 @@ class BanditEvaluator:
         )
 
         selected_action = self.select_action(flag_key, subject_key, action_weights)
-        selected_idx = next(
-            idx
-            for idx, action_context in enumerate(actions_with_contexts)
-            if action_context.action_key == selected_action
-        )
-
-        optimality_gap = (
-            max(score for _, score in action_scores) - action_scores[selected_idx][1]
-        )
+        optimality_gap = max(action_scores.values()) - action_scores[selected_action]
 
         return BanditEvaluation(
             flag_key,
             subject_key,
             subject_attributes,
             selected_action,
-            actions_with_contexts[selected_idx].attributes,
-            action_scores[selected_idx][1],
-            action_weights[selected_idx][1],
+            actions[selected_action],
+            action_scores[selected_action],
+            action_weights[selected_action],
             bandit_model.gamma,
             optimality_gap,
         )
@@ -153,56 +105,51 @@ class BanditEvaluator:
     def score_actions(
         self,
         subject_attributes: Attributes,
-        actions_with_contexts: List[ActionContext],
+        actions: ActionContexts,
         bandit_model: BanditModelData,
-    ) -> List[Tuple[str, float]]:
-        return [
-            (
-                action_context.action_key,
-                (
-                    score_action(
-                        subject_attributes,
-                        action_context.attributes,
-                        bandit_model.coefficients[action_context.action_key],
-                    )
-                    if action_context.action_key in bandit_model.coefficients
-                    else bandit_model.default_action_score
-                ),
+    ) -> Dict[str, float]:
+        return {
+            action_key: (
+                score_action(
+                    subject_attributes,
+                    action_attributes,
+                    bandit_model.coefficients[action_key],
+                )
+                if action_key in bandit_model.coefficients
+                else bandit_model.default_action_score
             )
-            for action_context in actions_with_contexts
-        ]
+            for action_key, action_attributes in actions.items()
+        }
 
     def weigh_actions(
         self, action_scores, gamma, probability_floor
-    ) -> List[Tuple[str, float]]:
+    ) -> Dict[str, float]:
         number_of_actions = len(action_scores)
-        best_action, best_score = max(action_scores, key=lambda t: t[1])
+        best_action = max(action_scores, key=action_scores.get)
+        best_score = action_scores[best_action]
 
         # adjust probability floor for number of actions to control the sum
         min_probability = probability_floor / number_of_actions
 
         # weight all but the best action
-        weights = [
-            (
-                action_key,
-                max(
-                    min_probability,
-                    1.0 / (number_of_actions + gamma * (best_score - score)),
-                ),
+        weights = {
+            action_key: max(
+                min_probability,
+                1.0 / (number_of_actions + gamma * (best_score - score)),
             )
-            for action_key, score in action_scores
+            for action_key, score in action_scores.items()
             if action_key != best_action
-        ]
+        }
 
         # remaining weight goes to best action
-        remaining_weight = max(0.0, 1.0 - sum(weight for _, weight in weights))
-        weights.append((best_action, remaining_weight))
+        remaining_weight = max(0.0, 1.0 - sum(weights.values()))
+        weights[best_action] = remaining_weight
         return weights
 
     def select_action(self, flag_key, subject_key, action_weights) -> str:
         # deterministic ordering
         sorted_action_weights = sorted(
-            action_weights,
+            action_weights.items(),
             key=lambda t: (
                 self.sharder.get_shard(
                     f"{flag_key}-{subject_key}-{t[0]}", self.total_shards

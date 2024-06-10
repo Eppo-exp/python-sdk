@@ -3,7 +3,6 @@ import pytest
 from eppo_client.sharders import MD5Sharder, DeterministicSharder
 
 from eppo_client.bandit import (
-    ActionContext,
     Attributes,
     score_numeric_attributes,
     score_categorical_attributes,
@@ -162,10 +161,10 @@ def test_score_categorical_attributes_mixed_coefficients():
 
 
 def test_weigh_actions_single_action():
-    action_scores = [("action1", 1.0)]
+    action_scores = {"action1": 1.0}
     gamma = 0.1
     probability_floor = 0.1
-    expected_weights = [("action1", 1.0)]
+    expected_weights = {"action1": 1.0}
     assert (
         bandit_evaluator.weigh_actions(action_scores, gamma, probability_floor)
         == expected_weights
@@ -173,31 +172,29 @@ def test_weigh_actions_single_action():
 
 
 def test_weigh_actions_multiple_actions():
-    action_scores = [("action1", 1.0), ("action2", 0.5)]
+    action_scores = {"action1": 1.0, "action2": 0.5}
     gamma = 10
     probability_floor = 0.1
     weights = bandit_evaluator.weigh_actions(action_scores, gamma, probability_floor)
     assert len(weights) == 2
-    action_1_weight = next(weight for action, weight in weights if action == "action1")
-    assert action_1_weight == pytest.approx(6 / 7, rel=1e-6)
-    action_2_weight = next(weight for action, weight in weights if action == "action2")
-    assert action_2_weight == pytest.approx(1 / 7, rel=1e-6)
+    assert weights["action1"] == pytest.approx(6 / 7, rel=1e-6)
+    assert weights["action2"] == pytest.approx(1 / 7, rel=1e-6)
 
 
 def test_weight_actions_probability_floor():
-    action_scores = [("action1", 1.0), ("action2", 0.5), ("action3", 0.2)]
+    action_scores = {"action1": 1.0, "action2": 0.5, "action3": 0.2}
     gamma = 10
     probability_floor = 0.3
     weights = bandit_evaluator.weigh_actions(action_scores, gamma, probability_floor)
     assert len(weights) == 3
 
     # note probability floor is normalized by number of actions: 0.3/3 = 0.1
-    for _, weight in weights:
+    for weight in weights.values():
         assert weight == pytest.approx(0.1, rel=1e-6) or weight > 0.1
 
 
 def test_weight_actions_gamma_effect():
-    action_scores = [("action1", 1.0), ("action2", 0.5)]
+    action_scores = {"action1": 1.0, "action2": 0.5}
     small_gamma = 1.0
     large_gamma = 10.0
     probability_floor = 0.1
@@ -207,22 +204,17 @@ def test_weight_actions_gamma_effect():
     weights_large_gamma = bandit_evaluator.weigh_actions(
         action_scores, large_gamma, probability_floor
     )
-
-    assert next(
-        weight for action, weight in weights_small_gamma if action == "action1"
-    ) < next(weight for action, weight in weights_large_gamma if action == "action1")
-    assert next(
-        weight for action, weight in weights_small_gamma if action == "action2"
-    ) > next(weight for action, weight in weights_large_gamma if action == "action2")
+    assert weights_small_gamma["action1"] < weights_large_gamma["action1"]
+    assert weights_small_gamma["action2"] > weights_large_gamma["action2"]
 
 
 def test_weight_actions_all_equal_scores():
-    action_scores = [("action1", 1.0), ("action2", 1.0), ("action3", 1.0)]
+    action_scores = {"action1": 1.0, "action2": 1.0, "action3": 1.0}
     gamma = 0.1
     probability_floor = 0.1
     weights = bandit_evaluator.weigh_actions(action_scores, gamma, probability_floor)
     assert len(weights) == 3
-    for _, weight in weights:
+    for weight in weights.values():
         assert weight == pytest.approx(1.0 / 3, rel=1e-2)
 
 
@@ -233,22 +225,16 @@ def test_evaluate_bandit():
     subject_attributes = Attributes(
         numeric_attributes={"age": 25.0}, categorical_attributes={"location": "US"}
     )
-    action_contexts = [
-        ActionContext(
-            action_key="action1",
-            attributes=Attributes(
-                numeric_attributes={"price": 10.0},
-                categorical_attributes={"category": "A"},
-            ),
+    action_contexts = {
+        "action1": Attributes(
+            numeric_attributes={"price": 10.0},
+            categorical_attributes={"category": "A"},
         ),
-        ActionContext(
-            action_key="action2",
-            attributes=Attributes(
-                numeric_attributes={"price": 20.0},
-                categorical_attributes={"category": "B"},
-            ),
+        "action2": Attributes(
+            numeric_attributes={"price": 20.0},
+            categorical_attributes={"category": "B"},
         ),
-    ]
+    }
     coefficients = {
         "action1": BanditCoefficients(
             action_key="action1",

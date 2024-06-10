@@ -3,7 +3,7 @@ import logging
 import json
 from typing import Any, Dict, List, Optional
 from eppo_client.assignment_logger import AssignmentLogger
-from eppo_client.bandit import BanditEvaluator, BanditResult, ActionContext, Attributes
+from eppo_client.bandit import BanditEvaluator, BanditResult, Attributes, ActionContexts
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationRequestor,
 )
@@ -226,7 +226,7 @@ class EppoClient:
         flag_key: str,
         subject_key: str,
         subject_context: Attributes,
-        actions: Dict[str, Attributes],
+        actions: ActionContexts,
         default: str,
     ) -> BanditResult:
         """
@@ -273,7 +273,7 @@ class EppoClient:
         flag_key: str,
         subject_key: str,
         subject_context: Attributes,
-        actions: Dict[str, Attributes],
+        actions: ActionContexts,
         default: str,
     ) -> BanditResult:
         # get experiment assignment
@@ -295,15 +295,11 @@ class EppoClient:
             )
             return BanditResult(variation, None)
 
-        actions_with_contexts = [
-            ActionContext(action_key, attributes)
-            for action_key, attributes in actions.items()
-        ]
         evaluation = self.__bandit_evaluator.evaluate_bandit(
             flag_key,
             subject_key,
             subject_context,
-            actions_with_contexts,
+            actions,
             bandit_data.model_data,
         )
 
