@@ -319,3 +319,73 @@ def test_evaluate_bandit():
     assert evaluation.gamma == bandit_model.gamma
     assert evaluation.action_score == 4.0
     assert pytest.approx(evaluation.action_weight, rel=1e-2) == 0.4926
+
+
+def test_bandit_no_action_contexts():
+    # Mock data
+    flag_key = "test_flag"
+    subject_key = "test_subject"
+    subject_attributes = Attributes(
+        numeric_attributes={"age": 25.0}, categorical_attributes={"location": "US"}
+    )
+    coefficients = {
+        "action1": BanditCoefficients(
+            action_key="action1",
+            intercept=0.5,
+            subject_numeric_coefficients=[
+                BanditNumericAttributeCoefficient(
+                    attribute_key="age", coefficient=0.1, missing_value_coefficient=0.0
+                )
+            ],
+            subject_categorical_coefficients=[
+                BanditCategoricalAttributeCoefficient(
+                    attribute_key="location",
+                    missing_value_coefficient=0.0,
+                    value_coefficients={"US": 0.2},
+                )
+            ],
+            action_numeric_coefficients=[],
+            action_categorical_coefficients=[],
+        ),
+        "action2": BanditCoefficients(
+            action_key="action2",
+            intercept=0.3,
+            subject_numeric_coefficients=[
+                BanditNumericAttributeCoefficient(
+                    attribute_key="age", coefficient=0.3, missing_value_coefficient=0.0
+                )
+            ],
+            subject_categorical_coefficients=[
+                BanditCategoricalAttributeCoefficient(
+                    attribute_key="location",
+                    missing_value_coefficient=0.0,
+                    value_coefficients={"US": -0.2},
+                )
+            ],
+            action_numeric_coefficients=[],
+            action_categorical_coefficients=[],
+        ),
+    }
+    bandit_model = BanditModelData(
+        gamma=0.1,
+        default_action_score=0.0,
+        action_probability_floor=0.1,
+        coefficients=coefficients,
+    )
+
+    evaluator = BanditEvaluator(sharder=DeterministicSharder({}))
+    evaluation = evaluator.evaluate_bandit(
+        flag_key,
+        subject_key,
+        subject_attributes,
+        {"action1": Attributes.empty(), "action2": Attributes.empty()},
+        bandit_model,
+    )
+
+    assert evaluation.flag_key == flag_key
+    assert evaluation.subject_key == subject_key
+    assert evaluation.subject_attributes == subject_attributes
+    assert evaluation.action_key == "action1"
+    assert evaluation.gamma == bandit_model.gamma
+    assert evaluation.action_score == 3.2
+    assert pytest.approx(evaluation.action_weight, rel=1e-2) == 0.41
