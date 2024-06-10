@@ -46,18 +46,16 @@ async def bandit(name: str, country: str, age: int):
         eppo_client.bandit.Attributes(
             numeric_attributes={"age": age}, categorical_attributes={"country": country}
         ),
-        [
-            eppo_client.bandit.ActionContext.create(
-                "nike",
+        {
+            "nike": eppo_client.bandit.Attributes(
                 numeric_attributes={"brand_affinity": 2.3},
                 categorical_attributes={"aspect_ratio": "16:9"},
             ),
-            eppo_client.bandit.ActionContext.create(
-                "adidas",
+            "adidas": eppo_client.bandit.Attributes(
                 numeric_attributes={"brand_affinity": 0.2},
                 categorical_attributes={"aspect_ratio": "16:9"},
             ),
-        ],
+        },
         "control",
     )
 
