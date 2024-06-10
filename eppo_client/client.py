@@ -1,9 +1,9 @@
 import datetime
 import logging
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from eppo_client.assignment_logger import AssignmentLogger
-from eppo_client.bandit import BanditEvaluator, BanditResult, ActionContext, Attributes
+from eppo_client.bandit import BanditEvaluator, BanditResult, Attributes, ActionContexts
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationRequestor,
 )
@@ -226,7 +226,7 @@ class EppoClient:
         flag_key: str,
         subject_key: str,
         subject_context: Attributes,
-        actions_with_contexts: List[ActionContext],
+        actions: ActionContexts,
         default: str,
     ) -> BanditResult:
         """
@@ -245,20 +245,41 @@ class EppoClient:
             flag_key (str): The feature flag key that contains the bandit as one of the variations.
             subject_key (str): The key identifying the subject.
             subject_context (Attributes): The subject context
-            actions_with_contexts (List[ActionContext]): The list of actions with their contexts.
+            actions (Dict[str, Attributes]): The dictionary that maps action keys
+                to their context of actions with their contexts.
+            default (str): The default variation to use if the subject is not part of the bandit.
 
         Returns:
             BanditResult: The result containing either the bandit action if the subject is part of the bandit,
                           or the assignment if they are not. The BanditResult includes:
                           - variation (str): The assignment key indicating the subject's variation.
                           - action (str): The key of the selected action if the subject is part of the bandit.
+
+        Example:
+        result = client.get_bandit_action(
+            "flag_key",
+            "subject_key",
+            Attributes(
+                numeric_attributes={"age": 25},
+                categorical_attributes={"country": "USA"}),
+            {
+                "action1": Attributes(numeric_attributes={"price": 10.0}, categorical_attributes={"category": "A"}),
+                "action2": Attributes.empty()
+            },
+            "default"
+        )
+        if result.action is None:
+            do_variation(result.variation)
+        else:
+            do_action(result.action)
         """
+
         try:
             return self.get_bandit_action_detail(
                 flag_key,
                 subject_key,
                 subject_context,
-                actions_with_contexts,
+                actions,
                 default,
             )
         except Exception as e:
@@ -272,7 +293,7 @@ class EppoClient:
         flag_key: str,
         subject_key: str,
         subject_context: Attributes,
-        actions_with_contexts: List[ActionContext],
+        actions: ActionContexts,
         default: str,
     ) -> BanditResult:
         # get experiment assignment
@@ -298,7 +319,7 @@ class EppoClient:
             flag_key,
             subject_key,
             subject_context,
-            actions_with_contexts,
+            actions,
             bandit_data.model_data,
         )
 
