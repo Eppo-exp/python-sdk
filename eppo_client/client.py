@@ -1,7 +1,7 @@
 import datetime
 import logging
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.bandit import BanditEvaluator, BanditResult, Attributes, ActionContexts
 from eppo_client.configuration_requestor import (
@@ -245,7 +245,8 @@ class EppoClient:
             flag_key (str): The feature flag key that contains the bandit as one of the variations.
             subject_key (str): The key identifying the subject.
             subject_context (Attributes): The subject context
-            actions (Dict[str, Attributes]): The dictionary that maps action keys to their context of actions with their contexts.
+            actions (Dict[str, Attributes]): The dictionary that maps action keys
+                to their context of actions with their contexts.
             default (str): The default variation to use if the subject is not part of the bandit.
 
         Returns:
