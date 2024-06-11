@@ -310,7 +310,11 @@ class EppoClient:
         # get experiment assignment
         # ignoring type because Dict[str, str] satisfies Dict[str, str | ...] but mypy does not understand
         variation = self.get_string_assignment(
-            flag_key, subject_key, subject_attributes.categorical_attributes | subject_attributes.numeric_attributes, default  # type: ignore
+            flag_key,
+            subject_key,
+            subject_attributes.categorical_attributes
+            | subject_attributes.numeric_attributes,  # type: ignore
+            default,
         )
 
         # if the variation is not the bandit key, then the subject is not allocated in the bandit

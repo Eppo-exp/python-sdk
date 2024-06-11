@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import logging
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 
 from eppo_client.models import (
     BanditCategoricalAttributeCoefficient,
@@ -31,7 +31,8 @@ class Attributes:
         Create an empty Attributes instance with no numeric or categorical attributes.
 
         Returns:
-            Attributes: An instance of the Attributes class with empty dictionaries for numeric and categorical attributes.
+            Attributes: An instance of the Attributes class with empty dictionaries
+                for numeric and categorical attributes.
         """
         return cls({}, {})
 
