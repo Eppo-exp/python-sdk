@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from eppo_client.models import (
     BanditCategoricalAttributeCoefficient,
@@ -8,7 +8,9 @@ from eppo_client.models import (
     BanditModelData,
     BanditNumericAttributeCoefficient,
 )
+from eppo_client.rules import to_string
 from eppo_client.sharders import Sharder
+from eppo_client.types import AttributesDict
 
 
 logger = logging.getLogger(__name__)
@@ -25,10 +27,41 @@ class Attributes:
 
     @classmethod
     def empty(cls):
+        """
+        Create an empty Attributes instance with no numeric or categorical attributes.
+
+        Returns:
+            Attributes: An instance of the Attributes class with empty dictionaries for numeric and categorical attributes.
+        """
         return cls({}, {})
+
+    @classmethod
+    def from_dict(cls, attributes: AttributesDict):
+        """
+        Create an Attributes instance from a dictionary of attributes.
+
+        Args:
+            attributes (Dict[str, Union[float, int, bool, str]]): A dictionary where keys are attribute names
+            and values are attribute values which can be of type float, int, bool, or str.
+
+        Returns:
+            Attributes: An instance of the Attributes class with numeric and categorical attributes separated.
+        """
+        numeric_attributes = {
+            key: float(value)
+            for key, value in attributes.items()
+            if isinstance(value, (int, float))
+        }
+        categorical_attributes = {
+            key: to_string(value)
+            for key, value in attributes.items()
+            if isinstance(value, (str, bool))
+        }
+        return cls(numeric_attributes, categorical_attributes)
 
 
 ActionContexts = Dict[str, Attributes]
+ActionContextsDict = Dict[str, AttributesDict]
 
 
 @dataclass

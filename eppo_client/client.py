@@ -1,9 +1,15 @@
 import datetime
 import logging
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 from eppo_client.assignment_logger import AssignmentLogger
-from eppo_client.bandit import BanditEvaluator, BanditResult, Attributes, ActionContexts
+from eppo_client.bandit import (
+    ActionContextsDict,
+    BanditEvaluator,
+    BanditResult,
+    Attributes,
+    ActionContexts,
+)
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationRequestor,
 )
@@ -11,7 +17,7 @@ from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
 from eppo_client.models import VariationType
 from eppo_client.poller import Poller
 from eppo_client.sharders import MD5Sharder
-from eppo_client.types import SubjectAttributes, ValueType
+from eppo_client.types import AttributesDict, ValueType
 from eppo_client.validation import validate_not_blank
 from eppo_client.eval import FlagEvaluation, Evaluator, none_result
 from eppo_client.version import __version__
@@ -43,7 +49,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: SubjectAttributes,
+        subject_attributes: AttributesDict,
         default: str,
     ) -> str:
         return self.get_assignment_variation(
@@ -58,7 +64,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: SubjectAttributes,
+        subject_attributes: AttributesDict,
         default: int,
     ) -> int:
         return self.get_assignment_variation(
@@ -73,7 +79,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: SubjectAttributes,
+        subject_attributes: AttributesDict,
         default: float,
     ) -> float:
         # convert to float in case we get an int
@@ -91,7 +97,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: SubjectAttributes,
+        subject_attributes: AttributesDict,
         default: bool,
     ) -> bool:
         return self.get_assignment_variation(
@@ -106,7 +112,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: SubjectAttributes,
+        subject_attributes: AttributesDict,
         default: Dict[Any, Any],
     ) -> Dict[Any, Any]:
         json_value = self.get_assignment_variation(
@@ -125,7 +131,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: SubjectAttributes,
+        subject_attributes: AttributesDict,
         default: Optional[ValueType],
         expected_variation_type: VariationType,
     ):
@@ -149,7 +155,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: SubjectAttributes,
+        subject_attributes: AttributesDict,
         expected_variation_type: VariationType,
     ) -> FlagEvaluation:
         """Maps a subject to a variation for a given flag
@@ -225,8 +231,8 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_context: Attributes,
-        actions: ActionContexts,
+        subject_context: Union[Attributes, AttributesDict],
+        actions: Union[ActionContexts, ActionContextsDict],
         default: str,
     ) -> BanditResult:
         """
@@ -244,9 +250,11 @@ class EppoClient:
         Args:
             flag_key (str): The feature flag key that contains the bandit as one of the variations.
             subject_key (str): The key identifying the subject.
-            subject_context (Attributes): The subject context
-            actions (Dict[str, Attributes]): The dictionary that maps action keys
+            subject_context (Attributes | AttributesDict): The subject context.
+                If supplying an AttributesDict, it gets converted to an Attributes instance
+            actions (ActionContexts | ActionContextsDict): The dictionary that maps action keys
                 to their context of actions with their contexts.
+                If supplying an AttributesDict, it gets converted to an Attributes instance.
             default (str): The default variation to use if the subject is not part of the bandit.
 
         Returns:
@@ -264,7 +272,8 @@ class EppoClient:
                 categorical_attributes={"country": "USA"}),
             {
                 "action1": Attributes(numeric_attributes={"price": 10.0}, categorical_attributes={"category": "A"}),
-                "action2": Attributes.empty()
+                "action2": {"price": 10.0, "category": "B"}
+                "action3": Attributes.empty(),
             },
             "default"
         )
@@ -273,7 +282,6 @@ class EppoClient:
         else:
             do_action(result.action)
         """
-
         try:
             return self.get_bandit_action_detail(
                 flag_key,
@@ -292,14 +300,17 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_context: Attributes,
-        actions: ActionContexts,
+        subject_context: Union[Attributes, AttributesDict],
+        actions: Union[ActionContexts, ActionContextsDict],
         default: str,
     ) -> BanditResult:
+        subject_attributes = convert_subject_context_to_attributes(subject_context)
+        action_contexts = convert_actions_to_action_contexts(actions)
+
         # get experiment assignment
         # ignoring type because Dict[str, str] satisfies Dict[str, str | ...] but mypy does not understand
         variation = self.get_string_assignment(
-            flag_key, subject_key, subject_context.categorical_attributes, default  # type: ignore
+            flag_key, subject_key, subject_attributes.categorical_attributes | subject_attributes.numeric_attributes, default  # type: ignore
         )
 
         # if the variation is not the bandit key, then the subject is not allocated in the bandit
@@ -318,8 +329,8 @@ class EppoClient:
         evaluation = self.__bandit_evaluator.evaluate_bandit(
             flag_key,
             subject_key,
-            subject_context,
-            actions,
+            subject_attributes,
+            action_contexts,
             bandit_data.model_data,
         )
 
@@ -334,12 +345,12 @@ class EppoClient:
             "modelVersion": bandit_data.model_version if evaluation else None,
             "timestamp": datetime.datetime.utcnow().isoformat(),
             "subjectNumericAttributes": (
-                subject_context.numeric_attributes
+                subject_attributes.numeric_attributes
                 if evaluation.subject_attributes
                 else {}
             ),
             "subjectCategoricalAttributes": (
-                subject_context.categorical_attributes
+                subject_attributes.categorical_attributes
                 if evaluation.subject_attributes
                 else {}
             ),
@@ -410,3 +421,20 @@ def check_value_type_match(
     if expected_type == VariationType.BOOLEAN:
         return isinstance(value, bool)
     return False
+
+
+def convert_subject_context_to_attributes(
+    subject_context: Union[Attributes, AttributesDict]
+) -> Attributes:
+    if isinstance(subject_context, dict):
+        return Attributes.from_dict(subject_context)
+    return subject_context
+
+
+def convert_actions_to_action_contexts(
+    actions: Union[ActionContexts, ActionContextsDict]
+) -> ActionContexts:
+    return {
+        k: Attributes.from_dict(v) if isinstance(v, dict) else v
+        for k, v in actions.items()
+    }
