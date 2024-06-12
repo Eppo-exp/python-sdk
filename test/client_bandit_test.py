@@ -71,6 +71,7 @@ def init_fixture():
             base_url=MOCK_BASE_URL,
             api_key="dummy",
             assignment_logger=mock_assignment_logger,
+            is_graceful_mode=False,
         )
     )
     sleep(0.1)  # wait for initialization
@@ -91,7 +92,7 @@ def test_get_bandit_action_bandit_does_not_exist():
         "nonexistent_bandit",
         "subject_key",
         DEFAULT_SUBJECT_ATTRIBUTES,
-        [],
+        {},
         "default_variation",
     )
     assert result == BanditResult("default_variation", None)
@@ -100,7 +101,7 @@ def test_get_bandit_action_bandit_does_not_exist():
 def test_get_bandit_action_flag_without_bandit():
     client = get_instance()
     result = client.get_bandit_action(
-        "a_flag", "subject_key", DEFAULT_SUBJECT_ATTRIBUTES, [], "default_variation"
+        "a_flag", "subject_key", DEFAULT_SUBJECT_ATTRIBUTES, {}, "default_variation"
     )
     assert result == BanditResult("default_variation", None)
 
