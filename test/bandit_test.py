@@ -3,7 +3,7 @@ import pytest
 from eppo_client.sharders import MD5Sharder, DeterministicSharder
 
 from eppo_client.bandit import (
-    Attributes,
+    ContextAttributes,
     score_numeric_attributes,
     score_categorical_attributes,
     BanditEvaluator,
@@ -222,15 +222,15 @@ def test_evaluate_bandit():
     # Mock data
     flag_key = "test_flag"
     subject_key = "test_subject"
-    subject_attributes = Attributes(
+    subject_attributes = ContextAttributes(
         numeric_attributes={"age": 25.0}, categorical_attributes={"location": "US"}
     )
     action_contexts = {
-        "action1": Attributes(
+        "action1": ContextAttributes(
             numeric_attributes={"price": 10.0},
             categorical_attributes={"category": "A"},
         ),
-        "action2": Attributes(
+        "action2": ContextAttributes(
             numeric_attributes={"price": 20.0},
             categorical_attributes={"category": "B"},
         ),
@@ -325,7 +325,7 @@ def test_bandit_no_action_contexts():
     # Mock data
     flag_key = "test_flag"
     subject_key = "test_subject"
-    subject_attributes = Attributes(
+    subject_attributes = ContextAttributes(
         numeric_attributes={"age": 25.0}, categorical_attributes={"location": "US"}
     )
     coefficients = {
@@ -378,7 +378,7 @@ def test_bandit_no_action_contexts():
         flag_key,
         subject_key,
         subject_attributes,
-        {"action1": Attributes.empty(), "action2": Attributes.empty()},
+        {"action1": ContextAttributes.empty(), "action2": ContextAttributes.empty()},
         bandit_model,
     )
 

@@ -5,7 +5,7 @@ from eppo_client.rules import matches_rule
 from dataclasses import dataclass
 import datetime
 
-from eppo_client.types import AttributesDict
+from eppo_client.types import Attributes
 
 
 @dataclass
@@ -13,7 +13,7 @@ class FlagEvaluation:
     flag_key: str
     variation_type: VariationType
     subject_key: str
-    subject_attributes: AttributesDict
+    subject_attributes: Attributes
     allocation_key: Optional[str]
     variation: Optional[Variation]
     extra_logging: Dict[str, str]
@@ -28,7 +28,7 @@ class Evaluator:
         self,
         flag: Flag,
         subject_key: str,
-        subject_attributes: AttributesDict,
+        subject_attributes: Attributes,
     ) -> FlagEvaluation:
         if not flag.enabled:
             return none_result(
@@ -93,7 +93,7 @@ def none_result(
     flag_key: str,
     variation_type: VariationType,
     subject_key: str,
-    subject_attributes: AttributesDict,
+    subject_attributes: Attributes,
 ) -> FlagEvaluation:
     return FlagEvaluation(
         flag_key=flag_key,

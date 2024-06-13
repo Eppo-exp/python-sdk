@@ -6,7 +6,7 @@ import json
 import os
 from time import sleep
 from typing import Dict, List
-from eppo_client.bandit import BanditResult, Attributes
+from eppo_client.bandit import BanditResult, ContextAttributes
 
 import httpretty  # type: ignore
 import pytest
@@ -28,7 +28,7 @@ for file_name in [file for file in os.listdir(TEST_DIR)]:
 
 MOCK_BASE_URL = "http://localhost:4001/api"
 
-DEFAULT_SUBJECT_ATTRIBUTES = Attributes(
+DEFAULT_SUBJECT_ATTRIBUTES = ContextAttributes(
     numeric_attributes={"age": 30}, categorical_attributes={"country": "UK"}
 )
 
@@ -110,11 +110,11 @@ def test_get_bandit_action_with_subject_attributes():
     # tests that allocation filtering based on subject attributes works correctly
     client = get_instance()
     actions = {
-        "adidas": Attributes(
+        "adidas": ContextAttributes(
             numeric_attributes={"discount": 0.1},
             categorical_attributes={"from": "germany"},
         ),
-        "nike": Attributes(
+        "nike": ContextAttributes(
             numeric_attributes={"discount": 0.2}, categorical_attributes={"from": "usa"}
         ),
     }
@@ -174,14 +174,14 @@ def test_bandit_generic_test_cases(test_case):
         result = client.get_bandit_action(
             flag,
             subject["subjectKey"],
-            Attributes(
+            ContextAttributes(
                 numeric_attributes=subject["subjectAttributes"]["numeric_attributes"],
                 categorical_attributes=subject["subjectAttributes"][
                     "categorical_attributes"
                 ],
             ),
             {
-                action["actionKey"]: Attributes(
+                action["actionKey"]: ContextAttributes(
                     action["numericAttributes"], action["categoricalAttributes"]
                 )
                 for action in subject["actions"]

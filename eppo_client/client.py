@@ -4,10 +4,10 @@ import json
 from typing import Any, Dict, Optional, Union
 from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.bandit import (
-    ActionContextsDict,
+    ActionAttributes,
     BanditEvaluator,
     BanditResult,
-    Attributes,
+    ContextAttributes,
     ActionContexts,
 )
 from eppo_client.configuration_requestor import (
@@ -17,7 +17,7 @@ from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
 from eppo_client.models import VariationType
 from eppo_client.poller import Poller
 from eppo_client.sharders import MD5Sharder
-from eppo_client.types import AttributesDict, ValueType
+from eppo_client.types import Attributes, ValueType
 from eppo_client.validation import validate_not_blank
 from eppo_client.eval import FlagEvaluation, Evaluator, none_result
 from eppo_client.version import __version__
@@ -49,7 +49,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: AttributesDict,
+        subject_attributes: Attributes,
         default: str,
     ) -> str:
         return self.get_assignment_variation(
@@ -64,7 +64,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: AttributesDict,
+        subject_attributes: Attributes,
         default: int,
     ) -> int:
         return self.get_assignment_variation(
@@ -79,7 +79,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: AttributesDict,
+        subject_attributes: Attributes,
         default: float,
     ) -> float:
         # convert to float in case we get an int
@@ -97,7 +97,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: AttributesDict,
+        subject_attributes: Attributes,
         default: bool,
     ) -> bool:
         return self.get_assignment_variation(
@@ -112,7 +112,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: AttributesDict,
+        subject_attributes: Attributes,
         default: Dict[Any, Any],
     ) -> Dict[Any, Any]:
         json_value = self.get_assignment_variation(
@@ -131,7 +131,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: AttributesDict,
+        subject_attributes: Attributes,
         default: Optional[ValueType],
         expected_variation_type: VariationType,
     ):
@@ -155,7 +155,7 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: AttributesDict,
+        subject_attributes: Attributes,
         expected_variation_type: VariationType,
     ) -> FlagEvaluation:
         """Maps a subject to a variation for a given flag
@@ -231,8 +231,8 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_context: Union[Attributes, AttributesDict],
-        actions: Union[ActionContexts, ActionContextsDict],
+        subject_context: Union[ContextAttributes, Attributes],
+        actions: Union[ActionContexts, ActionAttributes],
         default: str,
     ) -> BanditResult:
         """
@@ -250,11 +250,11 @@ class EppoClient:
         Args:
             flag_key (str): The feature flag key that contains the bandit as one of the variations.
             subject_key (str): The key identifying the subject.
-            subject_context (Attributes | AttributesDict): The subject context.
-                If supplying an AttributesDict, it gets converted to an Attributes instance
-            actions (ActionContexts | ActionContextsDict): The dictionary that maps action keys
+            subject_context (ActionContexts | ActionAttributes): The subject context.
+                If supplying an ActionAttributes, it gets converted to an ActionContexts instance
+            actions (ActionContexts | ActionAttributes): The dictionary that maps action keys
                 to their context of actions with their contexts.
-                If supplying an AttributesDict, it gets converted to an Attributes instance.
+                If supplying an ActionAttributes, it gets converted to an ActionContexts instance.
             default (str): The default variation to use if the subject is not part of the bandit.
 
         Returns:
@@ -267,13 +267,13 @@ class EppoClient:
         result = client.get_bandit_action(
             "flag_key",
             "subject_key",
-            Attributes(
+            ContextAttributes(
                 numeric_attributes={"age": 25},
                 categorical_attributes={"country": "USA"}),
             {
-                "action1": Attributes(numeric_attributes={"price": 10.0}, categorical_attributes={"category": "A"}),
+                "action1": ContextAttributes(numeric_attributes={"price": 10.0}, categorical_attributes={"category": "A"}),
                 "action2": {"price": 10.0, "category": "B"}
-                "action3": Attributes.empty(),
+                "action3": ContextAttributes.empty(),
             },
             "default"
         )
@@ -300,8 +300,8 @@ class EppoClient:
         self,
         flag_key: str,
         subject_key: str,
-        subject_context: Union[Attributes, AttributesDict],
-        actions: Union[ActionContexts, ActionContextsDict],
+        subject_context: Union[ContextAttributes, Attributes],
+        actions: Union[ActionContexts, ActionAttributes],
         default: str,
     ) -> BanditResult:
         subject_attributes = convert_subject_context_to_attributes(subject_context)
@@ -428,17 +428,17 @@ def check_value_type_match(
 
 
 def convert_subject_context_to_attributes(
-    subject_context: Union[Attributes, AttributesDict]
-) -> Attributes:
+    subject_context: Union[ContextAttributes, Attributes]
+) -> ContextAttributes:
     if isinstance(subject_context, dict):
-        return Attributes.from_dict(subject_context)
+        return ContextAttributes.from_dict(subject_context)
     return subject_context
 
 
 def convert_actions_to_action_contexts(
-    actions: Union[ActionContexts, ActionContextsDict]
+    actions: Union[ActionContexts, ActionAttributes]
 ) -> ActionContexts:
     return {
-        k: Attributes.from_dict(v) if isinstance(v, dict) else v
+        k: ContextAttributes.from_dict(v) if isinstance(v, dict) else v
         for k, v in actions.items()
     }

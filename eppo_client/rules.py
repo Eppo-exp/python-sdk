@@ -7,7 +7,7 @@ from typing import Any, List
 import semver
 
 from eppo_client.models import SdkBaseModel
-from eppo_client.types import AttributeType, ConditionValueType, AttributesDict
+from eppo_client.types import AttributeType, ConditionValueType, Attributes
 
 
 class OperatorType(Enum):
@@ -32,16 +32,14 @@ class Rule(SdkBaseModel):
     conditions: List[Condition]
 
 
-def matches_rule(rule: Rule, subject_attributes: AttributesDict) -> bool:
+def matches_rule(rule: Rule, subject_attributes: Attributes) -> bool:
     return all(
         evaluate_condition(condition, subject_attributes)
         for condition in rule.conditions
     )
 
 
-def evaluate_condition(
-    condition: Condition, subject_attributes: AttributesDict
-) -> bool:
+def evaluate_condition(condition: Condition, subject_attributes: Attributes) -> bool:
     subject_value = subject_attributes.get(condition.attribute, None)
     if condition.operator == OperatorType.IS_NULL:
         if condition.value:

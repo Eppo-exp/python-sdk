@@ -10,7 +10,7 @@ from eppo_client.models import (
 )
 from eppo_client.rules import to_string
 from eppo_client.sharders import Sharder
-from eppo_client.types import AttributesDict
+from eppo_client.types import Attributes
 
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ class BanditEvaluationError(Exception):
 
 
 @dataclass
-class Attributes:
+class ContextAttributes:
     numeric_attributes: Dict[str, float]
     categorical_attributes: Dict[str, str]
 
@@ -31,22 +31,22 @@ class Attributes:
         Create an empty Attributes instance with no numeric or categorical attributes.
 
         Returns:
-            Attributes: An instance of the Attributes class with empty dictionaries
+            ContextAttributes: An instance of the ContextAttributes class with empty dictionaries
                 for numeric and categorical attributes.
         """
         return cls({}, {})
 
     @classmethod
-    def from_dict(cls, attributes: AttributesDict):
+    def from_dict(cls, attributes: Attributes):
         """
-        Create an Attributes instance from a dictionary of attributes.
+        Create an ContextAttributes instance from a dictionary of attributes.
 
         Args:
             attributes (Dict[str, Union[float, int, bool, str]]): A dictionary where keys are attribute names
             and values are attribute values which can be of type float, int, bool, or str.
 
         Returns:
-            Attributes: An instance of the Attributes class with numeric and categorical attributes separated.
+            ContextAttributes: An instance of the ContextAttributes class with numeric and categorical attributes separated.
         """
         numeric_attributes = {
             key: float(value)
@@ -61,17 +61,17 @@ class Attributes:
         return cls(numeric_attributes, categorical_attributes)
 
 
-ActionContexts = Dict[str, Attributes]
-ActionContextsDict = Dict[str, AttributesDict]
+ActionContexts = Dict[str, ContextAttributes]
+ActionAttributes = Dict[str, Attributes]
 
 
 @dataclass
 class BanditEvaluation:
     flag_key: str
     subject_key: str
-    subject_attributes: Attributes
+    subject_attributes: ContextAttributes
     action_key: Optional[str]
-    action_attributes: Optional[Attributes]
+    action_attributes: Optional[ContextAttributes]
     action_score: float
     action_weight: float
     gamma: float
@@ -88,7 +88,7 @@ class BanditResult:
 
 
 def null_evaluation(
-    flag_key: str, subject_key: str, subject_attributes: Attributes, gamma: float
+    flag_key: str, subject_key: str, subject_attributes: ContextAttributes, gamma: float
 ):
     return BanditEvaluation(
         flag_key, subject_key, subject_attributes, None, None, 0.0, 0.0, gamma, 0.0
@@ -104,7 +104,7 @@ class BanditEvaluator:
         self,
         flag_key: str,
         subject_key: str,
-        subject_attributes: Attributes,
+        subject_attributes: ContextAttributes,
         actions: ActionContexts,
         bandit_model: BanditModelData,
     ) -> BanditEvaluation:
@@ -138,7 +138,7 @@ class BanditEvaluator:
 
     def score_actions(
         self,
-        subject_attributes: Attributes,
+        subject_attributes: ContextAttributes,
         actions: ActionContexts,
         bandit_model: BanditModelData,
     ) -> Dict[str, float]:
@@ -209,8 +209,8 @@ class BanditEvaluator:
 
 
 def score_action(
-    subject_attributes: Attributes,
-    action_attributes: Attributes,
+    subject_attributes: ContextAttributes,
+    action_attributes: ContextAttributes,
     coefficients: BanditCoefficients,
 ) -> float:
     score = coefficients.intercept
