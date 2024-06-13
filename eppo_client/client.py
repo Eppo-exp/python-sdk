@@ -271,7 +271,10 @@ class EppoClient:
                 numeric_attributes={"age": 25},
                 categorical_attributes={"country": "USA"}),
             {
-                "action1": ContextAttributes(numeric_attributes={"price": 10.0}, categorical_attributes={"category": "A"}),
+                "action1": ContextAttributes(
+                    numeric_attributes={"price": 10.0},
+                    categorical_attributes={"category": "A"}
+                ),
                 "action2": {"price": 10.0, "category": "B"}
                 "action3": ContextAttributes.empty(),
             },

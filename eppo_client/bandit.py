@@ -43,10 +43,11 @@ class ContextAttributes:
 
         Args:
             attributes (Dict[str, Union[float, int, bool, str]]): A dictionary where keys are attribute names
-            and values are attribute values which can be of type float, int, bool, or str.
+                and values are attribute values which can be of type float, int, bool, or str.
 
         Returns:
-            ContextAttributes: An instance of the ContextAttributes class with numeric and categorical attributes separated.
+            ContextAttributes: An instance of the ContextAttributes class
+                with numeric and categorical attributes separated.
         """
         numeric_attributes = {
             key: float(value)
