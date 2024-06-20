@@ -218,6 +218,11 @@ def test_client_has_flags():
     assert len(client.get_flag_keys()) > 0, "No flags have been loaded by the client"
 
 
+def test_client_flag_configurations():
+    client = get_instance()
+    assert len(client.get_flag_configurations()) > 0, "No flags have been loaded by the client"
+
+
 @pytest.mark.parametrize("test_case", test_data)
 def test_assign_subject_in_sample(test_case):
     client = get_instance()
