@@ -220,9 +220,9 @@ def test_client_has_flags():
 
 def test_client_flag_configurations():
     client = get_instance()
-    assert len(
-        client.get_flag_configurations()
-    ) > 0, "No flags have been loaded by the client"
+    assert (
+        len(client.get_flag_configurations()) > 0
+    ), "No flags have been loaded by the client"
 
 
 @pytest.mark.parametrize("test_case", test_data)
