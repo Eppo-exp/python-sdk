@@ -34,6 +34,13 @@ def test_get_keys():
     assert len(keys) == 2
 
 
+def test_get_configurations():
+    config = {"flag1": mock_flag, "flag2": mock_flag}
+    store.set_configurations(config)
+    configurations = store.get_configurations()
+    assert configurations == config
+
+
 def test_evicts_old_entries_when_max_size_exceeded():
     store.set_configurations({"item_to_be_evicted": mock_flag})
     assert store.get_configuration("item_to_be_evicted") == mock_flag

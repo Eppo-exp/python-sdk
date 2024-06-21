@@ -36,6 +36,9 @@ class ExperimentConfigurationRequestor:
     def get_flag_keys(self):
         return self.__flag_config_store.get_keys()
 
+    def get_flag_configurations(self):
+        return self.__flag_config_store.get_configurations()
+
     def get_bandit_keys(self):
         return self.__bandit_config_store.get_keys()
 

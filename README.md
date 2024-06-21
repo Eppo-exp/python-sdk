@@ -103,6 +103,28 @@ class SegmentAssignmentLogger(AssignmentLogger):
 client_config = Config(api_key="<SDK-KEY-FROM-DASHBOARD>", assignment_logger=SegmentAssignmentLogger())
 ```
 
+## Export configuration
+
+To support the use-case of needing to bootstrap a front-end client, the Eppo SDK provides a function to export flag configurations to a JSON string.
+
+Use the `get_flag_configurations` function to export flag configurations to a JSON string and then send it to the front-end client.
+
+```python
+from fastapi import JSONResponse
+
+import eppo_client
+import json
+
+client = eppo_client.get_instance()
+flag_configurations = client.get_flag_configurations()
+
+# Convert flag configurations to a JSON string
+flag_config_json = json.dumps(flag_configurations)
+
+# Create a JSONResponse object with the stringified JSON
+response = JSONResponse(content={"flagConfigurations": flag_config_json})
+```
+
 ## Philosophy
 
 Eppo's SDKs are built for simplicity, speed and reliability. Flag configurations are compressed and distributed over a global CDN (Fastly), typically reaching your servers in under 15ms. Server SDKs continue polling Eppo’s API at 30-second intervals. Configurations are then cached locally, ensuring that each assignment is made instantly. Evaluation logic within each SDK consists of a few lines of simple numeric and string comparisons. The typed functions listed above are all developers need to understand, abstracting away the complexity of the Eppo's underlying (and expanding) feature set.

@@ -10,6 +10,7 @@ from eppo_client.bandit import (
     ContextAttributes,
     ActionContexts,
 )
+from eppo_client.models import Flag
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationRequestor,
 )
@@ -385,6 +386,13 @@ class EppoClient:
         Note that it is generally not a good idea to pre-load all flag configurations.
         """
         return self.__config_requestor.get_flag_keys()
+
+    def get_flag_configurations(self) -> Dict[str, Flag]:
+        """
+        Returns a dictionary of all flag configurations that have been initialized.
+        This can be useful to debug the initialization process or to bootstrap a front-end client.
+        """
+        return self.__config_requestor.get_flag_configurations()
 
     def get_bandit_keys(self):
         """
