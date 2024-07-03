@@ -97,7 +97,7 @@ class BanditModelData(SdkBaseModel):
 
 class BanditData(SdkBaseModel):
     bandit_key: str
-    bandit_model_name: str = Field(alias='modelName')
-    bandit_model_version: str = Field(alias='modelVersion')
-    bandit_model_data: BanditModelData = Field(alias='modelData')
+    bandit_model_name: str = Field(alias="modelName")
+    bandit_model_version: str = Field(alias="modelVersion")
+    bandit_model_data: BanditModelData = Field(alias="modelData")
     updated_at: datetime
