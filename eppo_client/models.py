@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from pydantic import Field
 from typing import Dict, List, Optional
 
 from eppo_client.base_model import SdkBaseModel
@@ -96,7 +97,7 @@ class BanditModelData(SdkBaseModel):
 
 class BanditData(SdkBaseModel):
     bandit_key: str
-    bandit_model_name: str
-    bandit_model_version: str
-    bandit_model_data: BanditModelData
+    bandit_model_name: str = Field(alias='modelName')
+    bandit_model_version: str = Field(alias='modelVersion')
+    bandit_model_data: BanditModelData = Field(alias='modelData')
     updated_at: datetime
