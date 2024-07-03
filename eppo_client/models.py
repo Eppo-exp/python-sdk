@@ -96,7 +96,7 @@ class BanditModelData(SdkBaseModel):
 
 class BanditData(SdkBaseModel):
     bandit_key: str
-    model_name: str
+    bandit_model_name: str
+    bandit_model_version: str
+    bandit_model_data: BanditModelData
     updated_at: datetime
-    model_version: str
-    model_data: BanditModelData
