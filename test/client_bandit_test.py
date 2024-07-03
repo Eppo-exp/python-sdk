@@ -175,9 +175,9 @@ def test_bandit_generic_test_cases(test_case):
             flag,
             subject["subjectKey"],
             ContextAttributes(
-                numeric_attributes=subject["subjectAttributes"]["numeric_attributes"],
+                numeric_attributes=subject["subjectAttributes"]["numericAttributes"],
                 categorical_attributes=subject["subjectAttributes"][
-                    "categorical_attributes"
+                    "categoricalAttributes"
                 ],
             ),
             {
