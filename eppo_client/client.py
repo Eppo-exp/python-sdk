@@ -313,7 +313,7 @@ class EppoClient:
         actions: Union[ActionContexts, ActionAttributes],
         default: str,
     ) -> BanditResult:
-        subject_attributes = convert_subject_context_to_attributes(subject_context)
+        subject_attributes = convert_subject_context_to_context_attributes(subject_context)
         action_contexts = convert_actions_to_action_contexts(actions)
 
         # get experiment assignment
@@ -338,6 +338,10 @@ class EppoClient:
                 f"[Eppo SDK] No assigned action. Bandit not found for flag: {flag_key}"
             )
             return BanditResult(variation, None)
+
+        # if no actions are given - a valid use case - return the default value
+        if len(actions) == 0:
+            return BanditResult(default, None)
 
         evaluation = self.__bandit_evaluator.evaluate_bandit(
             flag_key,
@@ -443,18 +447,26 @@ def check_value_type_match(
     return False
 
 
-def convert_subject_context_to_attributes(
+def convert_subject_context_to_context_attributes(
     subject_context: Union[ContextAttributes, Attributes]
 ) -> ContextAttributes:
     if isinstance(subject_context, dict):
         return ContextAttributes.from_dict(subject_context)
-    return subject_context
+
+    stringified_categorical_attributes = {
+        key: str(value) for key, value in subject_context.categorical_attributes.items()
+    }
+
+    return ContextAttributes(
+        numeric_attributes=subject_context.numeric_attributes,
+        categorical_attributes=stringified_categorical_attributes
+    )
 
 
 def convert_actions_to_action_contexts(
     actions: Union[ActionContexts, ActionAttributes]
 ) -> ActionContexts:
     return {
-        k: ContextAttributes.from_dict(v) if isinstance(v, dict) else v
+        k: convert_subject_context_to_context_attributes(v)
         for k, v in actions.items()
     }
