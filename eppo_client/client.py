@@ -313,7 +313,9 @@ class EppoClient:
         actions: Union[ActionContexts, ActionAttributes],
         default: str,
     ) -> BanditResult:
-        subject_attributes = convert_subject_context_to_context_attributes(subject_context)
+        subject_attributes = convert_subject_context_to_context_attributes(
+            subject_context
+        )
         action_contexts = convert_actions_to_action_contexts(actions)
 
         # get experiment assignment
@@ -459,7 +461,7 @@ def convert_subject_context_to_context_attributes(
 
     return ContextAttributes(
         numeric_attributes=subject_context.numeric_attributes,
-        categorical_attributes=stringified_categorical_attributes
+        categorical_attributes=stringified_categorical_attributes,
     )
 
 
@@ -467,6 +469,5 @@ def convert_actions_to_action_contexts(
     actions: Union[ActionContexts, ActionAttributes]
 ) -> ActionContexts:
     return {
-        k: convert_subject_context_to_context_attributes(v)
-        for k, v in actions.items()
+        k: convert_subject_context_to_context_attributes(v) for k, v in actions.items()
     }
