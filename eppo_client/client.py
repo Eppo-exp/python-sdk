@@ -14,7 +14,7 @@ from eppo_client.models import Flag
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationRequestor,
 )
-from eppo_client.constants import POLL_INTERVAL_MILLIS, POLL_JITTER_MILLIS
+from eppo_client.constants import POLL_JITTER_SECONDS, POLL_INTERVAL_SECONDS
 from eppo_client.models import VariationType
 from eppo_client.poller import Poller
 from eppo_client.sharders import MD5Sharder
@@ -33,13 +33,14 @@ class EppoClient:
         config_requestor: ExperimentConfigurationRequestor,
         assignment_logger: AssignmentLogger,
         is_graceful_mode: bool = True,
+        poll_interval_seconds: int = POLL_INTERVAL_SECONDS,
     ):
         self.__config_requestor = config_requestor
         self.__assignment_logger = assignment_logger
         self.__is_graceful_mode = is_graceful_mode
         self.__poller = Poller(
-            interval_millis=POLL_INTERVAL_MILLIS,
-            jitter_millis=POLL_JITTER_MILLIS,
+            interval_millis=poll_interval_seconds * 1000,
+            jitter_millis=POLL_JITTER_SECONDS * 1000,
             callback=config_requestor.fetch_and_store_configurations,
         )
         self.__poller.start()
