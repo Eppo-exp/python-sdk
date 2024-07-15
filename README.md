@@ -82,6 +82,7 @@ The `init` function accepts the following optional configuration arguments.
 | **`assignment_logger`**  | [AssignmentLogger](https://github.com/Eppo-exp/python-sdk/blob/ebc1a0b781769fe9d2e2be6fc81779eb8685a6c7/eppo_client/assignment_logger.py#L6-L10) | A callback that sends each assignment to your data warehouse. Required only for experiment analysis. See [example](#assignment-logger) below. | `None` |
 | **`is_graceful_mode`** | bool | When true, gracefully handles all exceptions within the assignment function and returns the default value. | `True` |
 | **`poll_interval_seconds`** | int | The interval in seconds at which the SDK polls for configuration updates. | `300` |
+| **`poll_jitter_seconds`** | int | The jitter in seconds to add to the poll interval. | `30` |
 
 ## Assignment logger
 
