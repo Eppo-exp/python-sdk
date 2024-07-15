@@ -1,7 +1,11 @@
 from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.base_model import SdkBaseModel
 from eppo_client.validation import validate_not_blank
-from eppo_client.constants import POLL_INTERVAL_SECONDS_DEFAULT, POLL_JITTER_SECONDS_DEFAULT
+from eppo_client.constants import (
+    POLL_INTERVAL_SECONDS_DEFAULT,
+    POLL_JITTER_SECONDS_DEFAULT,
+)
+
 
 class Config(SdkBaseModel):
     api_key: str

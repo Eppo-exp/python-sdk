@@ -21,7 +21,10 @@ from eppo_client.types import Attributes, ValueType
 from eppo_client.validation import validate_not_blank
 from eppo_client.eval import FlagEvaluation, Evaluator, none_result
 from eppo_client.version import __version__
-from eppo_client.constants import POLL_INTERVAL_SECONDS_DEFAULT, POLL_JITTER_SECONDS_DEFAULT
+from eppo_client.constants import (
+    POLL_INTERVAL_SECONDS_DEFAULT,
+    POLL_JITTER_SECONDS_DEFAULT,
+)
 
 
 logger = logging.getLogger(__name__)
