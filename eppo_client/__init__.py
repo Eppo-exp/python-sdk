@@ -48,6 +48,8 @@ def init(config: Config) -> EppoClient:
         __client = EppoClient(
             config_requestor=config_requestor,
             assignment_logger=assignment_logger,
+            poll_interval_seconds=config.poll_interval_seconds,
+            poll_jitter_seconds=config.poll_jitter_seconds,
             is_graceful_mode=is_graceful_mode,
         )
         return __client

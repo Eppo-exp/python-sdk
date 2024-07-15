@@ -1,5 +1,6 @@
 # poller
-SECOND_MILLIS = 1000
-MINUTE_MILLIS = 60 * SECOND_MILLIS
-POLL_JITTER_MILLIS = 30 * SECOND_MILLIS
-POLL_INTERVAL_MILLIS = 5 * MINUTE_MILLIS
+# We accidently shipped Python with a 5 minute poll interval.
+# Customers can set the poll interval to 30 seconds to match the behavior of the other server SDKs.
+# Please change this to 30 seconds when ready to bump to 4.0.
+POLL_JITTER_SECONDS_DEFAULT = 30  # 30 seconds
+POLL_INTERVAL_SECONDS_DEFAULT = 5 * 60  # 5 minutes
