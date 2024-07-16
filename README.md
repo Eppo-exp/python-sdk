@@ -129,3 +129,7 @@ response = JSONResponse(content={"flagConfigurations": flag_config_json})
 ## Philosophy
 
 Eppo's SDKs are built for simplicity, speed and reliability. Flag configurations are compressed and distributed over a global CDN (Fastly), typically reaching your servers in under 15ms. Server SDKs continue polling Eppo’s API at 30-second intervals. Configurations are then cached locally, ensuring that each assignment is made instantly. Evaluation logic within each SDK consists of a few lines of simple numeric and string comparisons. The typed functions listed above are all developers need to understand, abstracting away the complexity of the Eppo's underlying (and expanding) feature set.
+
+## Contributing
+
+To publish a new version of the SDK, set the version as desired in `eppo_client/version.py`, then create a new Github release. The CI/CD configuration will handle the build and publish to PyPi.
