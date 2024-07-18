@@ -261,13 +261,15 @@ class EppoClient:
             actions (ActionContexts | ActionAttributes): The dictionary that maps action keys
                 to their context of actions with their contexts.
                 If supplying an ActionAttributes, it gets converted to an ActionContexts instance.
-            default (str): The default variation to use if the subject is not part of the bandit.
+            default (str): The default variation to use if an error is encountered retrieving the
+                assigned variation.
 
         Returns:
             BanditResult: The result containing either the bandit action if the subject is part of the bandit,
                           or the assignment if they are not. The BanditResult includes:
                           - variation (str): The assignment key indicating the subject's variation.
-                          - action (str): The key of the selected action if the subject is part of the bandit.
+                          - action (str | null): The key of the selected action if the subject was assigned one
+                            by the bandit.
 
         Example:
         result = client.get_bandit_action(
@@ -286,10 +288,10 @@ class EppoClient:
             },
             "default"
         )
-        if result.action is None:
-            do_variation(result.variation)
+        if result.action:
+            do_action(result.variation)
         else:
-            do_action(result.action)
+            do_status_quo()
         """
         try:
             return self.get_bandit_action_detail(
@@ -341,9 +343,9 @@ class EppoClient:
             )
             return BanditResult(variation, None)
 
-        # if no actions are given - a valid use case - return the default value
+        # if no actions are given - a valid use case - return the variation with no action
         if len(actions) == 0:
-            return BanditResult(default, None)
+            return BanditResult(variation, None)
 
         evaluation = self.__bandit_evaluator.evaluate_bandit(
             flag_key,
