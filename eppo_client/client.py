@@ -468,7 +468,8 @@ def convert_context_attributes_to_attributes(
     if isinstance(subject_context, dict):
         return subject_context
 
-    return subject_context.numeric_attributes | subject_context.categorical_attributes
+    # ignoring type because Dict[str, str] satisfies Dict[str, str | ...] but mypy does not understand
+    return subject_context.numeric_attributes | subject_context.categorical_attributes  # type: ignore
 
 
 def convert_attributes_to_context_attributes(
