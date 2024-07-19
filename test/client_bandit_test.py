@@ -111,12 +111,18 @@ def test_get_bandit_action_flag_not_exist():
 def test_get_bandit_action_flag_has_no_bandit():
     client = get_instance()
     result = client.get_bandit_action(
-        "non_bandit_flag", "subject_key", DEFAULT_SUBJECT_ATTRIBUTES, {}, "default_variation"
+        "non_bandit_flag",
+        "subject_key",
+        DEFAULT_SUBJECT_ATTRIBUTES,
+        {},
+        "default_variation",
     )
     assert result == BanditResult("control", None)
 
 
-@patch.object(BanditEvaluator, 'evaluate_bandit', side_effect=Exception("Mocked Exception"))
+@patch.object(
+    BanditEvaluator, "evaluate_bandit", side_effect=Exception("Mocked Exception")
+)
 def test_get_bandit_action_bandit_error(mock_bandit_evaluator):
     client = get_instance()
     client.set_is_graceful_mode(True)
@@ -207,7 +213,9 @@ def test_get_bandit_action_with_subject_attributes():
     )
 
 
-@patch.object(MockAssignmentLogger, 'log_bandit_action', side_effect=Exception("Mocked Exception"))
+@patch.object(
+    MockAssignmentLogger, "log_bandit_action", side_effect=Exception("Mocked Exception")
+)
 def test_get_bandit_action_bandit_logger_error(patched_mock_assignment_logger):
     client = get_instance()
     actions = {

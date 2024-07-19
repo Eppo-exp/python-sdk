@@ -296,7 +296,9 @@ class EppoClient:
         variation = default
         action = None
         try:
-            subject_attributes = convert_context_attributes_to_attributes(subject_context)
+            subject_attributes = convert_context_attributes_to_attributes(
+                subject_context
+            )
 
             # first, get experiment assignment
             variation = self.get_string_assignment(
@@ -365,7 +367,9 @@ class EppoClient:
                 "action": evaluation.action_key if evaluation else None,
                 "actionProbability": evaluation.action_weight if evaluation else None,
                 "optimalityGap": evaluation.optimality_gap if evaluation else None,
-                "modelVersion": bandit_data.bandit_model_version if evaluation else None,
+                "modelVersion": (
+                    bandit_data.bandit_model_version if evaluation else None
+                ),
                 "timestamp": datetime.datetime.utcnow().isoformat(),
                 "subjectNumericAttributes": (
                     subject_context_attributes.numeric_attributes
@@ -486,6 +490,4 @@ def convert_attributes_to_context_attributes(
 def convert_actions_to_action_contexts(
     actions: Union[ActionContexts, ActionAttributes]
 ) -> ActionContexts:
-    return {
-        k: convert_attributes_to_context_attributes(v) for k, v in actions.items()
-    }
+    return {k: convert_attributes_to_context_attributes(v) for k, v in actions.items()}
