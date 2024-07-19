@@ -203,6 +203,32 @@ def test_get_bandit_action_with_subject_attributes():
         == chosen_action.categorical_attributes
     )
 
+@patch.object(MockAssignmentLogger, 'log_bandit_action', side_effect=Exception("Mocked Exception"))
+def test_get_bandit_action_bandit_logger_error(patched_mock_assignment_logger):
+    client = get_instance()
+    actions = {
+        "adidas": ContextAttributes(
+            numeric_attributes={"discount": 0.1},
+            categorical_attributes={"from": "germany"},
+        ),
+        "nike": ContextAttributes(
+            numeric_attributes={"discount": 0.2}, categorical_attributes={"from": "usa"}
+        ),
+    }
+    result = client.get_bandit_action(
+        "banner_bandit_flag_uk_only",
+        "alice",
+        DEFAULT_SUBJECT_ATTRIBUTES,
+        actions,
+        "default_variation",
+    )
+    assert result.variation == "banner_bandit"
+    assert result.action in ["adidas", "nike"]
+
+    # assignment should have still been logged
+    assert len(mock_assignment_logger.assignment_events) == 1
+    assert len(mock_assignment_logger.bandit_events) == 0
+    
 
 @pytest.mark.parametrize("test_case", test_data)
 def test_bandit_generic_test_cases(test_case):
