@@ -298,8 +298,7 @@ class EppoClient:
         try:
             subject_attributes = convert_context_attributes_to_attributes(subject_context)
 
-            # get experiment assignment
-            # ignoring type because Dict[str, str] satisfies Dict[str, str | ...] but mypy does not understand
+            # first, get experiment assignment
             variation = self.get_string_assignment(
                 flag_key,
                 subject_key,
@@ -308,6 +307,7 @@ class EppoClient:
             )
 
             if variation in self.get_bandit_keys():
+                # next, if assigned a bandit, get the selected action
                 action = self.evaluate_bandit_action(
                     flag_key,
                     variation, # for now, we assume the variation value is always equal to the bandit key
@@ -343,7 +343,7 @@ class EppoClient:
             )
             return None
         
-        subject_context_attributes = convert_subject_context_to_context_attributes(
+        subject_context_attributes = convert_attributes_to_context_attributes(
             subject_context
         )
         action_contexts = convert_actions_to_action_contexts(actions)
@@ -466,7 +466,7 @@ def convert_context_attributes_to_attributes(
     return subject_context.numeric_attributes | subject_context.categorical_attributes
 
 
-def convert_subject_context_to_context_attributes(
+def convert_attributes_to_context_attributes(
     subject_context: Union[ContextAttributes, Attributes]
 ) -> ContextAttributes:
     if isinstance(subject_context, dict):
@@ -486,5 +486,5 @@ def convert_actions_to_action_contexts(
     actions: Union[ActionContexts, ActionAttributes]
 ) -> ActionContexts:
     return {
-        k: convert_subject_context_to_context_attributes(v) for k, v in actions.items()
+        k: convert_attributes_to_context_attributes(v) for k, v in actions.items()
     }
