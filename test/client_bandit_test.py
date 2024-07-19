@@ -81,13 +81,15 @@ def init_fixture():
     httpretty.disable()
     httpretty.reset()
 
+
 @pytest.fixture(autouse=True)
 def clear_event_arrays():
     # Reset graceful mode to off
     get_instance().set_is_graceful_mode(False)
-    # Clear captured logger events 
+    # Clear captured logger events
     mock_assignment_logger.assignment_events.clear()
     mock_assignment_logger.bandit_events.clear()
+
 
 def test_is_initialized():
     client = get_instance()
@@ -112,6 +114,7 @@ def test_get_bandit_action_flag_has_no_bandit():
         "non_bandit_flag", "subject_key", DEFAULT_SUBJECT_ATTRIBUTES, {}, "default_variation"
     )
     assert result == BanditResult("control", None)
+
 
 @patch.object(BanditEvaluator, 'evaluate_bandit', side_effect=Exception("Mocked Exception"))
 def test_get_bandit_action_bandit_error(mock_bandit_evaluator):
@@ -203,6 +206,7 @@ def test_get_bandit_action_with_subject_attributes():
         == chosen_action.categorical_attributes
     )
 
+
 @patch.object(MockAssignmentLogger, 'log_bandit_action', side_effect=Exception("Mocked Exception"))
 def test_get_bandit_action_bandit_logger_error(patched_mock_assignment_logger):
     client = get_instance()
@@ -228,7 +232,7 @@ def test_get_bandit_action_bandit_logger_error(patched_mock_assignment_logger):
     # assignment should have still been logged
     assert len(mock_assignment_logger.assignment_events) == 1
     assert len(mock_assignment_logger.bandit_events) == 0
-    
+
 
 @pytest.mark.parametrize("test_case", test_data)
 def test_bandit_generic_test_cases(test_case):

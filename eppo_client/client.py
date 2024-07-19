@@ -310,7 +310,7 @@ class EppoClient:
                 # next, if assigned a bandit, get the selected action
                 action = self.evaluate_bandit_action(
                     flag_key,
-                    variation, # for now, we assume the variation value is always equal to the bandit key
+                    variation,  # for now, we assume the variation value is always equal to the bandit key
                     subject_key,
                     subject_context,
                     actions,
@@ -334,7 +334,7 @@ class EppoClient:
         # if no actions are given--a valid use case--return the variation with no action
         if len(actions) == 0:
             return None
-        
+
         bandit_data = self.__config_requestor.get_bandit_model(bandit_key)
 
         if not bandit_data:
@@ -342,7 +342,7 @@ class EppoClient:
                 f"[Eppo SDK] No assigned action. Bandit not found for flag: {flag_key}"
             )
             return None
-        
+
         subject_context_attributes = convert_attributes_to_context_attributes(
             subject_context
         )
@@ -417,7 +417,7 @@ class EppoClient:
         This can be useful to debug the initialization process.
         """
         return self.__config_requestor.get_bandit_keys()
-    
+
     def set_is_graceful_mode(self, is_graceful_mode: bool):
         self.__is_graceful_mode = is_graceful_mode
 
@@ -457,12 +457,13 @@ def check_value_type_match(
         return isinstance(value, bool)
     return False
 
+
 def convert_context_attributes_to_attributes(
     subject_context: Union[ContextAttributes, Attributes]
 ) -> Attributes:
     if isinstance(subject_context, dict):
         return subject_context
-    
+
     return subject_context.numeric_attributes | subject_context.categorical_attributes
 
 
