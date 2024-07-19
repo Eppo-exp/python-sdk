@@ -332,7 +332,7 @@ class EppoClient:
         subject_key: str,
         subject_context: Union[ContextAttributes, Attributes],
         actions: Union[ActionContexts, ActionAttributes],
-    ) -> str | None:
+    ) -> Union[str, None]:
         # if no actions are given--a valid use case--return the variation with no action
         if len(actions) == 0:
             return None
