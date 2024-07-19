@@ -6,7 +6,8 @@ import json
 import os
 from time import sleep
 from typing import Dict, List
-from eppo_client.bandit import BanditResult, ContextAttributes
+from unittest.mock import patch
+from eppo_client.bandit import BanditEvaluator, BanditResult, ContextAttributes
 
 import httpretty  # type: ignore
 import pytest
@@ -80,16 +81,23 @@ def init_fixture():
     httpretty.disable()
     httpretty.reset()
 
+@pytest.fixture(autouse=True)
+def clear_event_arrays():
+    # Reset graceful mode to off
+    get_instance().set_is_graceful_mode(False)
+    # Clear captured logger events 
+    mock_assignment_logger.assignment_events.clear()
+    mock_assignment_logger.bandit_events.clear()
 
 def test_is_initialized():
     client = get_instance()
     assert client.is_initialized(), "Client should be initialized"
 
 
-def test_get_bandit_action_bandit_does_not_exist():
+def test_get_bandit_action_flag_not_exist():
     client = get_instance()
     result = client.get_bandit_action(
-        "nonexistent_bandit",
+        "nonexistent_flag",
         "subject_key",
         DEFAULT_SUBJECT_ATTRIBUTES,
         {},
@@ -98,12 +106,45 @@ def test_get_bandit_action_bandit_does_not_exist():
     assert result == BanditResult("default_variation", None)
 
 
-def test_get_bandit_action_flag_without_bandit():
+def test_get_bandit_action_flag_has_no_bandit():
     client = get_instance()
     result = client.get_bandit_action(
-        "a_flag", "subject_key", DEFAULT_SUBJECT_ATTRIBUTES, {}, "default_variation"
+        "non_bandit_flag", "subject_key", DEFAULT_SUBJECT_ATTRIBUTES, {}, "default_variation"
     )
-    assert result == BanditResult("default_variation", None)
+    assert result == BanditResult("control", None)
+
+@patch.object(BanditEvaluator, 'evaluate_bandit', side_effect=Exception("Mocked Exception"))
+def test_get_bandit_action_bandit_error(mock_bandit_evaluator):
+    client = get_instance()
+    client.set_is_graceful_mode(True)
+    actions = {
+        "adidas": ContextAttributes(
+            numeric_attributes={"discount": 0.1},
+            categorical_attributes={"from": "germany"},
+        ),
+        "nike": ContextAttributes(
+            numeric_attributes={"discount": 0.2}, categorical_attributes={"from": "usa"}
+        ),
+    }
+
+    result = client.get_bandit_action(
+        "banner_bandit_flag_uk_only",
+        "alice",
+        DEFAULT_SUBJECT_ATTRIBUTES,
+        actions,
+        "default_variation",
+    )
+    assert result.variation == "banner_bandit"
+    assert result.action is None
+
+    # testing assignment logger
+    assignment_log_statement = mock_assignment_logger.assignment_events[-1]
+    assert assignment_log_statement["featureFlag"] == "banner_bandit_flag_uk_only"
+    assert assignment_log_statement["variation"] == "banner_bandit"
+    assert assignment_log_statement["subject"] == "alice"
+
+    # testing bandit logger
+    assert len(mock_assignment_logger.bandit_events) == 0
 
 
 def test_get_bandit_action_with_subject_attributes():
