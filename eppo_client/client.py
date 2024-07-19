@@ -268,7 +268,7 @@ class EppoClient:
             BanditResult: The result containing either the bandit action if the subject is part of the bandit,
                           or the assignment if they are not. The BanditResult includes:
                           - variation (str): The assignment key indicating the subject's variation.
-                          - action (str | null): The key of the selected action if the subject was assigned one
+                          - action (Optional[str]): The key of the selected action if the subject was assigned one
                             by the bandit.
 
         Example:
