@@ -256,9 +256,9 @@ class EppoClient:
         Args:
             flag_key (str): The feature flag key that contains the bandit as one of the variations.
             subject_key (str): The key identifying the subject.
-            subject_context (ActionContexts | ActionAttributes): The subject context.
+            subject_context (Union[ContextAttributes, Attributes]): The subject context.
                 If supplying an ActionAttributes, it gets converted to an ActionContexts instance
-            actions (ActionContexts | ActionAttributes): The dictionary that maps action keys
+            actions (Union[ActionContexts, ActionAttributes]): The dictionary that maps action keys
                 to their context of actions with their contexts.
                 If supplying an ActionAttributes, it gets converted to an ActionContexts instance.
             default (str): The default variation to use if an error is encountered retrieving the
