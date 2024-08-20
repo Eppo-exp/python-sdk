@@ -1,4 +1,5 @@
 import json
+import datetime
 import os
 from time import sleep
 from unittest.mock import patch
@@ -111,6 +112,40 @@ def test_log_assignment(mock_config_requestor, mock_logger):
         == "control"
     )
     assert mock_logger.log_assignment.call_count == 1
+
+
+@patch("eppo_client.assignment_logger.AssignmentLogger")
+@patch("eppo_client.configuration_requestor.ExperimentConfigurationRequestor")
+def test_assignment_event_has_utc_timestamp(mock_config_requestor, mock_logger):
+    flag = Flag(
+        key="flag-key",
+        enabled=True,
+        variation_type=VariationType.STRING,
+        variations={"control": Variation(key="control", value="control")},
+        allocations=[
+            Allocation(
+                key="allocation",
+                splits=[
+                    Split(
+                        variation_key="control",
+                        shards=[Shard(salt="salt", ranges=[Range(start=0, end=10000)])],
+                    )
+                ],
+                do_log=True,
+            )
+        ],
+        total_shards=10_000,
+    )
+
+    mock_config_requestor.get_configuration.return_value = flag
+    client = EppoClient(
+        config_requestor=mock_config_requestor, assignment_logger=mock_logger
+    )
+    client.get_string_assignment("falg-key", "user-1", {}, "default value")
+
+    event = mock_logger.log_assignment.call_args.args[0]
+    timestamp = datetime.datetime.fromisoformat(event["timestamp"])
+    assert timestamp.tzinfo == datetime.timezone.utc
 
 
 @patch("eppo_client.assignment_logger.AssignmentLogger")

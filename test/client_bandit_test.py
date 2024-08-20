@@ -2,6 +2,7 @@
 # making client_test.py too long.
 
 
+import datetime
 import json
 import os
 from time import sleep
@@ -154,6 +155,37 @@ def test_get_bandit_action_bandit_error(mock_bandit_evaluator):
 
     # testing bandit logger
     assert len(mock_assignment_logger.bandit_events) == 0
+
+
+def test_bandit_event_has_utc_timestamp():
+    # tests that allocation filtering based on subject attributes works correctly
+    client = get_instance()
+    actions = {
+        "adidas": ContextAttributes(
+            numeric_attributes={"discount": 0.1},
+            categorical_attributes={"from": "germany"},
+        ),
+        "nike": ContextAttributes(
+            numeric_attributes={"discount": 0.2}, categorical_attributes={"from": "usa"}
+        ),
+    }
+    client.get_bandit_action(
+        "banner_bandit_flag_uk_only",
+        "alice",
+        DEFAULT_SUBJECT_ATTRIBUTES,
+        actions,
+        "default_variation",
+    )
+
+    # testing assignment logger
+    assignment_event = mock_assignment_logger.assignment_events[-1]
+    timestamp = datetime.datetime.fromisoformat(assignment_event["timestamp"])
+    assert timestamp.tzinfo == datetime.timezone.utc
+
+    # testing bandit logger
+    bandit_event = mock_assignment_logger.bandit_events[-1]
+    timestamp = datetime.datetime.fromisoformat(bandit_event["timestamp"])
+    assert timestamp.tzinfo == datetime.timezone.utc
 
 
 def test_get_bandit_action_with_subject_attributes():
