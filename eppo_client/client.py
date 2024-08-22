@@ -222,7 +222,7 @@ class EppoClient:
             "featureFlag": flag_key,
             "variation": result.variation.key if result and result.variation else None,
             "subject": subject_key,
-            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "timestamp": _utcnow().isoformat(),
             "subjectAttributes": subject_attributes,
             "metaData": {"sdkLanguage": "python", "sdkVersion": __version__},
         }
@@ -370,7 +370,7 @@ class EppoClient:
                 "modelVersion": (
                     bandit_data.bandit_model_version if evaluation else None
                 ),
-                "timestamp": datetime.datetime.utcnow().isoformat(),
+                "timestamp": _utcnow().isoformat(),
                 "subjectNumericAttributes": (
                     subject_context_attributes.numeric_attributes
                     if evaluation.subject_attributes
@@ -492,3 +492,7 @@ def convert_actions_to_action_contexts(
     actions: Union[ActionContexts, ActionAttributes]
 ) -> ActionContexts:
     return {k: convert_attributes_to_context_attributes(v) for k, v in actions.items()}
+
+
+def _utcnow() -> datetime.datetime:
+    return datetime.datetime.now(datetime.timezone.utc)
