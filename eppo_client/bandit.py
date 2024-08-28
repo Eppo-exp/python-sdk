@@ -52,7 +52,7 @@ class ContextAttributes:
         numeric_attributes = {
             key: float(value)
             for key, value in attributes.items()
-            if isinstance(value, (int, float))
+            if isinstance(value, (int, float)) and not isinstance(value, bool)
         }
         categorical_attributes = {
             key: to_string(value)
