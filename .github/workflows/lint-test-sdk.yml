@@ -51,6 +51,6 @@ jobs:
   run-tests-with-tox:
     runs-on: ubuntu-latest
     steps:
-      - uses: .github/actions/action-test
+      - uses: Eppo-exp/python-sdk/.github/actions/action-test@tp/workflows/remote
         with:
-          sdk_branch: ${{ github.head_ref || github.ref_name }}
+          sdk_branch: ${{ github.head_ref || github.ref_name  }}
