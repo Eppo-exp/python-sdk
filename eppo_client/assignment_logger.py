@@ -1,11 +1,7 @@
 from typing import Dict
-from eppo_client.base_model import BaseModel
-from pydantic import ConfigDict
 
 
-class AssignmentLogger(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
+class AssignmentLogger:
     def log_assignment(self, assignment_event: Dict):
         pass
 
