@@ -7,3 +7,5 @@ __pycache__
 test-data
 venv/
 .DS_Store
+.venv
+.idea

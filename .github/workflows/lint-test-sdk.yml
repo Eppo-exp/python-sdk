@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '**/*'
+  workflow_dispatch:
 
 
 jobs:
@@ -50,17 +51,6 @@ jobs:
   run-tests-with-tox:
     runs-on: ubuntu-latest
     steps:
-      - uses: "actions/checkout@v2"
-      - uses: "actions/setup-python@v2"
-        with: 
-          python-version: '3.9.x'
-      - name: "Install dependencies"
-        run: |
-          python -VV
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -r requirements.txt
-          python -m pip install -r requirements-test.txt
-      - name: 'Set up GCP SDK to download test data'
-        uses: 'google-github-actions/setup-gcloud@v0'
-      - name: "Run tests"
-        run: make test
+      - uses: Eppo-exp/python-sdk/.github/actions/action-test@tp/workflows/remote
+        with:
+          sdk_branch: ${{ github.head_ref || github.ref_name  }}
