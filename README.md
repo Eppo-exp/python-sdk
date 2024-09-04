@@ -104,6 +104,38 @@ class SegmentAssignmentLogger(AssignmentLogger):
 client_config = Config(api_key="<SDK-KEY-FROM-DASHBOARD>", assignment_logger=SegmentAssignmentLogger())
 ```
 
+### De-duplication of assignments
+
+The SDK may see many duplicate assignments in a short period of time, and if you have configured a logging function, they will be transmitted to your downstream event store. This increases the cost of storage as well as warehouse costs during experiment analysis.
+
+To mitigate this, a caching assignment logger is optionally available with configurable cache behavior.
+
+The caching can be configured individually for assignment logs and bandit action logs using `AssignmentCacheLogger`.
+
+`AssignmentCacheLogger` optionally accepts two caches. We recommend using [`cachetools`](https://pypi.org/project/cachetools/) but any subclass of `MutableMapping` works.
+
+```python
+import cachetools
+from eppo_client.assignment_logger import AssignmentLogger, AssignmentCacheLogger
+
+
+class MyLogger(AssignmentLogger):
+    # implement your logger
+    pass
+
+
+client_config = Config(
+    api_key="<SDK-KEY-FROM-DASHBOARD>",
+    assignment_logger=AssignmentCacheLogger(
+        MyLogger(),
+        # cache 1024 least recently used assignments
+        assignment_cache=cachetools.LRUCache(maxsize=1024),
+        # cache bandit assignment for no longer than 10 minutes
+        bandit_cache=cachetools.TTLCache(maxsize=2048, ttl=600),
+    ),
+)
+```
+
 ## Export configuration
 
 To support the use-case of needing to bootstrap a front-end client, the Eppo SDK provides a function to export flag configurations to a JSON string.
