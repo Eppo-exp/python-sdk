@@ -11,10 +11,10 @@ def test_non_caching():
     inner = Mock()
     logger = AssignmentCacheLogger(inner)
 
-    logger.log_assignment(mk_assignment_event())
-    logger.log_assignment(mk_assignment_event())
-    logger.log_bandit_action(mk_bandit_event())
-    logger.log_bandit_action(mk_bandit_event())
+    logger.log_assignment(make_assignment_event())
+    logger.log_assignment(make_assignment_event())
+    logger.log_bandit_action(make_bandit_event())
+    logger.log_bandit_action(make_bandit_event())
 
     assert inner.log_assignment.call_count == 2
     assert inner.log_bandit_action.call_count == 2
@@ -24,8 +24,8 @@ def test_assignment_cache():
     inner = Mock()
     logger = AssignmentCacheLogger(inner, assignment_cache=LRUCache(100))
 
-    logger.log_assignment(mk_assignment_event())
-    logger.log_assignment(mk_assignment_event())
+    logger.log_assignment(make_assignment_event())
+    logger.log_assignment(make_assignment_event())
 
     assert inner.log_assignment.call_count == 1
 
@@ -34,8 +34,8 @@ def test_bandit_cache():
     inner = Mock()
     logger = AssignmentCacheLogger(inner, bandit_cache=LRUCache(100))
 
-    logger.log_bandit_action(mk_bandit_event())
-    logger.log_bandit_action(mk_bandit_event())
+    logger.log_bandit_action(make_bandit_event())
+    logger.log_bandit_action(make_bandit_event())
 
     assert inner.log_bandit_action.call_count == 1
 
@@ -44,18 +44,18 @@ def test_bandit_flip_flop():
     inner = Mock()
     logger = AssignmentCacheLogger(inner, bandit_cache=LRUCache(100))
 
-    logger.log_bandit_action(mk_bandit_event(action="action1"))
-    logger.log_bandit_action(mk_bandit_event(action="action1"))
+    logger.log_bandit_action(make_bandit_event(action="action1"))
+    logger.log_bandit_action(make_bandit_event(action="action1"))
     assert inner.log_bandit_action.call_count == 1
 
-    logger.log_bandit_action(mk_bandit_event(action="action2"))
+    logger.log_bandit_action(make_bandit_event(action="action2"))
     assert inner.log_bandit_action.call_count == 2
 
-    logger.log_bandit_action(mk_bandit_event(action="action1"))
+    logger.log_bandit_action(make_bandit_event(action="action1"))
     assert inner.log_bandit_action.call_count == 3
 
 
-def mk_assignment_event(
+def make_assignment_event(
     *,
     allocation="allocation",
     experiment="experiment",
@@ -80,7 +80,7 @@ def mk_assignment_event(
     }
 
 
-def mk_bandit_event(
+def make_bandit_event(
     *,
     flag_key="flagKey",
     bandit_key="banditKey",
