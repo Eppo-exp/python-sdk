@@ -44,7 +44,7 @@ class EppoClient:
         self.__assignment_logger = assignment_logger
         self.__is_graceful_mode = is_graceful_mode
 
-        if poll_interval_seconds is not None:
+        if poll_interval_seconds:
             self.__poller: Optional[Poller] = Poller(
                 interval_millis=poll_interval_seconds * 1000,
                 jitter_millis=poll_jitter_seconds * 1000,
