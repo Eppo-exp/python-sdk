@@ -21,7 +21,7 @@ class Config(SdkBaseModel):
     base_url: str = "https://fscdn.eppo.cloud/api"
     assignment_logger: AssignmentLogger = Field(exclude=True)
     is_graceful_mode: bool = True
-    poll_interval_seconds: int = POLL_INTERVAL_SECONDS_DEFAULT
+    poll_interval_seconds: Optional[int] = POLL_INTERVAL_SECONDS_DEFAULT
     poll_jitter_seconds: int = POLL_JITTER_SECONDS_DEFAULT
     initial_configuration: Optional[Configuration] = None
 

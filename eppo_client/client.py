@@ -36,18 +36,23 @@ class EppoClient:
         config_requestor: ExperimentConfigurationRequestor,
         assignment_logger: AssignmentLogger,
         is_graceful_mode: bool = True,
-        poll_interval_seconds: int = POLL_INTERVAL_SECONDS_DEFAULT,
+        poll_interval_seconds: Optional[int] = POLL_INTERVAL_SECONDS_DEFAULT,
         poll_jitter_seconds: int = POLL_JITTER_SECONDS_DEFAULT,
     ):
         self.__config_requestor = config_requestor
         self.__assignment_logger = assignment_logger
         self.__is_graceful_mode = is_graceful_mode
-        self.__poller = Poller(
-            interval_millis=poll_interval_seconds * 1000,
-            jitter_millis=poll_jitter_seconds * 1000,
-            callback=config_requestor.fetch_and_store_configurations,
-        )
-        self.__poller.start()
+
+        if poll_interval_seconds is not None:
+            self.__poller: Optional[Poller] = Poller(
+                interval_millis=poll_interval_seconds * 1000,
+                jitter_millis=poll_jitter_seconds * 1000,
+                callback=config_requestor.fetch_and_store_configurations,
+            )
+            self.__poller.start()
+        else:
+            self.__poller = None
+
         self.__evaluator = Evaluator(sharder=MD5Sharder())
         self.__bandit_evaluator = BanditEvaluator(sharder=MD5Sharder())
 
@@ -434,7 +439,8 @@ class EppoClient:
         """Stops all background processes used by the client
         Do not use the client after calling this method.
         """
-        self.__poller.stop()
+        if self.__poller:
+            self.__poller.stop()
 
 
 def check_type_match(
