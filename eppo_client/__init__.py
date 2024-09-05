@@ -10,6 +10,9 @@ from eppo_client.models import BanditData, Flag
 from eppo_client.read_write_lock import ReadWriteLock
 from eppo_client.version import __version__
 
+# re-export for convenience
+from eppo_client.configuration import Configuration  # noqa: F401
+
 
 __client: Optional[EppoClient] = None
 __lock = ReadWriteLock()
@@ -32,6 +35,12 @@ def init(config: Config) -> EppoClient:
     http_client = HttpClient(base_url=config.base_url, sdk_params=sdk_params)
     flag_config_store: ConfigurationStore[Flag] = ConfigurationStore()
     bandit_config_store: ConfigurationStore[BanditData] = ConfigurationStore()
+
+    if config.initial_configuration:
+        flag_config_store.set_configurations(
+            config.initial_configuration._flags_configuration.flags
+        )
+
     config_requestor = ExperimentConfigurationRequestor(
         http_client=http_client,
         flag_config_store=flag_config_store,

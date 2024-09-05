@@ -55,6 +55,10 @@ class Flag(SdkBaseModel):
     total_shards: int = 10_000
 
 
+class UfcResponse(SdkBaseModel):
+    flags: Dict[str, Flag]
+
+
 class BanditVariation(SdkBaseModel):
     key: str
     flag_key: str

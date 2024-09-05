@@ -1,7 +1,9 @@
 from pydantic import Field, ConfigDict
+from typing import Optional
 
 from eppo_client.assignment_logger import AssignmentLogger
 from eppo_client.base_model import SdkBaseModel
+from eppo_client.configuration import Configuration
 from eppo_client.validation import validate_not_blank
 from eppo_client.constants import (
     POLL_INTERVAL_SECONDS_DEFAULT,
@@ -19,8 +21,9 @@ class Config(SdkBaseModel):
     base_url: str = "https://fscdn.eppo.cloud/api"
     assignment_logger: AssignmentLogger = Field(exclude=True)
     is_graceful_mode: bool = True
-    poll_interval_seconds: int = POLL_INTERVAL_SECONDS_DEFAULT
+    poll_interval_seconds: Optional[int] = POLL_INTERVAL_SECONDS_DEFAULT
     poll_jitter_seconds: int = POLL_JITTER_SECONDS_DEFAULT
+    initial_configuration: Optional[Configuration] = None
 
     def _validate(self):
         validate_not_blank("api_key", self.api_key)
