@@ -10,6 +10,9 @@ from eppo_client.models import BanditData, Flag
 from eppo_client.read_write_lock import ReadWriteLock
 from eppo_client.version import __version__
 
+# re-export for convenience
+from eppo_client.configuration import Configuration  # noqa: F401
+
 
 __client: Optional[EppoClient] = None
 __lock = ReadWriteLock()
