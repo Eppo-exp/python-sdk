@@ -27,3 +27,7 @@ class Config(SdkBaseModel):
 
     def _validate(self):
         validate_not_blank("api_key", self.api_key)
+
+        if self.poll_interval_seconds is not None:
+            if self.poll_interval_seconds <= self.poll_jitter_seconds:
+                raise ValueError("poll_interval_seconds must be greater than poll_jitter_seconds")
