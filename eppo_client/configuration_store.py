@@ -7,6 +7,7 @@ T = TypeVar("T")
 
 class ConfigurationStore(Generic[T]):
     def __init__(self):
+        self.__is_initialized = False
         self.__cache: Dict[str, T] = {}
         self.__lock = ReadWriteLock()
 
@@ -16,6 +17,7 @@ class ConfigurationStore(Generic[T]):
 
     def set_configurations(self, configs: Dict[str, T]):
         with self.__lock.writer():
+            self.__is_initialized = True
             self.__cache = configs
 
     def get_keys(self):
@@ -25,3 +27,7 @@ class ConfigurationStore(Generic[T]):
     def get_configurations(self):
         with self.__lock.reader():
             return self.__cache
+
+    def is_initialized(self) -> bool:
+        with self.__lock.reader():
+            return self.__is_initialized

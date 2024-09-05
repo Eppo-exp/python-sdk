@@ -21,7 +21,6 @@ class ExperimentConfigurationRequestor:
         self.__http_client = http_client
         self.__flag_config_store = flag_config_store
         self.__bandit_config_store = bandit_config_store
-        self.__is_initialized = False
 
     def get_configuration(self, flag_key: str) -> Optional[Flag]:
         if self.__http_client.is_unauthorized():
@@ -70,9 +69,8 @@ class ExperimentConfigurationRequestor:
             if flag_data.get("bandits", {}):
                 bandit_data = self.fetch_bandits()
                 self.store_bandits(bandit_data)
-            self.__is_initialized = True
         except Exception as e:
             logger.error("Error retrieving configurations: " + str(e))
 
     def is_initialized(self):
-        return self.__is_initialized
+        return self.__flag_config_store.is_initialized()
