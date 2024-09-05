@@ -11,6 +11,7 @@ from eppo_client.bandit import (
     ActionContexts,
 )
 from eppo_client.models import Flag
+from eppo_client.configuration import Configuration
 from eppo_client.configuration_requestor import (
     ExperimentConfigurationRequestor,
 )
@@ -55,6 +56,9 @@ class EppoClient:
 
         self.__evaluator = Evaluator(sharder=MD5Sharder())
         self.__bandit_evaluator = BanditEvaluator(sharder=MD5Sharder())
+
+    def set_configuration(self, configuration: Configuration):
+        self.__config_requestor._set_configuration(configuration)
 
     def get_string_assignment(
         self,

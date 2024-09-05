@@ -25,3 +25,17 @@ def test_with_initial_configuration():
         )
     )
     assert client.is_initialized()
+
+
+def test_update_configuration():
+    client = eppo_client.init(
+        Config(
+            api_key="test",
+            poll_interval_seconds=None,
+            assignment_logger=AssignmentLogger(),
+        )
+    )
+
+    client.set_configuration(Configuration(flags_configuration='{"flags":{}}'))
+
+    assert client.is_initialized()
