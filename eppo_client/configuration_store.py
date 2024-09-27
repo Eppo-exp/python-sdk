@@ -6,7 +6,7 @@ T = TypeVar("T")
 
 
 class ConfigurationStore(Generic[T]):
-    def __init__(self):
+    def __init__(self) -> None:
         self.__is_initialized = False
         self.__cache: Dict[str, T] = {}
         self.__lock = ReadWriteLock()

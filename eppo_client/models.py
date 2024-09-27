@@ -105,3 +105,7 @@ class BanditData(SdkBaseModel):
     bandit_model_version: str = Field(alias="modelVersion")
     bandit_model_data: BanditModelData = Field(alias="modelData")
     updated_at: datetime
+
+
+class BanditResponse(SdkBaseModel):
+    bandits: Dict[str, BanditData]
