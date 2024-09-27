@@ -5,7 +5,7 @@ from eppo_client.configuration import Configuration
 
 
 def test_init_valid():
-    Configuration(flags_configuration='{"flags": {}}')
+    Configuration(flags_configuration=b'{"flags": {}}')
 
 
 def test_init_invalid_json():
@@ -15,4 +15,4 @@ def test_init_invalid_json():
 
 def test_init_invalid_format():
     with pytest.raises(pydantic.ValidationError):
-        Configuration(flags_configuration='{"flags": []}')
+        Configuration(flags_configuration=b'{"flags": []}')

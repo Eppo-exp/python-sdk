@@ -80,3 +80,7 @@ class ExperimentConfigurationRequestor:
         self.__flag_config_store.set_configurations(
             configuration._flags_configuration.flags
         )
+        if configuration._bandits_configuration is not None:
+            self.__bandit_config_store.set_configurations(
+                configuration._bandits_configuration.bandits
+            )

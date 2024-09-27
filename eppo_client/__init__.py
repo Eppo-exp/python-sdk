@@ -40,6 +40,10 @@ def init(config: Config) -> EppoClient:
         flag_config_store.set_configurations(
             config.initial_configuration._flags_configuration.flags
         )
+        if config.initial_configuration._bandits_configuration:
+            bandit_config_store.set_configurations(
+                config.initial_configuration._bandits_configuration.bandits
+            )
 
     config_requestor = ExperimentConfigurationRequestor(
         http_client=http_client,
