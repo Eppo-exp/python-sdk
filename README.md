@@ -1,6 +1,6 @@
 # Eppo Python SDK
 
-[![Test and lint SDK](https://github.com/Eppo-exp/python-sdk/actions/workflows/test-and-lint-sdk.yml/badge.svg)](https://github.com/Eppo-exp/python-sdk/actions/workflows/test-and-lint-sdk.yml)
+This repository has been migrated to [https://github.com/Eppo-exp/eppo-multiplatform](https://github.com/Eppo-exp/eppo-multiplatform).
 
 [Eppo](https://www.geteppo.com/) is a modular flagging and experimentation analysis tool. Eppo's Python SDK is built to make assignments in multi-user server side contexts. Before proceeding you'll need an Eppo account.
 
